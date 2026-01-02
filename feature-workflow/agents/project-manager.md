@@ -127,7 +127,7 @@ Product deliverables include:
 
 ## Integration with Feature Workflow
 
-This agent is called by `/feature-workflow:implement` during Phase 2 (Requirements Deep Dive) to:
+This agent is called by `/feature-plan` during Phase 2 (Requirements Deep Dive) to:
 - Expand backlog items into detailed requirements
 - Create user stories with acceptance criteria
 - Identify dependencies and blockers

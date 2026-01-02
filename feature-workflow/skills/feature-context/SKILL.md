@@ -104,4 +104,4 @@ When explicitly asked about the feature:
 This skill works with:
 - `progress-tracker` skill - Updates the plan.md this skill reads
 - `scope-guard` skill - Uses requirements.md to check scope
-- `/feature-workflow:complete` - Uses these files for completion review
+- `/feature-ship` - Uses these files for completion review

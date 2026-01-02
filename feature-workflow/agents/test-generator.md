@@ -162,7 +162,7 @@ Test suite includes:
 
 ## Integration with Feature Workflow
 
-This agent is called by `/feature-workflow:implement` during Phase 4 to:
+This agent is called by `/feature-plan` during Phase 4 to:
 - Create test specifications for new features
 - Define expected behavior through tests
 - Ensure TDD approach is followed

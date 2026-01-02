@@ -1,7 +1,7 @@
 ---
-name: add
+name: feature-capture
 description: Interactive workflow for adding items to the JSON backlog
-version: 1.2.0
+version: 1.3.0
 argument-hint: ""
 ---
 
@@ -174,7 +174,7 @@ Display a summary:
 - Backlog: [backlog count] | In Progress: [in-progress count] | Completed: [completed count]
 
 ## Next Steps
-- Run `/feature-workflow:implement [id]` when ready to start
+- Run `/feature-plan [id]` when ready to start
 - View backlog: `docs/planning/backlog.json`
 ```
 
@@ -195,18 +195,18 @@ docs/planning/
 ```
 
 **Key Principles**:
-- `backlog.json` is the only file created/updated by `/add`
-- Feature directories are created by `/implement` when work starts
+- `backlog.json` is the only file created/updated by `/feature-capture`
+- Feature directories are created by `/feature-plan` when work starts
 - Status is tracked in JSON, not by file location
 
 ---
 
 ## Integration Notes
 
-This command works with `/feature-workflow:implement` to provide a complete feature lifecycle:
+This command works with `/feature-plan` to provide a complete feature lifecycle:
 
-1. **`/feature-workflow:add`** - Captures idea in backlog (YOU ARE HERE)
-2. **`/feature-workflow:implement [id]`** - Creates feature directory and detailed planning
+1. **`/feature-capture`** - Captures idea in backlog (YOU ARE HERE)
+2. **`/feature-plan [id]`** - Creates feature directory and detailed planning
 
 ---
 
@@ -219,9 +219,9 @@ Capture:
 - **When**: Priority and effort estimate
 
 Does NOT need:
-- Detailed technical design (that's for `/feature-workflow:implement`)
-- Specific implementation steps (that's for `/feature-workflow:implement`)
-- Complete requirements (that's for `/feature-workflow:implement`)
+- Detailed technical design (that's for `/feature-plan`)
+- Specific implementation steps (that's for `/feature-plan`)
+- Complete requirements (that's for `/feature-plan`)
 
 ---
 

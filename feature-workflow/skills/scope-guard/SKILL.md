@@ -82,7 +82,7 @@ This seems outside the current feature scope.
 
 Options:
 1. **Include it** - Add to current feature (may increase effort)
-2. **Add to backlog** - Track as separate item: `/feature-workflow:add`
+2. **Add to backlog** - Track as separate item: `/feature-capture`
 3. **Skip for now** - Focus on original scope first
 
 What would you like to do?
@@ -93,7 +93,7 @@ What would you like to do?
 This is outside the scope of [feature name].
 
 Consider adding it as a separate backlog item:
-`/feature-workflow:add`
+`/feature-capture`
 
 This keeps the current feature focused and trackable.
 ```
@@ -121,4 +121,4 @@ This helps track what the feature actually delivers.
 This skill works with:
 - `feature-context` skill - Uses same requirements.md
 - `backlog-awareness` skill - For checking if idea is already tracked
-- `/feature-workflow:add` - For adding out-of-scope items
+- `/feature-capture` - For adding out-of-scope items

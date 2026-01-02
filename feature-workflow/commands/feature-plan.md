@@ -1,7 +1,7 @@
 ---
-name: implement
+name: feature-plan
 description: Start implementing a feature from the JSON backlog with adaptive agent dispatch
-version: 1.2.0
+version: 1.3.0
 argument-hint: "[feature-id-from-backlog]"
 ---
 
@@ -594,10 +594,10 @@ Ready to start coding!
 
 ## Completing a Feature
 
-When the feature is done, use the `/feature-workflow:complete` command:
+When the feature is done, use the `/feature-ship` command:
 
 ```
-/feature-workflow:complete [feature-id]
+/feature-ship [feature-id]
 ```
 
 This runs quality gates before marking the feature complete:

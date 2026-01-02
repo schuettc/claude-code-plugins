@@ -28,7 +28,7 @@ Read: docs/planning/backlog.json
 
 If file doesn't exist:
 ```
-No backlog found. Use /feature-workflow:add to start tracking features.
+No backlog found. Use /feature-capture to start tracking features.
 ```
 
 ### Step 2: Parse and Categorize
@@ -113,5 +113,5 @@ Next Up: User Authentication (P0), API Rate Limiting (P0)
 
 This skill works with:
 - `backlog-awareness` skill - For deeper dives into specific items
-- `/feature-workflow:implement` - Suggest for starting backlog items
-- `/feature-workflow:complete` - Suggest for finishing in-progress items
+- `/feature-plan` - Suggest for starting backlog items
+- `/feature-ship` - Suggest for finishing in-progress items

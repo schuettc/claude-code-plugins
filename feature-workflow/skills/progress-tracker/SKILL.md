@@ -107,7 +107,7 @@ Remaining steps: [N] of [total]
 
 ## Error Handling
 
-- **No plan.md**: "No implementation plan found. Run /feature-workflow:implement first."
+- **No plan.md**: "No implementation plan found. Run /feature-plan first."
 - **No matching step**: "Couldn't find a matching implementation step. Add to progress log only?"
 - **Multiple matches**: List options and ask which to check off
 
@@ -115,4 +115,4 @@ Remaining steps: [N] of [total]
 
 This skill works with:
 - `feature-context` skill - Reads the same plan.md
-- `/feature-workflow:complete` - Relies on accurate progress tracking
+- `/feature-ship` - Relies on accurate progress tracking

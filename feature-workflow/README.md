@@ -1,6 +1,6 @@
 # Feature Workflow Plugin
 
-**Version:** 1.2.0
+**Version:** 1.3.0
 
 A Claude Code plugin for feature lifecycle management with JSON-based backlog tracking. Capture feature ideas, plan implementations, and kick off development with adaptive agent dispatch.
 
@@ -23,13 +23,13 @@ claude --plugin-dir ./claude-code-plugins/feature-workflow
 
 ## Commands
 
-### `/feature-workflow:add`
+### `/feature-capture`
 
 Interactive workflow for adding items to the JSON backlog.
 
 **Usage:**
 ```
-/feature-workflow:add
+/feature-capture
 ```
 
 **What it does:**
@@ -46,18 +46,18 @@ Interactive workflow for adding items to the JSON backlog.
 
 3. Provides a summary and next steps
 
-### `/feature-workflow:implement [feature-id]`
+### `/feature-plan [feature-id]`
 
 Start implementing a feature from the backlog with comprehensive planning.
 
 **Usage:**
 ```
-/feature-workflow:implement dark-mode-toggle
+/feature-plan dark-mode-toggle
 ```
 
 Or without an ID to see available items:
 ```
-/feature-workflow:implement
+/feature-plan
 ```
 
 **What it does:**
@@ -76,18 +76,18 @@ Or without an ID to see available items:
 7. **Status Update** - Updates backlog.json to "in-progress"
 8. **Kickoff Summary** - Creates todos and provides next steps
 
-### `/feature-workflow:complete [feature-id]`
+### `/feature-ship [feature-id]`
 
 Complete a feature with quality gates - security review, QA validation, and final verification.
 
 **Usage:**
 ```
-/feature-workflow:complete dark-mode-toggle
+/feature-ship dark-mode-toggle
 ```
 
 Or without an ID to see in-progress items:
 ```
-/feature-workflow:complete
+/feature-ship
 ```
 
 **What it does:**
@@ -139,11 +139,11 @@ docs/planning/
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  1. ADD TO BACKLOG                                              │
-│     /feature-workflow:add                                        │
+│     /feature-capture                                             │
 │     └─> Creates entry in backlog.json (status: "backlog")       │
 │                                                                  │
 │  2. START IMPLEMENTING                                           │
-│     /feature-workflow:implement [id]                             │
+│     /feature-plan [id]                                           │
 │     └─> Creates features/[id]/ directory                        │
 │     └─> Creates requirements.md, design.md, plan.md             │
 │     └─> Updates backlog.json (status: "in-progress")            │
@@ -153,7 +153,7 @@ docs/planning/
 │     └─> Update plan.md progress log as you work                 │
 │                                                                  │
 │  4. COMPLETE WITH QUALITY GATES                                  │
-│     /feature-workflow:complete [id]                              │
+│     /feature-ship [id]                                           │
 │     └─> Runs security-reviewer agent (blocks on issues)         │
 │     └─> Runs qa-engineer agent (validates quality)              │
 │     └─> Verifies all tests pass                                 │
@@ -262,7 +262,7 @@ Skills are **automatically invoked by Claude** when context is relevant. Unlike 
 
 **backlog-awareness**
 - Triggers when you say: "We should add...", "Is X planned?", "What features..."
-- Shows matching backlog items or suggests `/feature-workflow:add`
+- Shows matching backlog items or suggests `/feature-capture`
 
 **feature-context**
 - Triggers when working on code while a feature is in-progress
@@ -282,7 +282,7 @@ Skills are **automatically invoked by Claude** when context is relevant. Unlike 
 
 ## Feature Type Detection
 
-The `/implement` command automatically detects feature type and dispatches appropriate agents:
+The `/feature-plan` command automatically detects feature type and dispatches appropriate agents:
 
 | Feature Type | Detection | Agents Used |
 |--------------|-----------|-------------|
@@ -298,8 +298,8 @@ The `/implement` command automatically detects feature type and dispatches appro
 
 This plugin enforces thoughtful planning before implementation:
 
-1. **Capture ideas quickly** - `/add` takes ~5 minutes
-2. **Plan thoroughly when ready** - `/implement` takes 15-30 minutes but saves hours
+1. **Capture ideas quickly** - `/feature-capture` takes ~5 minutes
+2. **Plan thoroughly when ready** - `/feature-plan` takes 15-30 minutes but saves hours
 3. **Keep everything organized** - One JSON file, one directory per feature
 4. **Track status in data** - No file moves, just JSON field updates
 

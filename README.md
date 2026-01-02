@@ -20,16 +20,16 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| [feature-workflow](./feature-workflow) | Feature lifecycle management with JSON-based backlog tracking | 1.2.0 |
+| [feature-workflow](./feature-workflow) | Feature lifecycle management with JSON-based backlog tracking | 1.3.0 |
 
 ## Plugin: feature-workflow
 
 Structured feature development with commands, agents, and skills.
 
 **Commands:**
-- `/feature-workflow:add` - Capture feature ideas in JSON backlog
-- `/feature-workflow:implement` - Plan implementation with specialized agents
-- `/feature-workflow:complete` - Verify quality gates before marking done
+- `/feature-capture` - Capture feature ideas in JSON backlog
+- `/feature-plan` - Plan implementation with specialized agents
+- `/feature-ship` - Verify quality gates before marking done
 
 **Install:**
 ```bash

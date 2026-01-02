@@ -171,7 +171,7 @@ Compliance: [PASS/FAIL] for OWASP, PCI-DSS, etc.
 
 ## Integration with Feature Workflow
 
-This agent is called by `/feature-workflow:complete` during Phase 2 to:
+This agent is called by `/feature-ship` during Phase 2 to:
 - Scan feature code for vulnerabilities
 - Check dependencies for CVEs
 - Validate authentication/authorization

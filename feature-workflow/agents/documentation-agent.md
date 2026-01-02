@@ -147,7 +147,7 @@ Documentation organized by user needs:
 
 ## Integration with Feature Workflow
 
-This agent is called by `/feature-workflow:implement` during Phase 5 (Documentation Preparation) to:
+This agent is called by `/feature-plan` during Phase 5 (Documentation Preparation) to:
 - Review the implementation plan
 - Identify docs that need updates
 - Add TODO comments to affected docs

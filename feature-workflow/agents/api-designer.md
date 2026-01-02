@@ -145,7 +145,7 @@ API design document includes:
 
 ## Integration with Feature Workflow
 
-This agent is called by `/feature-workflow:implement` during Phase 3 (System Design) for:
+This agent is called by `/feature-plan` during Phase 3 (System Design) for:
 - Type A (Backend-Only) features
 - Type C (Full-Stack) features
 - Type D (UI-Heavy Full-Stack) features

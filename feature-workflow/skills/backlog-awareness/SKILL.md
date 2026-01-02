@@ -1,6 +1,6 @@
 ---
 name: backlog-awareness
-description: Check project backlog when discussing feature ideas or priorities. Use when user mentions adding features, asks what's planned, discusses priorities, or proposes new functionality. Silently reads backlog.json to show relevant items and suggest /feature-workflow:add for untracked ideas.
+description: Check project backlog when discussing feature ideas or priorities. Use when user mentions adding features, asks what's planned, discusses priorities, or proposes new functionality. Silently reads backlog.json to show relevant items and suggest /feature-capture for untracked ideas.
 allowed-tools: Read, Glob
 ---
 
@@ -26,7 +26,7 @@ Read: docs/planning/backlog.json
 If the file doesn't exist, inform the user:
 ```
 No backlog found at docs/planning/backlog.json.
-Use /feature-workflow:add to start tracking features.
+Use /feature-capture to start tracking features.
 ```
 
 ### Step 2: Analyze User Intent
@@ -59,7 +59,7 @@ This feature is already tracked:
 - Priority: [priority]
 - Problem: [problemStatement]
 
-[If status is "backlog"]: Ready to start? Use `/feature-workflow:implement [id]`
+[If status is "backlog"]: Ready to start? Use `/feature-plan [id]`
 [If status is "in-progress"]: Currently being worked on.
 [If status is "completed"]: Already completed on [completedAt].
 ```
@@ -73,14 +73,14 @@ Your idea might be:
 - An extension of [related item]
 - A separate feature worth tracking
 
-Add as new item? Use `/feature-workflow:add`
+Add as new item? Use `/feature-capture`
 ```
 
 **If not tracked:**
 ```
 This isn't tracked in the backlog yet.
 
-To add it: `/feature-workflow:add`
+To add it: `/feature-capture`
 ```
 
 ## Output Format
@@ -93,6 +93,6 @@ Keep responses concise. Show:
 ## Integration Notes
 
 This skill works with:
-- `/feature-workflow:add` - Suggest when idea isn't tracked
-- `/feature-workflow:implement` - Suggest when item is ready to start
+- `/feature-capture` - Suggest when idea isn't tracked
+- `/feature-plan` - Suggest when item is ready to start
 - `status-dashboard` skill - For broader status queries

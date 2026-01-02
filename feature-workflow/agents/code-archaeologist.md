@@ -201,7 +201,7 @@ LOW:
 
 ## Integration with Feature Workflow
 
-This agent is called by `/feature-workflow:implement` during Phase 2 when:
+This agent is called by `/feature-plan` during Phase 2 when:
 - Modifying existing code without documentation
 - Working with legacy systems
 - Need to understand hidden dependencies

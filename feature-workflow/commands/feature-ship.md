@@ -1,7 +1,7 @@
 ---
-name: complete
+name: feature-ship
 description: Complete a feature with quality gates - security review, QA validation, and final verification
-version: 1.2.0
+version: 1.3.0
 argument-hint: "[feature-id-from-backlog]"
 ---
 
@@ -37,7 +37,7 @@ Read `docs/planning/backlog.json` to get current items.
 ### If Feature ID Provided ($ARGUMENTS not empty)
 1. Find item in `items` array where `id` matches the argument
 2. Verify status is "in-progress"
-   - If status is "backlog": Ask user to run `/feature-workflow:implement` first
+   - If status is "backlog": Ask user to run `/feature-plan` first
    - If status is "completed": Inform user feature is already completed
 3. Verify implementation artifacts exist:
    - `docs/planning/features/[feature-id]/plan.md`
@@ -133,7 +133,7 @@ Critical/High severity issues must be fixed before completion:
 
 [List of issues with fixes]
 
-Please fix these issues and run `/feature-workflow:complete [id]` again.
+Please fix these issues and run `/feature-ship [id]` again.
 ```
 STOP the workflow here.
 
@@ -215,7 +215,7 @@ Issues that must be addressed:
 
 [List of critical issues]
 
-Please fix these issues and run `/feature-workflow:complete [id]` again.
+Please fix these issues and run `/feature-ship [id]` again.
 ```
 STOP the workflow here.
 
@@ -388,7 +388,7 @@ Display comprehensive completion report:
    ```
 2. Review backlog for next feature to implement:
    ```
-   /feature-workflow:implement
+   /feature-plan
    ```
 
 ---

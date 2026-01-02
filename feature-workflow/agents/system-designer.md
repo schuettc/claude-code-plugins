@@ -117,7 +117,7 @@ System design includes:
 
 ## Integration with Feature Workflow
 
-This agent is called by `/feature-workflow:implement` during Phase 3 (System Design) for Type E (Infrastructure) features to:
+This agent is called by `/feature-plan` during Phase 3 (System Design) for Type E (Infrastructure) features to:
 - Design system architecture for new infrastructure
 - Create component diagrams
 - Define data flow patterns

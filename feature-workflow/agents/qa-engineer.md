@@ -191,7 +191,7 @@ Quality metrics:
 
 ## Integration with Feature Workflow
 
-This agent is called by `/feature-workflow:complete` during Phase 3 to:
+This agent is called by `/feature-ship` during Phase 3 to:
 - Verify test coverage meets thresholds
 - Check all tests pass
 - Review acceptance criteria against implementation
