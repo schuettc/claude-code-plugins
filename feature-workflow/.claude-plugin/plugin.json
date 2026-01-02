@@ -1,0 +1,9 @@
+{
+  "name": "feature-workflow",
+  "version": "1.2.0",
+  "description": "Feature lifecycle management with JSON-based backlog tracking. Add features to backlog, implement with adaptive agent dispatch, and complete with quality gates. Includes skills for automatic context loading and progress tracking.",
+  "author": {
+    "name": "Court Schuett"
+  },
+  "skills": "./skills/"
+}
