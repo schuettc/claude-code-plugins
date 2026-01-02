@@ -6,14 +6,19 @@ A Claude Code plugin for feature lifecycle management with JSON-based backlog tr
 
 ## Installation
 
-### Local Development
+### From GitHub (recommended)
 ```bash
-claude --plugin-dir ./feature-workflow
+# Add the marketplace
+/plugin marketplace add schuettc/claude-code-plugins
+
+# Install the plugin
+/plugin install feature-workflow@schuettc-claude-code-plugins
 ```
 
-### Multiple Plugins
+### Development Mode
 ```bash
-claude --plugin-dir ./feature-workflow --plugin-dir ./other-plugin
+git clone https://github.com/schuettc/claude-code-plugins.git
+claude --plugin-dir ./claude-code-plugins/feature-workflow
 ```
 
 ## Commands

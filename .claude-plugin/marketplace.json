@@ -1,0 +1,14 @@
+{
+  "name": "schuettc-claude-code-plugins",
+  "owner": {
+    "name": "Court Schuett"
+  },
+  "plugins": [
+    {
+      "name": "feature-workflow",
+      "source": "./feature-workflow",
+      "description": "Feature lifecycle management with JSON-based backlog tracking",
+      "version": "1.2.0"
+    }
+  ]
+}
