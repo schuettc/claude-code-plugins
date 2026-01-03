@@ -1,7 +1,7 @@
 ---
 name: feature-plan
 description: Start implementing a feature from the JSON backlog with adaptive agent dispatch
-version: 1.3.0
+version: 1.4.0
 argument-hint: "[feature-id-from-backlog]"
 ---
 
@@ -37,16 +37,14 @@ docs/planning/
 
 ## Workflow Overview
 
-This command orchestrates an 8-phase workflow:
+This command orchestrates a 6-phase workflow:
 
 1. **Feature Selection** - Choose from backlog or validate provided ID
 2. **Requirements Analysis** - Deep dive with project-manager agent
 3. **System Design** - Architecture planning (adaptive based on feature type)
-4. **Implementation Planning** - Create detailed plan document
-5. **Documentation Preparation** - Prepare docs with documentation-agent
-6. **Backlog Status Update** - Update status to "in-progress" in JSON
-7. **Environment Verification** - Ensure local setup is ready
-8. **Kickoff Summary** - Create todos and provide clear next steps
+4. **Implementation Plan** - Create detailed plan document
+5. **Backlog Status Update** - Update status to "in-progress" in JSON
+6. **Kickoff Summary** - Create todos and provide clear next steps
 
 ---
 
@@ -319,49 +317,7 @@ If no system design was needed (simple feature), skip creating design.md.
 
 ---
 
-## Phase 4: Implementation Plan & Test Specifications
-
-### Step 4a: Test-First Planning (TDD)
-
-**AGENT**: `epcc-workflow:test-generator`
-
-Launch the test-generator agent to create test specifications BEFORE implementation:
-
-```
-Launch Task tool with:
-subagent_type: "epcc-workflow:test-generator"
-description: "Create test specifications for feature"
-prompt: "
-Create comprehensive test specifications for this feature:
-
-Feature: [name]
-Requirements: docs/planning/features/[feature-id]/requirements.md
-Design: docs/planning/features/[feature-id]/design.md (if exists)
-
-Tasks:
-1. Review requirements and acceptance criteria
-2. Create test specifications using TDD approach:
-   - Unit tests for each new function/method
-   - Integration tests for component interactions
-   - Edge cases and boundary conditions
-   - Error handling scenarios
-
-Output test specs with:
-- Test file locations (where tests should be created)
-- Test case names with descriptions
-- AAA structure (Arrange, Act, Assert)
-- Expected inputs and outputs
-- Mocking strategy for dependencies
-
-Target: 90%+ code coverage for new code
-
-These specs will guide implementation - code should be written to make these tests pass.
-"
-```
-
-**Output**: Test specifications to guide implementation
-
-### Step 4b: Implementation Plan Creation
+## Phase 4: Implementation Plan
 
 Create file: `docs/planning/features/[feature-id]/plan.md`
 
@@ -434,48 +390,7 @@ Write this file using the Write tool.
 
 ---
 
-## Phase 5: Documentation Preparation
-
-**AGENT**: `feature-workflow:documentation-agent`
-
-Launch documentation-agent:
-
-```
-Launch Task tool with:
-subagent_type: "feature-workflow:documentation-agent"
-description: "Prepare documentation structure"
-prompt: "
-Prepare documentation for this new feature:
-
-Feature: [name]
-Feature Directory: docs/planning/features/[feature-id]/
-Implementation Plan: docs/planning/features/[feature-id]/plan.md
-Requirements: docs/planning/features/[feature-id]/requirements.md
-
-Tasks:
-1. Review the implementation plan and requirements thoroughly
-2. Identify ALL documentation files that will need updates based on:
-   - New components being added
-   - Modified behavior in existing components
-   - Architecture changes
-   - New integrations
-3. For each affected doc:
-   - Add a <!-- TODO: [feature-id] - [what needs updating] --> comment
-   - Create placeholder sections if needed
-4. If new components are being created:
-   - Determine where documentation should live
-   - Create stub documentation files
-5. Update docs/README.md navigation if new docs are added
-
-Create a documentation checklist and add it to the implementation plan.
-"
-```
-
-**Output**: Documentation structure prepared with TODOs
-
----
-
-## Phase 6: Backlog Status Update
+## Phase 5: Backlog Status Update
 
 1. **Read** `docs/planning/backlog.json`
 
@@ -506,32 +421,7 @@ Create a documentation checklist and add it to the implementation plan.
 
 ---
 
-## Phase 7: Environment Verification
-
-1. **Check project setup**:
-   ```bash
-   # Check if common tools exist
-   node --version 2>/dev/null || echo "Node.js not found"
-   npm --version 2>/dev/null || echo "npm not found"
-   ```
-
-2. **Install dependencies** (if package.json exists):
-   ```bash
-   npm install
-   ```
-
-3. **Run type check** (if available):
-   ```bash
-   npm run type-check 2>/dev/null || echo "No type-check script"
-   ```
-
-4. **Note any pre-commit hooks** the project uses
-
-**Output**: Environment verified
-
----
-
-## Phase 8: Kickoff Summary & Todo Creation
+## Phase 6: Kickoff Summary & Todo Creation
 
 1. **Create TodoWrite list** with implementation steps from the plan
 
@@ -557,9 +447,7 @@ Create a documentation checklist and add it to the implementation plan.
 - Requirements analyzed with detailed acceptance criteria
 - System design completed [or "No architecture changes needed"]
 - Implementation plan created with [N] actionable steps
-- Documentation structure prepared
 - Backlog status updated to "in-progress"
-- Local environment verified
 
 ---
 
@@ -623,7 +511,7 @@ The complete workflow ensures no feature ships without passing security and qual
 
 ## Philosophy: "Never Code Without a Plan"
 
-By completing these 8 phases, you ensure:
+By completing these 6 phases, you ensure:
 - Requirements are clearly understood
 - Architecture is properly designed
 - Implementation is broken into manageable steps
