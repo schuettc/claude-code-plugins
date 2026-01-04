@@ -1,6 +1,6 @@
 # Feature Workflow Plugin
 
-**Version:** 1.3.0
+**Version:** 1.5.0
 
 A Claude Code plugin for feature lifecycle management with JSON-based backlog tracking. Capture feature ideas, plan implementations, and kick off development with adaptive agent dispatch.
 

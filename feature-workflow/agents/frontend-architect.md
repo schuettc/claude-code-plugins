@@ -1,6 +1,6 @@
 ---
 name: frontend-architect
-version: 1.3.0
+version: 1.5.0
 description: Designs React component architecture and state management for frontend features. Specializes in component hierarchy, props interfaces, state flow, and integration patterns. Creates clear component blueprints that are maintainable, testable, and performant.
 model: sonnet
 color: cyan

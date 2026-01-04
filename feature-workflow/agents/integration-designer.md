@@ -1,6 +1,6 @@
 ---
 name: integration-designer
-version: 1.3.0
+version: 1.5.0
 description: Designs integration layer between frontend and backend. Specializes in GraphQL query usage, state synchronization, authorization flow, caching strategy, and error handling. Creates clear integration patterns that are secure, performant, and reliable.
 model: sonnet
 color: green

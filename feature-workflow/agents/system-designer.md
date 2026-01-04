@@ -1,6 +1,6 @@
 ---
 name: system-designer
-version: 1.2.0
+version: 1.5.0
 description: MUST BE USED when designing high-level system architecture for new projects or major system changes. This agent specializes exclusively in system design - creating component diagrams, defining service boundaries, designing data flows, and establishing integration patterns. Automatically creates system blueprints with clear component relationships and interaction patterns.
 model: opus
 color: purple

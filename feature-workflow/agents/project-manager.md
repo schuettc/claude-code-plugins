@@ -1,6 +1,6 @@
 ---
 name: project-manager
-version: 1.2.0
+version: 1.5.0
 description: Use PROACTIVELY at the start of each sprint or product cycle to align technical work with business objectives. This agent specializes exclusively in product strategy and prioritization - creating roadmaps, defining acceptance criteria, analyzing market needs, and maximizing ROI. Automatically generates PRDs from requirements, prioritizes features using value/effort matrices, and ensures stakeholder alignment through clear communication.
 model: opus
 color: blue

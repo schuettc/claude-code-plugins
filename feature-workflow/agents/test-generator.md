@@ -1,6 +1,6 @@
 ---
 name: test-generator
-version: 1.2.0
+version: 1.5.0
 description: MUST BE USED for all new feature development to enforce test-driven development (TDD). This agent specializes exclusively in writing comprehensive test suites BEFORE any implementation exists - generating unit tests, integration tests, edge cases, and error scenarios that define expected behavior. Automatically creates failing tests first (Red phase), guides minimal implementation (Green phase), then assists with refactoring while maintaining test coverage above 90%.
 model: sonnet
 color: yellow

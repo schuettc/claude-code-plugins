@@ -1,6 +1,6 @@
 ---
 name: code-archaeologist
-version: 1.2.0
+version: 1.5.0
 description: Use PROACTIVELY when inheriting legacy codebases or before making changes to undocumented systems. This agent specializes exclusively in reverse-engineering complex code - tracing data flows, uncovering hidden dependencies, mapping system architecture, and identifying technical debt. Automatically generates comprehensive system documentation from code analysis, reveals undocumented business logic, and creates dependency graphs for safe refactoring.
 model: opus
 color: brown

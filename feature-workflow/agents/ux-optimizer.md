@@ -1,6 +1,6 @@
 ---
 name: ux-optimizer
-version: 1.2.0
+version: 1.5.0
 description: MUST BE USED when creating or modifying user-facing interfaces to ensure optimal user and developer experience. This agent specializes exclusively in UX optimization - analyzing user flows, improving interaction patterns, ensuring accessibility compliance, and enhancing developer ergonomics. Automatically identifies UX anti-patterns, suggests interface improvements based on best practices, and validates WCAG accessibility standards.
 model: opus
 color: pink

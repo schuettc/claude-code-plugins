@@ -1,6 +1,6 @@
 ---
 name: api-designer
-version: 1.3.0
+version: 1.5.0
 description: Designs API contracts and data flow for features. Specializes in GraphQL schema design, Lambda function specifications, database structures, and authorization patterns. Creates clear API contracts between frontend and backend with complete error handling specifications.
 model: sonnet
 color: blue
