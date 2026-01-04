@@ -1,7 +1,7 @@
 ---
 name: feature-plan
 description: Start implementing a feature from the JSON backlog with adaptive agent dispatch
-version: 1.4.0
+version: 1.5.0
 argument-hint: "[feature-id-from-backlog]"
 ---
 
@@ -89,6 +89,20 @@ Read `docs/planning/backlog.json` to get the current backlog.
 
 ---
 
+## Effort-Based Scaling
+
+The workflow adapts based on the effort level from backlog.json:
+
+| Effort | Analysis Depth | Design Scope |
+|--------|----------------|--------------|
+| **Low** (< 8 hours) | Brief, essentials only | Skip design.md if simple |
+| **Medium** (1-2 weeks) | Standard analysis | Full design workflow |
+| **Large** (2+ weeks) | Comprehensive | Full design with extra detail |
+
+**All agent prompts include effort context** so they self-regulate their output depth.
+
+---
+
 ## Phase 2: Requirements Deep Dive
 
 First, create the feature directory:
@@ -111,6 +125,12 @@ Analyze the existing code that will be modified for this feature:
 
 Feature: [name]
 Affected Areas: [affectedAreas from backlog item]
+**Effort Level**: [effort]
+
+**Scaling guidance**:
+- Low: Quick scan of affected files. Key dependencies only.
+- Medium: Standard analysis depth.
+- Large: Comprehensive deep-dive with full documentation.
 
 Tasks:
 1. Find and map the existing code in affected areas
@@ -153,8 +173,14 @@ Feature ID: [id]
 Feature Name: [name]
 Type: [type]
 Priority: [priority]
+**Effort Level**: [effort]
 Problem Statement: [problemStatement]
 Affected Areas: [affectedAreas]
+
+**Scaling guidance**:
+- Low: Brief requirements. 2-3 user stories max. Key risks only.
+- Medium: Standard requirements document.
+- Large: Comprehensive requirements with full stakeholder analysis.
 
 Create:
 1. Detailed problem statement with user context
@@ -166,7 +192,7 @@ Create:
 7. Implementation task breakdown
 
 Review existing architecture in docs/ to understand current patterns.
-Output a comprehensive requirements document.
+Output a requirements document scaled to the effort level.
 "
 ```
 
@@ -218,6 +244,12 @@ Launch single agent: **feature-workflow:api-designer**
 Design the API layer for [feature name]:
 
 Requirements: docs/planning/features/[feature-id]/requirements.md
+**Effort Level**: [effort]
+
+**Scaling guidance**:
+- Low: Schema changes only. Brief function specs.
+- Medium: Standard API design.
+- Large: Comprehensive design with full error handling.
 
 Deliverables:
 1. GraphQL schema updates (types, queries, mutations)
@@ -225,7 +257,7 @@ Deliverables:
 3. Data flow diagram: Frontend -> API -> Storage -> Response
 4. Authorization design (who can access, permission checks)
 
-Output: API design document with all contracts clearly defined.
+Output: API design document scaled to effort level.
 ```
 
 #### Type B: Frontend-Only
@@ -236,6 +268,12 @@ Launch IN PARALLEL: **feature-workflow:ux-optimizer** + **feature-workflow:front
 Analyze user flows and optimize UX for [feature name]:
 
 Requirements: docs/planning/features/[feature-id]/requirements.md
+**Effort Level**: [effort]
+
+**Scaling guidance**:
+- Low: Key UX considerations only.
+- Medium: Standard UX analysis.
+- Large: Full journey mapping with accessibility audit.
 
 Deliverables:
 1. User journey analysis with pain points
@@ -243,7 +281,7 @@ Deliverables:
 3. Accessibility audit (WCAG compliance)
 4. Performance impact assessment
 
-Output: UX optimization recommendations.
+Output: UX recommendations scaled to effort level.
 ```
 
 **Frontend-Architect**:
@@ -251,6 +289,12 @@ Output: UX optimization recommendations.
 Design React component architecture for [feature name]:
 
 Requirements: docs/planning/features/[feature-id]/requirements.md
+**Effort Level**: [effort]
+
+**Scaling guidance**:
+- Low: Component list with key props only.
+- Medium: Standard component architecture.
+- Large: Full hierarchy with detailed interfaces.
 
 Deliverables:
 1. Component hierarchy diagram
@@ -258,7 +302,7 @@ Deliverables:
 3. State management strategy (local vs Context vs global)
 4. Integration points (where components plug into existing UI)
 
-Output: Frontend architecture document with component tree and interfaces.
+Output: Frontend architecture scaled to effort level.
 ```
 
 #### Type C: Full-Stack (MOST COMMON)
@@ -273,6 +317,12 @@ Launch IN PARALLEL: **feature-workflow:api-designer** + **feature-workflow:front
 Design integration layer for [feature name]:
 
 Requirements: docs/planning/features/[feature-id]/requirements.md
+**Effort Level**: [effort]
+
+**Scaling guidance**:
+- Low: Query usage only. Basic error handling.
+- Medium: Standard integration patterns.
+- Large: Full caching and retry strategies.
 
 Deliverables:
 1. GraphQL query usage in components
@@ -281,7 +331,7 @@ Deliverables:
 4. Caching strategy
 5. Error handling and retry logic
 
-Output: Integration design document.
+Output: Integration design scaled to effort level.
 ```
 
 #### Type D: UI-Heavy Full-Stack
@@ -297,6 +347,12 @@ Design the system architecture for this feature:
 
 Feature: [name]
 Requirements: docs/planning/features/[feature-id]/requirements.md
+**Effort Level**: [effort]
+
+**Scaling guidance**:
+- Low: Component changes only. Brief diagram.
+- Medium: Standard system design.
+- Large: Full architecture with scaling patterns.
 
 Create:
 1. Component diagram showing new/modified components
@@ -304,7 +360,7 @@ Create:
 3. Scalability and fault tolerance patterns
 4. Monitoring and operational considerations
 
-Output: System design document.
+Output: System design scaled to effort level.
 ```
 
 ### Step 3: Save Design Documents

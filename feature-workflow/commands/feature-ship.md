@@ -1,7 +1,7 @@
 ---
 name: feature-ship
 description: Complete a feature with quality gates - security review, QA validation, and final verification
-version: 1.3.0
+version: 1.5.0
 argument-hint: "[feature-id-from-backlog]"
 ---
 
@@ -69,7 +69,27 @@ Ready to proceed with quality gates.
 
 ---
 
-## Phase 2: Security Review
+## Effort-Based Workflow Selection
+
+The ship workflow scales based on effort level from backlog.json:
+
+### Low Effort (< 8 hours)
+Skip agent-based reviews. Run quick verification instead:
+- **Skip Phase 2**: Run `npm audit --audit-level=high` instead of security-reviewer agent
+- **Skip Phase 3**: Run `npm test` instead of qa-engineer agent
+- **Continue to Phase 4**: Standard final verification
+
+### Medium or Large Effort
+Run full workflow with all quality gates:
+- **Phase 2**: Full security-reviewer agent scan
+- **Phase 3**: Full qa-engineer agent validation
+- **Phase 4-6**: Standard completion workflow
+
+---
+
+## Phase 2: Security Review (Medium/Large Effort)
+
+**Note**: For Low effort items, skip this phase and run `npm audit --audit-level=high` instead.
 
 **AGENT**: `epcc-workflow:security-reviewer`
 
@@ -152,7 +172,9 @@ Continue to Phase 3.
 
 ---
 
-## Phase 3: QA Validation
+## Phase 3: QA Validation (Medium/Large Effort)
+
+**Note**: For Low effort items, skip this phase and run `npm test` instead.
 
 **AGENT**: `epcc-workflow:qa-engineer`
 

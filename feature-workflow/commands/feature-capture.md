@@ -1,7 +1,7 @@
 ---
 name: feature-capture
 description: Interactive workflow for adding items to the JSON backlog
-version: 1.3.0
+version: 1.5.0
 argument-hint: ""
 ---
 
