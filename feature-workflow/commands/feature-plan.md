@@ -1,7 +1,7 @@
 ---
 name: feature-plan
 description: Start implementing a feature from the JSON backlog with adaptive agent dispatch
-version: 1.5.0
+version: 2.0.0
 argument-hint: "[feature-id-from-backlog]"
 ---
 
@@ -9,10 +9,24 @@ argument-hint: "[feature-id-from-backlog]"
 
 You are executing the **IMPLEMENT FEATURE** workflow - a comprehensive feature kickoff process that ensures proper planning before any implementation begins.
 
+## Contents
+
+- [Feature Target](#feature-target)
+- [File Organization](#file-organization)
+- [Workflow Overview](#workflow-overview)
+- [Phase Details](#phase-details)
+- [Completing a Feature](#completing-a-feature)
+- [Error Handling](#error-handling)
+
+---
+
 ## Feature Target
+
 $ARGUMENTS
 
 If no specific feature ID was provided above, you will help the user select from the backlog.
+
+---
 
 ## File Organization
 
@@ -20,7 +34,9 @@ All feature artifacts are stored in a single location:
 
 ```
 docs/planning/
-├── backlog.json                    # Single source of truth (status, metadata)
+├── backlog.json                    # Items with status: "backlog"
+├── in-progress.json                # Items with status: "in-progress"
+├── completed.json                  # Items with status: "completed"
 └── features/
     └── [feature-id]/               # One directory per feature
         ├── plan.md                 # Implementation plan
@@ -29,9 +45,10 @@ docs/planning/
 ```
 
 **Key Principles**:
-- `backlog.json` tracks ALL items and their status (backlog → in-progress → completed)
+- Items are split by status across three JSON files (multi-file format v2.0)
+- Each file contains a global `summary` for quick dashboard access
+- Status transitions move items between files atomically via hooks
 - Files are created once in `features/[id]/` and never move
-- Status changes update the JSON, not file locations
 
 ---
 
@@ -39,500 +56,61 @@ docs/planning/
 
 This command orchestrates a 6-phase workflow:
 
-1. **Feature Selection** - Choose from backlog or validate provided ID
-2. **Requirements Analysis** - Deep dive with project-manager agent
-3. **System Design** - Architecture planning (adaptive based on feature type)
-4. **Implementation Plan** - Create detailed plan document
-5. **Backlog Status Update** - Update status to "in-progress" in JSON
-6. **Kickoff Summary** - Create todos and provide clear next steps
+| Phase | Name | Purpose |
+|-------|------|---------|
+| 1 | Feature Selection | Choose from backlog or validate provided ID |
+| 2 | Requirements Analysis | Deep dive with project-manager agent |
+| 3 | System Design | Architecture planning (adaptive based on feature type) |
+| 4 | Implementation Plan | Create detailed plan document |
+| 5 | Backlog Status Update | Update status to "in-progress" via hook |
+| 6 | Kickoff Summary | Create todos and provide clear next steps |
 
 ---
 
-## Phase 1: Feature Selection
+## Phase Details
 
-### Read Backlog
-Read `docs/planning/backlog.json` to get the current backlog.
+### Phase 1: Feature Selection & Dependencies
 
-### If Feature ID Provided ($ARGUMENTS not empty)
-1. Find item in `items` array where `id` matches the argument
-2. If not found:
-   - List available items with status "backlog"
-   - Ask user to select one
-3. If found, confirm:
-   ```
-   Ready to start: [name]
-   Priority: [priority] | Effort: [effort] | Impact: [impact]
+**See**: [feature-plan/selection.md](feature-plan/selection.md)
 
-   Problem: [problemStatement]
+- Read backlog and find/select feature
+- Check for unmet dependencies
+- Set terminal context for status line
+- Handle blocked features with user options
 
-   Proceed? (yes/no)
-   ```
+### Phase 2: Requirements Deep Dive
 
-### If No Feature ID Provided
-1. Filter items where `status === "backlog"`
-2. Display organized by priority:
-   ```
-   ## Available Backlog Items
+**See**: [feature-plan/requirements.md](feature-plan/requirements.md)
 
-   ### P0 (High Priority)
-   - [id]: [name] - [effort] effort, [impact] impact
+- Create feature directory
+- Optional: Run code-archaeologist for legacy code
+- Run project-manager agent for requirements analysis
+- Effort-based scaling (Low/Medium/Large)
 
-   ### P1 (Medium Priority)
-   - [id]: [name] - [effort] effort, [impact] impact
+### Phase 3: System Design (Adaptive)
 
-   ### P2 (Low Priority)
-   - [id]: [name] - [effort] effort, [impact] impact
-   ```
-3. Ask user to select by ID
+**See**: [feature-plan/design.md](feature-plan/design.md)
 
-**Output**: Selected feature with full details
+- Classify feature type (Backend/Frontend/Full-Stack/Infrastructure)
+- Dispatch appropriate specialized agents
+- Save design documents
 
----
+| Feature Type | Agents Used |
+|--------------|-------------|
+| Backend-Only | api-designer |
+| Frontend-Only | ux-optimizer + frontend-architect |
+| Full-Stack | api-designer + frontend-architect + integration-designer |
+| UI-Heavy | ux-optimizer → then full-stack agents |
+| Infrastructure | system-designer |
 
-## Effort-Based Scaling
+### Phases 4-6: Implementation & Kickoff
 
-The workflow adapts based on the effort level from backlog.json:
+**See**: [feature-plan/implementation.md](feature-plan/implementation.md)
 
-| Effort | Analysis Depth | Design Scope |
-|--------|----------------|--------------|
-| **Low** (< 8 hours) | Brief, essentials only | Skip design.md if simple |
-| **Medium** (1-2 weeks) | Standard analysis | Full design workflow |
-| **Large** (2+ weeks) | Comprehensive | Full design with extra detail |
-
-**All agent prompts include effort context** so they self-regulate their output depth.
-
----
-
-## Phase 2: Requirements Deep Dive
-
-First, create the feature directory:
-```bash
-mkdir -p docs/planning/features/[feature-id]
-```
-
-### Step 2a: Legacy Code Analysis (If Modifying Existing Code)
-
-**AGENT**: `epcc-workflow:code-archaeologist` (OPTIONAL)
-
-If the feature modifies existing, undocumented code, launch the code-archaeologist agent FIRST:
-
-```
-Launch Task tool with:
-subagent_type: "epcc-workflow:code-archaeologist"
-description: "Analyze existing code before modification"
-prompt: "
-Analyze the existing code that will be modified for this feature:
-
-Feature: [name]
-Affected Areas: [affectedAreas from backlog item]
-**Effort Level**: [effort]
-
-**Scaling guidance**:
-- Low: Quick scan of affected files. Key dependencies only.
-- Medium: Standard analysis depth.
-- Large: Comprehensive deep-dive with full documentation.
-
-Tasks:
-1. Find and map the existing code in affected areas
-2. Trace data flows through the code
-3. Identify hidden dependencies
-4. Document business logic embedded in code
-5. Identify technical debt and risks
-6. Create a safe modification strategy
-
-Output: Archaeological report with:
-- Dependency graph
-- Data flow analysis
-- Business logic documentation
-- Risk assessment for modifications
-"
-```
-
-**When to use**:
-- Feature affects existing code with poor documentation
-- Touching legacy systems
-- Modifying code you didn't write
-- `affectedAreas` references existing components
-
-**Skip if**: Greenfield feature with no existing code dependencies
-
-### Step 2b: Requirements Analysis
-
-**AGENT**: `epcc-workflow:project-manager`
-
-Launch the project-manager agent:
-
-```
-Launch Task tool with:
-subagent_type: "feature-workflow:project-manager"
-description: "Analyze feature requirements"
-prompt: "
-Analyze this feature from our backlog and create detailed requirements:
-
-Feature ID: [id]
-Feature Name: [name]
-Type: [type]
-Priority: [priority]
-**Effort Level**: [effort]
-Problem Statement: [problemStatement]
-Affected Areas: [affectedAreas]
-
-**Scaling guidance**:
-- Low: Brief requirements. 2-3 user stories max. Key risks only.
-- Medium: Standard requirements document.
-- Large: Comprehensive requirements with full stakeholder analysis.
-
-Create:
-1. Detailed problem statement with user context
-2. User stories with acceptance criteria
-3. Technical requirements and constraints
-4. Dependencies and prerequisites
-5. Success metrics
-6. Risks and mitigation strategies
-7. Implementation task breakdown
-
-Review existing architecture in docs/ to understand current patterns.
-Output a requirements document scaled to the effort level.
-"
-```
-
-**Save output to**: `docs/planning/features/[feature-id]/requirements.md`
-
-**Output**: Comprehensive requirements document saved
-
----
-
-## Phase 3: System Design (Adaptive)
-
-**CONCEPT**: Detect feature type and dispatch appropriate specialized agents.
-
-### Step 1: Classify Feature Type
-
-Analyze the requirements to determine feature type:
-
-- **Type A: Backend-Only** - API/Lambda changes, no UI
-- **Type B: Frontend-Only** - UI components, no new API
-- **Type C: Full-Stack** - New UI + New API + Integration
-- **Type D: UI-Heavy Full-Stack** - Complex UI interactions + API
-- **Type E: Infrastructure** - Deployment, monitoring, performance
-
-**Classification Logic**:
-```
-Look for keywords in requirements:
-- UI keywords: 'UI', 'component', 'page', 'frontend', 'interface', 'React'
-- API keywords: 'API', 'Lambda', 'endpoint', 'GraphQL', 'backend', 'database'
-- Infrastructure keywords: 'deployment', 'monitoring', 'infrastructure', 'performance'
-
-has_ui = any UI keyword found
-has_api = any API keyword found
-has_infra = any infrastructure keyword found
-
-if has_infra: Type E
-elif has_ui and has_api and (UI keyword count > 10): Type D
-elif has_ui and has_api: Type C
-elif has_ui: Type B
-elif has_api: Type A
-else: Type C (default to full-stack)
-```
-
-### Step 2: Dispatch Appropriate Agents
-
-#### Type A: Backend-Only
-Launch single agent: **feature-workflow:api-designer**
-
-```
-Design the API layer for [feature name]:
-
-Requirements: docs/planning/features/[feature-id]/requirements.md
-**Effort Level**: [effort]
-
-**Scaling guidance**:
-- Low: Schema changes only. Brief function specs.
-- Medium: Standard API design.
-- Large: Comprehensive design with full error handling.
-
-Deliverables:
-1. GraphQL schema updates (types, queries, mutations)
-2. Lambda function specifications (input, output, errors)
-3. Data flow diagram: Frontend -> API -> Storage -> Response
-4. Authorization design (who can access, permission checks)
-
-Output: API design document scaled to effort level.
-```
-
-#### Type B: Frontend-Only
-Launch IN PARALLEL: **feature-workflow:ux-optimizer** + **feature-workflow:frontend-architect**
-
-**UX-Optimizer**:
-```
-Analyze user flows and optimize UX for [feature name]:
-
-Requirements: docs/planning/features/[feature-id]/requirements.md
-**Effort Level**: [effort]
-
-**Scaling guidance**:
-- Low: Key UX considerations only.
-- Medium: Standard UX analysis.
-- Large: Full journey mapping with accessibility audit.
-
-Deliverables:
-1. User journey analysis with pain points
-2. Interaction pattern recommendations
-3. Accessibility audit (WCAG compliance)
-4. Performance impact assessment
-
-Output: UX recommendations scaled to effort level.
-```
-
-**Frontend-Architect**:
-```
-Design React component architecture for [feature name]:
-
-Requirements: docs/planning/features/[feature-id]/requirements.md
-**Effort Level**: [effort]
-
-**Scaling guidance**:
-- Low: Component list with key props only.
-- Medium: Standard component architecture.
-- Large: Full hierarchy with detailed interfaces.
-
-Deliverables:
-1. Component hierarchy diagram
-2. TypeScript props interfaces for each component
-3. State management strategy (local vs Context vs global)
-4. Integration points (where components plug into existing UI)
-
-Output: Frontend architecture scaled to effort level.
-```
-
-#### Type C: Full-Stack (MOST COMMON)
-Launch IN PARALLEL: **feature-workflow:api-designer** + **feature-workflow:frontend-architect** + **feature-workflow:integration-designer**
-
-**API-Designer**: [Same as Type A]
-
-**Frontend-Architect**: [Same as Type B]
-
-**Integration-Designer**:
-```
-Design integration layer for [feature name]:
-
-Requirements: docs/planning/features/[feature-id]/requirements.md
-**Effort Level**: [effort]
-
-**Scaling guidance**:
-- Low: Query usage only. Basic error handling.
-- Medium: Standard integration patterns.
-- Large: Full caching and retry strategies.
-
-Deliverables:
-1. GraphQL query usage in components
-2. Loading/error state handling
-3. Authorization flow (JWT tokens)
-4. Caching strategy
-5. Error handling and retry logic
-
-Output: Integration design scaled to effort level.
-```
-
-#### Type D: UI-Heavy Full-Stack
-Two-phase approach:
-- Phase 3a: Run **feature-workflow:ux-optimizer** for detailed UX requirements
-- Phase 3b: Launch Type C agents with UX input
-
-#### Type E: Infrastructure
-Launch single agent: **feature-workflow:system-designer**
-
-```
-Design the system architecture for this feature:
-
-Feature: [name]
-Requirements: docs/planning/features/[feature-id]/requirements.md
-**Effort Level**: [effort]
-
-**Scaling guidance**:
-- Low: Component changes only. Brief diagram.
-- Medium: Standard system design.
-- Large: Full architecture with scaling patterns.
-
-Create:
-1. Component diagram showing new/modified components
-2. Data flow diagrams
-3. Scalability and fault tolerance patterns
-4. Monitoring and operational considerations
-
-Output: System design scaled to effort level.
-```
-
-### Step 3: Save Design Documents
-
-**Save combined output to**: `docs/planning/features/[feature-id]/design.md`
-
-If no system design was needed (simple feature), skip creating design.md.
-
-**Output**: Comprehensive design document saved (if applicable)
-
----
-
-## Phase 4: Implementation Plan
-
-Create file: `docs/planning/features/[feature-id]/plan.md`
-
-Use this template:
-
-```markdown
-# [Feature Name]
-
-**Status**: In Progress
-**Priority**: [priority]
-**Effort**: [effort]
-**Started**: [YYYY-MM-DD]
-**Backlog ID**: [id]
-
-## Problem Statement
-[From requirements.md - why we're building this]
-
-## Requirements
-[Summary from requirements.md - key acceptance criteria]
-
-## System Design
-[Summary from design.md, or "No architecture changes required"]
-
-## Implementation Steps
-- [ ] Step 1: [Specific, actionable task with file references]
-- [ ] Step 2: [Specific, actionable task with file references]
-- [ ] Step 3: [Continue with all steps...]
-
-Each step should:
-- Be concrete and testable
-- Reference specific files or components
-- Be completable in 1-4 hours ideally
-
-## Testing Strategy
-
-### Unit Tests
-- [What needs unit testing]
-- [Coverage targets]
-
-### Integration Tests
-- [What needs integration testing]
-- [Test scenarios]
-
-### Manual Testing Checklist
-- [ ] Test scenario 1
-- [ ] Test scenario 2
-- [ ] Test scenario 3
-
-## Documentation Updates Needed
-- [ ] Update [doc file 1] - [what needs updating]
-- [ ] Update [doc file 2] - [what needs updating]
-
-## Dependencies
-- [Any prerequisite work]
-- [Any external dependencies]
-
-## Risks/Unknowns
-- **Risk**: [Description]
-  - **Mitigation**: [How to address]
-
-## Progress Log
-### [Today's Date]
-- Created implementation plan
-- Next: [First implementation step]
-```
-
-Write this file using the Write tool.
-
-**Output**: Implementation plan file created at `docs/planning/features/[feature-id]/plan.md`
-
----
-
-## Phase 5: Backlog Status Update
-
-1. **Read** `docs/planning/backlog.json`
-
-2. **Find and update the item**:
-   ```json
-   {
-     "status": "in-progress",
-     "updatedAt": "[current ISO timestamp]",
-     "startedAt": "[current ISO timestamp]",
-     "implementationPlan": "docs/planning/features/[feature-id]/plan.md"
-   }
-   ```
-
-3. **Recalculate summary**:
-   - Decrement `byStatus.backlog`
-   - Increment `byStatus.in-progress`
-   - Update `lastUpdated`
-
-4. **Write** updated JSON back to `docs/planning/backlog.json`
-
-5. **Stage changes**:
-   ```bash
-   git add docs/planning/backlog.json
-   git add docs/planning/features/[feature-id]/
-   ```
-
-**Output**: Backlog JSON updated, feature files staged
-
----
-
-## Phase 6: Kickoff Summary & Todo Creation
-
-1. **Create TodoWrite list** with implementation steps from the plan
-
-2. **Display comprehensive summary**:
-
-```markdown
-# Feature Development Kickoff Complete
-
-## Feature: [Name]
-**ID**: [id]
-**Priority**: [priority]
-
----
-
-## Feature Files Created:
-- `docs/planning/features/[feature-id]/requirements.md` - Detailed requirements
-- `docs/planning/features/[feature-id]/design.md` - System design [if applicable]
-- `docs/planning/features/[feature-id]/plan.md` - Implementation plan
-
----
-
-## What's Ready:
-- Requirements analyzed with detailed acceptance criteria
-- System design completed [or "No architecture changes needed"]
-- Implementation plan created with [N] actionable steps
-- Backlog status updated to "in-progress"
-
----
-
-## Next Steps:
-
-### 1. Review Your Plan
-Read: docs/planning/features/[feature-id]/plan.md
-
-### 2. Start First Implementation Step
-Task: [First step description]
-Files: [Affected files]
-
-### 3. Development Workflow
-- Update progress in plan.md as you work
-- Run tests frequently
-- Before committing: ensure tests pass
-
----
-
-## Key Files:
-- **Feature Directory**: docs/planning/features/[feature-id]/
-- **Backlog**: docs/planning/backlog.json
-
----
-
-Ready to start coding!
-```
-
-**Output**: Complete kickoff summary with clear next steps
+- Create plan.md with implementation steps
+- Trigger hook-based status transition (backlog → in-progress)
+- Stage changes with git
+- Display kickoff summary with next steps
 
 ---
 
@@ -548,9 +126,7 @@ This runs quality gates before marking the feature complete:
 1. **Security Review** - Scans for vulnerabilities (OWASP Top 10, CVEs)
 2. **QA Validation** - Verifies test coverage and acceptance criteria
 3. **Final Verification** - Runs tests, type checks, and build
-4. **Status Update** - Updates backlog.json to "completed"
-
-The complete workflow ensures no feature ships without passing security and quality standards.
+4. **Status Update** - Updates status to "completed" via hook
 
 **Files stay in place** - `docs/planning/features/[feature-id]/` remains as a permanent record
 
@@ -558,10 +134,13 @@ The complete workflow ensures no feature ships without passing security and qual
 
 ## Error Handling
 
-- **Backlog not found**: Create empty backlog.json and inform user
-- **Feature not found**: List available items, ask to select
-- **Agent errors**: Retry with more context or continue without that design phase
-- **Directory missing**: Create `docs/planning/features/` if needed
+| Error | Resolution |
+|-------|------------|
+| Backlog not found | Create empty backlog.json and inform user |
+| Feature not found | List available items, ask to select |
+| Agent errors | Retry with more context or continue without that design phase |
+| Directory missing | Create `docs/planning/features/` if needed |
+| Hook failure | Check result.json for error details |
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: feature-capture
 description: Interactive workflow for adding items to the JSON backlog
-version: 1.5.0
+version: 2.0.0
 argument-hint: ""
 ---
 
@@ -9,12 +9,26 @@ argument-hint: ""
 
 You are executing the **ADD TO BACKLOG** workflow - an interactive process to capture new features, enhancements, tech debt, or bug fixes in the JSON-based backlog.
 
+## Contents
+
+- [Target File](#target-file)
+- [Workflow Overview](#workflow-overview)
+- [Phase 1: Interactive Questions](#phase-1-interactive-questions)
+- [Phase 2: Validation](#phase-2-validation)
+- [Phase 3: Add to Backlog](#phase-3-add-to-backlog-hook-based)
+- [Phase 4: Git Staging](#phase-4-git-staging-optional)
+- [Phase 5: Confirmation](#phase-5-confirmation)
+- [What Makes a Good Backlog Item](#what-makes-a-good-backlog-item)
+- [Error Handling](#error-handling)
+
+---
+
 ## Target File
 `docs/planning/backlog.json`
 
 ## Workflow Overview
 
-1. **Interactive Questions** - Capture essential information through 7 focused questions
+1. **Interactive Questions** - Capture essential information through 8 focused questions
 2. **Validation** - Check for duplicate IDs and validate input
 3. **JSON Update** - Add entry to backlog.json with proper structure
 4. **Summary Recalculation** - Update counts and timestamps
@@ -75,12 +89,39 @@ Which parts of the system will this affect?
 Example: frontend/settings, backend/api, database
 ```
 
+### Question 8: Dependencies (Optional)
+```
+Does this feature depend on any other backlog items being completed first?
+(comma-separated feature IDs, or leave blank)
+Example: analytics-api, user-auth
+```
+
+**Note**: Dependencies create bidirectional relationships:
+- The new item's `dependsOn` array will include the specified IDs
+- Each dependency target's `blockedBy` array will include this new item's ID
+
 ## Phase 2: Validation
+
+### Step 1: Format Detection
+
+Determine if using single-file (v1.x) or multi-file (v2.0) format:
+
+1. **Check for multi-file indicators**:
+   - If `docs/planning/in-progress.json` exists → multi-file format
+   - If `docs/planning/completed.json` exists → multi-file format
+   - If `docs/planning/backlog.json` exists with `version === "2.0.0"` → multi-file format
+   - Otherwise → single-file format (or new backlog)
+
+2. **Store format for later phases**:
+   - `isMultiFile = true` if any multi-file indicator found
+   - This determines whether to sync summaries to other files
+
+### Step 2: Initialize or Load Backlog
 
 1. **Check if backlog.json exists**: If not, create initial structure:
 ```json
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "lastUpdated": "[current ISO timestamp]",
   "summary": {
     "total": 0,
@@ -102,39 +143,119 @@ Example: frontend/settings, backend/api, database
 
 5. **Validate required fields**: Ensure all required data is captured
 
-## Phase 3: JSON Update
+6. **Validate dependencies (if provided)**:
+   a. Parse comma-separated list, trim whitespace
+   b. For each dependency ID:
+      - Check it exists in the items array → If not found: "Feature '[id]' not found. Available IDs: [list]"
+      - Check it's not the same as new item's ID → If same: "A feature cannot depend on itself"
+   c. Check for circular dependencies using BFS algorithm (see below)
+   d. If any validation fails, report error and ask for correction
 
-1. **Create new item object**:
+### Circular Dependency Detection Algorithm
+
+Before adding dependencies, verify no cycles would be created:
+
+```
+FUNCTION hasCircularDependency(newItemId, targetDepId, allItems):
+    """
+    Check if making newItemId depend on targetDepId would create a cycle.
+    A cycle exists if targetDepId already depends (directly or transitively) on newItemId.
+    """
+
+    visited = Set()
+    queue = [targetDepId]
+
+    WHILE queue is not empty:
+        current = queue.shift()
+
+        IF current === newItemId:
+            RETURN true  // Cycle detected!
+
+        IF current in visited:
+            CONTINUE
+
+        visited.add(current)
+
+        item = findItemById(current, allItems)
+        IF item AND item.dependsOn:
+            FOR EACH depId IN item.dependsOn:
+                IF depId not in visited:
+                    queue.push(depId)
+
+    RETURN false  // No cycle
+```
+
+If a cycle is detected, reject with: "Circular dependency detected: [chain path]"
+
+## Phase 3: Add to Backlog (Hook-Based)
+
+Trigger the atomic addition by writing a transition intent file. The hook will handle all JSON manipulation reliably.
+
+### Step 1: Create Transition Directory
+
+```bash
+mkdir -p docs/planning/.transition
+```
+
+### Step 2: Write Transition Intent File
+
+Write the following to `docs/planning/.transition/intent.json`:
+
 ```json
 {
-  "id": "[kebab-case-name]",
-  "name": "[Original Name]",
-  "type": "[Feature|Enhancement|Tech Debt|Bug Fix]",
-  "priority": "[P0|P1|P2]",
-  "effort": "[Low|Medium|Large]",
-  "impact": "[Low|Medium|High]",
-  "problemStatement": "[User's problem description]",
-  "proposedSolution": "",
-  "affectedAreas": ["[parsed from user input]"],
-  "status": "backlog",
-  "createdAt": "[ISO 8601 timestamp]",
-  "updatedAt": "[ISO 8601 timestamp]",
-  "startedAt": null,
-  "completedAt": null,
-  "implementationPlan": null,
-  "metadata": {}
+  "type": "add-to-backlog",
+  "projectRoot": "[absolute path to project root]",
+  "item": {
+    "id": "[kebab-case-name]",
+    "name": "[Original Name]",
+    "type": "[Feature|Enhancement|Tech Debt|Bug Fix]",
+    "priority": "[P0|P1|P2]",
+    "effort": "[Low|Medium|Large]",
+    "impact": "[Low|Medium|High]",
+    "problemStatement": "[User's problem description]",
+    "proposedSolution": "",
+    "affectedAreas": ["[parsed from user input]"],
+    "status": "backlog",
+    "dependsOn": ["[parsed dependency IDs, or empty array]"],
+    "blockedBy": [],
+    "metadata": {}
+  }
 }
 ```
 
-2. **Add to items array** in backlog.json
+**Important**: The `projectRoot` must be an absolute path (e.g., `/Users/username/project`).
 
-3. **Recalculate summary**:
-   - Increment `total`
-   - Increment `byStatus.backlog`
-   - Increment `byPriority.[priority]`
-   - Update `lastUpdated` to current timestamp
+### Step 3: Verify Result
 
-4. **Write updated JSON** back to `docs/planning/backlog.json`
+After writing the intent file, the hook automatically:
+1. Validates the item structure
+2. Checks for duplicate IDs across all status files
+3. Validates dependencies exist and no circular dependencies
+4. Adds item to backlog.json
+5. Updates blockedBy arrays on dependency targets
+6. Syncs global summary across all files
+
+Read the result from `docs/planning/.transition/result.json`:
+
+```json
+{
+  "success": true,
+  "transition": "add-to-backlog",
+  "itemId": "[id]",
+  "timestamp": "[ISO timestamp]",
+  "filesModified": ["docs/planning/backlog.json"]
+}
+```
+
+If there's an error, the result will contain:
+```json
+{
+  "success": false,
+  "error": "[error message]"
+}
+```
+
+Display the error to the user and stop the workflow.
 
 ## Phase 4: Git Staging (Optional)
 
@@ -145,8 +266,10 @@ Would you like to stage this change with git?
 
 If yes, run:
 ```bash
-git add docs/planning/backlog.json
+git add docs/planning/*.json
 ```
+
+This stages all modified backlog files (backlog.json, and in-progress.json/completed.json if they exist and were updated).
 
 ## Phase 5: Confirmation
 
@@ -165,6 +288,10 @@ Display a summary:
 
 ## Affected Areas
 [affectedAreas as bullet list, or "None specified"]
+
+## Dependencies
+[dependsOn as bullet list with status, or "None - ready to start anytime"]
+Example: "- analytics-api (in-progress)" or "- user-auth (completed ✓)"
 
 ---
 
@@ -186,7 +313,9 @@ All planning files are organized cleanly:
 
 ```
 docs/planning/
-├── backlog.json                    # Single source of truth (all items, all statuses)
+├── backlog.json                    # Items with status: "backlog"
+├── in-progress.json                # Items with status: "in-progress" (created by /feature-plan)
+├── completed.json                  # Items with status: "completed" (created by /feature-ship)
 └── features/
     └── [feature-id]/               # Created when implementing (not when adding)
         ├── plan.md
@@ -195,9 +324,12 @@ docs/planning/
 ```
 
 **Key Principles**:
-- `backlog.json` is the only file created/updated by `/feature-capture`
+- Items are split by status across three JSON files (multi-file format v2.0)
+- Each file contains a global `summary` for quick dashboard access
+- `/feature-capture` adds new items to `backlog.json` only
+- `/feature-plan` moves items from `backlog.json` to `in-progress.json`
+- `/feature-ship` moves items from `in-progress.json` to `completed.json`
 - Feature directories are created by `/feature-plan` when work starts
-- Status is tracked in JSON, not by file location
 
 ---
 

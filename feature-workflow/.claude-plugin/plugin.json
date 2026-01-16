@@ -1,9 +1,34 @@
 {
   "name": "feature-workflow",
-  "version": "1.5.0",
-  "description": "Feature lifecycle management with JSON-based backlog tracking. Add features to backlog, implement with adaptive agent dispatch, and complete with quality gates. Includes skills for automatic context loading and progress tracking.",
+  "version": "2.0.0",
+  "description": "Feature lifecycle management with JSON-based backlog tracking. Add features to backlog, implement with adaptive agent dispatch, and complete with quality gates. Includes atomic file transitions via hooks for reliable operation.",
   "author": {
     "name": "Court Schuett"
   },
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/transition-handler.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rm -rf docs/planning/.transition 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
 }
