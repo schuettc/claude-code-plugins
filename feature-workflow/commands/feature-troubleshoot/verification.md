@@ -1,3 +1,9 @@
+---
+name: feature-troubleshoot:verification
+description: "Phase 5: Verification"
+user-invocable: false
+---
+
 # Phase 5: Verification
 
 ## Verify Fix Works

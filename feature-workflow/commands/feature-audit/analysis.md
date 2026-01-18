@@ -1,3 +1,9 @@
+---
+name: feature-audit:analysis
+description: "Phase 6: Analysis & Report"
+user-invocable: false
+---
+
 # Phase 6: Analysis & Report
 
 ## Load Audit Context

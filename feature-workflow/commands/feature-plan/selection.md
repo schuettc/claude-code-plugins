@@ -1,3 +1,9 @@
+---
+name: feature-plan:selection
+description: "Phase 1: Feature Selection"
+user-invocable: false
+---
+
 # Phase 1: Feature Selection
 
 ## Contents

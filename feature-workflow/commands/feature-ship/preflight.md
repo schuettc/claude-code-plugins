@@ -1,3 +1,9 @@
+---
+name: feature-ship:preflight
+description: "Phase 1: Pre-flight Check"
+user-invocable: false
+---
+
 # Phase 1: Pre-flight Check
 
 ## Read In-Progress Items

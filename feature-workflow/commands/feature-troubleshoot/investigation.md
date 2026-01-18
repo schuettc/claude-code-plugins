@@ -1,3 +1,9 @@
+---
+name: feature-troubleshoot:investigation
+description: "Phase 3: Investigation"
+user-invocable: false
+---
+
 # Phase 3: Investigation
 
 ## Systematic Hypothesis Testing

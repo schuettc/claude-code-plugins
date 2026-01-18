@@ -1,3 +1,9 @@
+---
+name: feature-audit:exploration
+description: "Phase 2: Code Exploration"
+user-invocable: false
+---
+
 # Phase 2: Code Exploration
 
 ## Load Audit Context

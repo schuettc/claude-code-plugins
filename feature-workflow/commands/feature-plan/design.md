@@ -1,3 +1,9 @@
+---
+name: feature-plan:design
+description: "Phase 3: System Design (Adaptive)"
+user-invocable: false
+---
+
 # Phase 3: System Design (Adaptive)
 
 ## Contents

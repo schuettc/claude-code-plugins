@@ -1,3 +1,9 @@
+---
+name: feature-audit:target
+description: "Phase 1: Target Identification"
+user-invocable: false
+---
+
 # Phase 1: Target Identification
 
 ## Understand the Audit Request

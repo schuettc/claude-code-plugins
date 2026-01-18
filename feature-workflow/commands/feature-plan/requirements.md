@@ -1,3 +1,9 @@
+---
+name: feature-plan:requirements
+description: "Phase 2: Requirements Deep Dive"
+user-invocable: false
+---
+
 # Phase 2: Requirements Deep Dive
 
 ## Contents

@@ -1,3 +1,9 @@
+---
+name: feature-troubleshoot:resolution
+description: "Phase 4: Resolution"
+user-invocable: false
+---
+
 # Phase 4: Resolution
 
 ## Propose Fix

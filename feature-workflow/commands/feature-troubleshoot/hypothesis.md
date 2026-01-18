@@ -1,3 +1,9 @@
+---
+name: feature-troubleshoot:hypothesis
+description: "Phase 2: Hypothesis Formation"
+user-invocable: false
+---
+
 # Phase 2: Hypothesis Formation
 
 ## Generate Hypotheses

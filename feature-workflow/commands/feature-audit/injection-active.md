@@ -1,3 +1,9 @@
+---
+name: feature-audit:injection-active
+description: "Phase 4: Log Injection (Active)"
+user-invocable: false
+---
+
 # Phase 4: Log Injection (Active)
 
 ## Prerequisites

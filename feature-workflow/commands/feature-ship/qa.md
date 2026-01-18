@@ -1,3 +1,9 @@
+---
+name: feature-ship:qa
+description: "Phase 3: QA Validation"
+user-invocable: false
+---
+
 # Phase 3: QA Validation (Medium/Large Effort)
 
 **Note**: For Low effort items, skip this phase and run `npm test` instead.
