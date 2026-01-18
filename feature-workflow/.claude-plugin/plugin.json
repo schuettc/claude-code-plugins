@@ -5,6 +5,7 @@
   "author": {
     "name": "Court Schuett"
   },
+  "commands": "./skills/",
   "skills": "./skills/",
   "hooks": {
     "PostToolUse": [
