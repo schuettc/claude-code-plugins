@@ -1,6 +1,6 @@
 {
   "name": "feature-workflow",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Feature lifecycle management with JSON-based backlog tracking. Add features to backlog, implement with adaptive agent dispatch, and complete with quality gates. Includes atomic file transitions via hooks for reliable operation.",
   "author": {
     "name": "Court Schuett"

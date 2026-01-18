@@ -1,7 +1,6 @@
 ---
 name: feature-troubleshoot
-description: Systematic debugging mode - Debug problems methodically with hypothesis-driven investigation
-version: 1.0.0
+description: Systematic debugging mode with hypothesis-driven investigation. Use when user reports a bug, encounters an error, or needs help debugging a problem.
 argument-hint: "[problem-description]"
 ---
 
@@ -66,7 +65,7 @@ This command orchestrates a 5-phase workflow:
 
 ### Phase 1: Problem Definition
 
-**See**: [feature-troubleshoot/problem-definition.md](feature-troubleshoot/problem-definition.md)
+**See**: [problem-definition.md](problem-definition.md)
 
 - Gather problem details from user
 - Establish expected vs actual behavior
@@ -76,7 +75,7 @@ This command orchestrates a 5-phase workflow:
 
 ### Phase 2: Hypothesis Formation
 
-**See**: [feature-troubleshoot/hypothesis.md](feature-troubleshoot/hypothesis.md)
+**See**: [hypothesis.md](hypothesis.md)
 
 - Generate possible causes
 - Rank by likelihood
@@ -86,7 +85,7 @@ This command orchestrates a 5-phase workflow:
 
 ### Phase 3: Investigation
 
-**See**: [feature-troubleshoot/investigation.md](feature-troubleshoot/investigation.md)
+**See**: [investigation.md](investigation.md)
 
 - Systematically test hypotheses
 - Gather evidence (logs, code reading, testing)
@@ -96,7 +95,7 @@ This command orchestrates a 5-phase workflow:
 
 ### Phase 4: Resolution
 
-**See**: [feature-troubleshoot/resolution.md](feature-troubleshoot/resolution.md)
+**See**: [resolution.md](resolution.md)
 
 - Propose fix based on evidence
 - Get user approval
@@ -105,7 +104,7 @@ This command orchestrates a 5-phase workflow:
 
 ### Phase 5: Verification
 
-**See**: [feature-troubleshoot/verification.md](feature-troubleshoot/verification.md)
+**See**: [verification.md](verification.md)
 
 - Verify the fix works
 - Confirm original problem is resolved

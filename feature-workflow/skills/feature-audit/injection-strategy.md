@@ -1,9 +1,3 @@
----
-name: feature-audit:injection-strategy
-description: "Phase 3: Injection Strategy"
-user-invocable: false
----
-
 # Phase 3: Injection Strategy
 
 ## Load Exploration Results

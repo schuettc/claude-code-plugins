@@ -1,7 +1,6 @@
 ---
 name: feature-capture
-description: Interactive workflow for adding items to the JSON backlog
-version: 2.0.0
+description: Interactive workflow for adding items to the JSON backlog. Use when user wants to add a new feature, track an idea, capture requirements, or mentions something that should be in the backlog.
 argument-hint: ""
 ---
 

@@ -1,7 +1,6 @@
 ---
 name: feature-plan
-description: Start implementing a feature from the JSON backlog with adaptive agent dispatch
-version: 2.0.0
+description: Start implementing a feature from the JSON backlog with adaptive agent dispatch. Use when user wants to begin work on a backlog item, start implementation, or mentions a specific feature ID to work on.
 argument-hint: "[feature-id-from-backlog]"
 ---
 
@@ -71,7 +70,7 @@ This command orchestrates a 6-phase workflow:
 
 ### Phase 1: Feature Selection & Dependencies
 
-**See**: [feature-plan/selection.md](feature-plan/selection.md)
+**See**: [selection.md](selection.md)
 
 - Read backlog and find/select feature
 - Check for unmet dependencies
@@ -80,7 +79,7 @@ This command orchestrates a 6-phase workflow:
 
 ### Phase 2: Requirements Deep Dive
 
-**See**: [feature-plan/requirements.md](feature-plan/requirements.md)
+**See**: [requirements.md](requirements.md)
 
 - Create feature directory
 - Optional: Run code-archaeologist for legacy code
@@ -89,7 +88,7 @@ This command orchestrates a 6-phase workflow:
 
 ### Phase 3: System Design (Adaptive)
 
-**See**: [feature-plan/design.md](feature-plan/design.md)
+**See**: [design.md](design.md)
 
 - Classify feature type (Backend/Frontend/Full-Stack/Infrastructure)
 - Dispatch appropriate specialized agents
@@ -105,7 +104,7 @@ This command orchestrates a 6-phase workflow:
 
 ### Phases 4-6: Implementation & Kickoff
 
-**See**: [feature-plan/implementation.md](feature-plan/implementation.md)
+**See**: [implementation.md](implementation.md)
 
 - Create plan.md with implementation steps
 - Trigger hook-based status transition (backlog → in-progress)

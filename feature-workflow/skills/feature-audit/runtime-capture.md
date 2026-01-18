@@ -1,9 +1,3 @@
----
-name: feature-audit:runtime-capture
-description: "Phase 5: Runtime Capture"
-user-invocable: false
----
-
 # Phase 5: Runtime Capture
 
 ## Capture Method Selection

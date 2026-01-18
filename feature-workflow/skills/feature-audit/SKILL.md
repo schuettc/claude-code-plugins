@@ -1,7 +1,6 @@
 ---
 name: feature-audit
-description: Runtime behavior verification - injects logs, captures execution data, and produces verifiable audit reports
-version: 1.0.0
+description: Runtime behavior auditing through systematic log injection. Use when user wants to understand what code is doing at runtime, debug complex flows, or audit a process.
 argument-hint: "[process-to-audit]"
 ---
 
@@ -82,7 +81,7 @@ This command orchestrates a 7-phase workflow:
 
 ### Phase 1: Target Identification
 
-**See**: [feature-audit/target.md](feature-audit/target.md)
+**See**: [target.md](target.md)
 
 - Understand what process/behavior to audit
 - Identify entry points and key questions
@@ -91,7 +90,7 @@ This command orchestrates a 7-phase workflow:
 
 ### Phase 2: Code Exploration
 
-**See**: [feature-audit/exploration.md](feature-audit/exploration.md)
+**See**: [exploration.md](exploration.md)
 
 - Map execution paths from entry points
 - Identify data flows and transformations
@@ -100,7 +99,7 @@ This command orchestrates a 7-phase workflow:
 
 ### Phase 3: Injection Strategy
 
-**See**: [feature-audit/injection-strategy.md](feature-audit/injection-strategy.md)
+**See**: [injection-strategy.md](injection-strategy.md)
 
 - Plan specific log statements for each location
 - Use language-appropriate patterns
@@ -109,7 +108,7 @@ This command orchestrates a 7-phase workflow:
 
 ### Phase 4: Log Injection (Requires Approval)
 
-**See**: [feature-audit/injection-active.md](feature-audit/injection-active.md)
+**See**: [injection-active.md](injection-active.md)
 
 - Inject approved log statements
 - Mark each with `// AUDIT-INJECTED` comment
@@ -118,7 +117,7 @@ This command orchestrates a 7-phase workflow:
 
 ### Phase 5: Runtime Capture
 
-**See**: [feature-audit/runtime-capture.md](feature-audit/runtime-capture.md)
+**See**: [runtime-capture.md](runtime-capture.md)
 
 - User chooses capture method (paste or direct execution)
 - Capture log output from process execution
@@ -127,7 +126,7 @@ This command orchestrates a 7-phase workflow:
 
 ### Phase 6: Analysis & Report
 
-**See**: [feature-audit/analysis.md](feature-audit/analysis.md)
+**See**: [analysis.md](analysis.md)
 
 - Parse captured log output
 - Compare actual behavior to expectations
@@ -136,7 +135,7 @@ This command orchestrates a 7-phase workflow:
 
 ### Phase 7: Cleanup
 
-**See**: [feature-audit/cleanup.md](feature-audit/cleanup.md)
+**See**: [cleanup.md](cleanup.md)
 
 - Remove all injected log statements
 - Verify code is restored to pre-audit state

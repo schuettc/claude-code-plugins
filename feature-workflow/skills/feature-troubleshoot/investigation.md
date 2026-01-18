@@ -1,9 +1,3 @@
----
-name: feature-troubleshoot:investigation
-description: "Phase 3: Investigation"
-user-invocable: false
----
-
 # Phase 3: Investigation
 
 ## Systematic Hypothesis Testing
@@ -122,11 +116,11 @@ After each hypothesis tested:
 ```
 ## Investigation Progress
 
-### H1: Validation function returns false ❌ Ruled Out
+### H1: Validation function returns false - Ruled Out
 **Evidence**: Added debug log, validation returns true for test input
 **Conclusion**: Validation is working correctly
 
-### H2: User object missing required field 🔍 Investigating
+### H2: User object missing required field - Investigating
 **Current action**: Checking user object structure at failure point
 
 ---

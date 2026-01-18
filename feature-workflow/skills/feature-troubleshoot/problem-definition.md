@@ -1,9 +1,3 @@
----
-name: feature-troubleshoot:problem-definition
-description: "Phase 1: Problem Definition"
-user-invocable: false
----
-
 # Phase 1: Problem Definition
 
 ## Gather Problem Details

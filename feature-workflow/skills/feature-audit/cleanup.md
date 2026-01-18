@@ -1,9 +1,3 @@
----
-name: feature-audit:cleanup
-description: "Phase 7: Cleanup"
-user-invocable: false
----
-
 # Phase 7: Cleanup
 
 ## Load Injection Manifest

@@ -1,9 +1,3 @@
----
-name: feature-ship:security
-description: "Phase 2: Security Review"
-user-invocable: false
----
-
 # Phase 2: Security Review (Medium/Large Effort)
 
 **Note**: For Low effort items, skip this phase and run `npm audit --audit-level=high` instead.

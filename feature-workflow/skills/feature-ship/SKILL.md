@@ -1,7 +1,6 @@
 ---
 name: feature-ship
-description: Complete a feature with quality gates - security review, QA validation, and final verification
-version: 2.0.0
+description: Complete a feature with quality gates - security review, QA validation, and final verification. Use when user says they're done implementing, wants to ship a feature, or asks to complete/finish work.
 argument-hint: "[feature-id-from-backlog]"
 ---
 
@@ -52,7 +51,7 @@ This command orchestrates a 6-phase quality gate workflow:
 
 ### Phase 1: Pre-flight Check & Effort Selection
 
-**See**: [feature-ship/preflight.md](feature-ship/preflight.md)
+**See**: [preflight.md](preflight.md)
 
 - Read in-progress.json and find/select feature
 - Verify implementation artifacts exist
@@ -60,7 +59,7 @@ This command orchestrates a 6-phase quality gate workflow:
 
 ### Phase 2: Security Review
 
-**See**: [feature-ship/security.md](feature-ship/security.md)
+**See**: [security.md](security.md)
 
 - **Low effort**: Run `npm audit --audit-level=high`
 - **Medium/Large**: Run security-reviewer agent
@@ -68,7 +67,7 @@ This command orchestrates a 6-phase quality gate workflow:
 
 ### Phase 3: QA Validation
 
-**See**: [feature-ship/qa.md](feature-ship/qa.md)
+**See**: [qa.md](qa.md)
 
 - **Low effort**: Run `npm test`
 - **Medium/Large**: Run qa-engineer agent
@@ -76,7 +75,7 @@ This command orchestrates a 6-phase quality gate workflow:
 
 ### Phases 4-6: Verification & Completion
 
-**See**: [feature-ship/completion.md](feature-ship/completion.md)
+**See**: [completion.md](completion.md)
 
 - Run full test suite, type check, lint, build
 - Review implementation checklist from plan.md

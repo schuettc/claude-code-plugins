@@ -1,9 +1,3 @@
----
-name: feature-ship:completion
-description: "Phase 4: Final Verification"
-user-invocable: false
----
-
 # Phase 4: Final Verification
 
 ## Contents

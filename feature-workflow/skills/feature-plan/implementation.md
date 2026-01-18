@@ -1,9 +1,3 @@
----
-name: feature-plan:implementation
-description: "Phase 4: Implementation Plan"
-user-invocable: false
----
-
 # Phase 4: Implementation Plan
 
 ## Contents
