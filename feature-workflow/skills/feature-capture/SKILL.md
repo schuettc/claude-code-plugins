@@ -1,6 +1,7 @@
 ---
 name: feature-capture
 description: Interactive workflow for adding items to the JSON backlog. Use when user wants to add a new feature, track an idea, capture requirements, or mentions something that should be in the backlog.
+user-invocable: true
 argument-hint: ""
 ---
 

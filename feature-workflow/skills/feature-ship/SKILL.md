@@ -1,6 +1,7 @@
 ---
 name: feature-ship
 description: Complete a feature with quality gates - security review, QA validation, and final verification. Use when user says they're done implementing, wants to ship a feature, or asks to complete/finish work.
+user-invocable: true
 argument-hint: "[feature-id-from-backlog]"
 ---
 

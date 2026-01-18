@@ -1,6 +1,7 @@
 ---
 name: feature-audit
 description: Runtime behavior auditing through systematic log injection. Use when user wants to understand what code is doing at runtime, debug complex flows, or audit a process.
+user-invocable: true
 argument-hint: "[process-to-audit]"
 ---
 
