@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./hooks/transition-handler.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/transition-handler.sh",
             "timeout": 30
           }
         ]
@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "rm -rf docs/planning/.transition 2>/dev/null || true",
+            "command": "rm -rf ${CLAUDE_PROJECT_DIR}/docs/planning/.transition 2>/dev/null || true",
             "timeout": 5
           }
         ]
