@@ -52,14 +52,13 @@ Read `docs/planning/backlog.json` to get the current backlog.
 
 ## Set Terminal Context (Immediate)
 
-As soon as a feature is selected, write the session-feature mapping:
+As soon as a feature is selected, update the statusline to show the current feature:
 
 ```bash
-SESSION_ID=$(cat ~/.claude/sessions/iterm-${ITERM_SESSION_ID}.session 2>/dev/null)
-if [[ -n "$SESSION_ID" ]]; then
-  echo "[feature-id]" > ~/.claude/sessions/${SESSION_ID}.feature
-fi
+${CLAUDE_PLUGIN_ROOT}/hooks/set-feature-context.sh "[feature-id]"
 ```
+
+This updates the terminal statusline to display the feature you're working on.
 
 Then prompt the user:
 ```

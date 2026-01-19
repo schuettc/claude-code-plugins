@@ -200,4 +200,12 @@ No features were waiting on this one.
 Congratulations on completing this feature!
 ```
 
-**Output**: Complete summary displayed
+## Clear Terminal Context
+
+After displaying the summary, clear the feature from the statusline:
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/hooks/clear-feature-context.sh
+```
+
+**Output**: Complete summary displayed, statusline cleared
