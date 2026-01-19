@@ -200,12 +200,6 @@ No features were waiting on this one.
 Congratulations on completing this feature!
 ```
 
-## Clear Terminal Context
+> **Note**: The terminal statusline is automatically cleared when the completion transition runs.
 
-After displaying the summary, clear the feature from the statusline:
-
-```bash
-${CLAUDE_PLUGIN_ROOT}/hooks/clear-feature-context.sh
-```
-
-**Output**: Complete summary displayed, statusline cleared
+**Output**: Complete summary displayed

@@ -3,9 +3,10 @@
 ## Workflow Steps
 
 1. Read backlog and identify/select feature
-2. **SET STATUSLINE IMMEDIATELY** (before any other work)
-3. Check dependencies
-4. Proceed to Phase 2
+2. Check dependencies
+3. Proceed to Phase 2
+
+> **Note**: The terminal statusline is automatically updated when you write to the feature directory (e.g., `docs/planning/features/[id]/plan.md`). No manual action needed.
 
 ---
 
@@ -24,21 +25,7 @@ Read `docs/planning/backlog.json` to get the current backlog.
 
 ---
 
-## Step 2: Set Statusline (REQUIRED - DO THIS FIRST)
-
-**IMMEDIATELY after identifying the feature, before ANY other work, run:**
-
-```bash
-${CLAUDE_PLUGIN_ROOT}/hooks/set-feature-context.sh "[feature-id]"
-```
-
-This is NOT optional. Run this command as soon as you know which feature the user wants.
-
-Then display: `Tip: Run /rename [feature-id] to name this session for easy resume later.`
-
----
-
-## Step 3: Dependency Check
+## Step 2: Dependency Check
 
 Before proceeding with planning, check if this feature has unmet dependencies.
 
@@ -54,6 +41,6 @@ Before proceeding with planning, check if this feature has unmet dependencies.
 
 ---
 
-## Step 4: Proceed to Phase 2
+## Step 3: Proceed to Phase 2
 
-Once feature is selected, statusline is set, and dependencies are checked, continue to Phase 2 (Requirements).
+Once feature is selected and dependencies are checked, continue to Phase 2 (Requirements).

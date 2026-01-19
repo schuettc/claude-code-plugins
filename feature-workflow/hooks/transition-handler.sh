@@ -4,6 +4,10 @@
 # This script is called by Claude Code's PostToolUse hook when the Write tool is used.
 # It detects when Claude writes to the transition intent file and dispatches to
 # the appropriate transition script.
+#
+# Also handles statusline updates by detecting:
+# - Writes to docs/planning/features/[id]/ → set statusline to feature ID
+# - Completion transitions → clear statusline
 
 set -euo pipefail
 
@@ -20,6 +24,15 @@ FILE_PATH=$(echo "$HOOK_DATA" | jq -r '.tool_input.file_path // empty')
 # Only process Write tool calls
 if [[ "$TOOL_NAME" != "Write" ]]; then
   exit 0
+fi
+
+# =============================================================================
+# STATUSLINE: Detect writes to feature directory and set context
+# =============================================================================
+if [[ "$FILE_PATH" =~ docs/planning/features/([^/]+)/ ]]; then
+  FEATURE_ID="${BASH_REMATCH[1]}"
+  # Set statusline context (silently, don't block on errors)
+  "$SCRIPT_DIR/set-feature-context.sh" "$FEATURE_ID" 2>/dev/null || true
 fi
 
 # Only process if this is our transition intent file
@@ -107,6 +120,8 @@ case "$TRANSITION_TYPE" in
     ;;
   "inprogress-to-completed")
     "$SCRIPT_DIR/transitions/inprogress-to-completed.sh" <<< "$INTENT"
+    # Clear statusline on completion (silently)
+    "$SCRIPT_DIR/clear-feature-context.sh" 2>/dev/null || true
     ;;
   "add-to-backlog")
     "$SCRIPT_DIR/transitions/add-to-backlog.sh" <<< "$INTENT"
