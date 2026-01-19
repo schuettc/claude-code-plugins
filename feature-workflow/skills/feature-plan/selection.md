@@ -5,7 +5,6 @@
 - [Read Backlog](#read-backlog)
 - [If Feature ID Provided](#if-feature-id-provided-arguments-not-empty)
 - [If No Feature ID Provided](#if-no-feature-id-provided)
-- [Set Terminal Context](#set-terminal-context-immediate)
 - [Dependency Check](#dependency-check)
 
 ---
@@ -50,20 +49,13 @@ Read `docs/planning/backlog.json` to get the current backlog.
 
 **Output**: Selected feature with full details
 
-## Set Terminal Context (Immediate)
+4. **REQUIRED - Set Terminal Context**: Immediately after the user selects a feature, you MUST run this command:
+   ```bash
+   ${CLAUDE_PLUGIN_ROOT}/hooks/set-feature-context.sh "[feature-id]"
+   ```
+   This updates the statusline to show which feature is being worked on.
 
-As soon as a feature is selected, update the statusline to show the current feature:
-
-```bash
-${CLAUDE_PLUGIN_ROOT}/hooks/set-feature-context.sh "[feature-id]"
-```
-
-This updates the terminal statusline to display the feature you're working on.
-
-Then prompt the user:
-```
-Tip: Run `/rename [feature-id]` to name this session for easy resume later.
-```
+5. Display tip: `Tip: Run /rename [feature-id] to name this session for easy resume later.`
 
 ---
 
