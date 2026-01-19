@@ -1,12 +1,12 @@
 #!/bin/bash
 # Main hook dispatcher for feature-workflow transitions
 #
-# This script is called by Claude Code's PostToolUse hook when the Write tool is used.
+# This script is called by Claude Code's PostToolUse hook when the Write or Edit tool is used.
 # It detects when Claude writes to the transition intent file and dispatches to
 # the appropriate transition script.
 #
 # Also handles statusline updates by detecting:
-# - Writes to docs/planning/features/[id]/ → set statusline to feature ID
+# - Writes to docs/planning/features/[id]/ or .feature-workflow/[id]/ → set statusline to feature ID
 # - Completion transitions → clear statusline
 
 set -euo pipefail
@@ -21,15 +21,20 @@ HOOK_DATA=$(cat)
 TOOL_NAME=$(echo "$HOOK_DATA" | jq -r '.tool_name // empty')
 FILE_PATH=$(echo "$HOOK_DATA" | jq -r '.tool_input.file_path // empty')
 
-# Only process Write tool calls
-if [[ "$TOOL_NAME" != "Write" ]]; then
+# Only process Write or Edit tool calls
+if [[ "$TOOL_NAME" != "Write" && "$TOOL_NAME" != "Edit" ]]; then
   exit 0
 fi
 
 # =============================================================================
 # STATUSLINE: Detect writes to feature directory and set context
+# Matches both docs/planning/features/[id]/ and .feature-workflow/[id]/
 # =============================================================================
 if [[ "$FILE_PATH" =~ docs/planning/features/([^/]+)/ ]]; then
+  FEATURE_ID="${BASH_REMATCH[1]}"
+  # Set statusline context (silently, don't block on errors)
+  "$SCRIPT_DIR/set-feature-context.sh" "$FEATURE_ID" 2>/dev/null || true
+elif [[ "$FILE_PATH" =~ \.feature-workflow/([^/]+)/ ]]; then
   FEATURE_ID="${BASH_REMATCH[1]}"
   # Set statusline context (silently, don't block on errors)
   "$SCRIPT_DIR/set-feature-context.sh" "$FEATURE_ID" 2>/dev/null || true

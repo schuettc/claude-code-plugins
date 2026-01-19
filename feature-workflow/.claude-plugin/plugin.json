@@ -1,6 +1,6 @@
 {
   "name": "feature-workflow",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "Feature lifecycle management with JSON-based backlog tracking. Add features to backlog, implement with adaptive agent dispatch, and complete with quality gates. Includes atomic file transitions via hooks for reliable operation.",
   "author": {
     "name": "Court Schuett"
@@ -10,6 +10,16 @@
     "PostToolUse": [
       {
         "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/transition-handler.sh",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
