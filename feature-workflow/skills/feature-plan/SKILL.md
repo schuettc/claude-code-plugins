@@ -2,7 +2,6 @@
 name: feature-plan
 description: Start implementing a feature from the JSON backlog with adaptive agent dispatch. Use when user wants to begin work on a backlog item, start implementation, or mentions a specific feature ID to work on.
 user-invocable: true
-argument-hint: "[feature-id-from-backlog]"
 ---
 
 # Implement Feature Command

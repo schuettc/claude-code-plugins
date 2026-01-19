@@ -2,7 +2,6 @@
 name: feature-troubleshoot
 description: Systematic debugging mode with hypothesis-driven investigation. Use when user reports a bug, encounters an error, or needs help debugging a problem.
 user-invocable: true
-argument-hint: "[problem-description]"
 ---
 
 # Troubleshooting Command
