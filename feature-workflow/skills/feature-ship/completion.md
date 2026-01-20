@@ -76,9 +76,6 @@ Proceed? (yes/no)
 
 Trigger the atomic transition by writing an intent file. The hook handles all file manipulation reliably.
 
-> **CRITICAL: Do NOT write directly to completed.json or modify backlog.json!**
-> You MUST use the intent.json mechanism below. Direct writes break the statusline and cause data inconsistency.
-
 ## Step 1: Create Transition Directory
 
 ```bash

@@ -8,9 +8,7 @@ user-invocable: true
 
 You are executing the **IMPLEMENT FEATURE** workflow - a comprehensive feature kickoff process that ensures proper planning before any implementation begins.
 
-> **CRITICAL: Never write directly to backlog.json, in-progress.json, or completed.json!**
->
-> To move a feature to in-progress, you MUST write to `docs/planning/.transition/intent.json` with the transition type. The hook will handle moving items between files atomically. Direct writes will cause data inconsistency and break statusline tracking.
+> **Note**: To update backlog status, write to `docs/planning/.transition/intent.json`. Direct writes to backlog JSON files are blocked by the hook system.
 
 ## Contents
 

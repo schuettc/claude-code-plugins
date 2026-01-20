@@ -2,9 +2,6 @@
 
 Trigger the atomic addition by writing a transition intent file. The hook will handle all JSON manipulation reliably.
 
-> **CRITICAL: Do NOT write directly to backlog.json!**
-> You MUST use the intent.json mechanism below. Direct writes cause data inconsistency.
-
 ## Step 1: Create Transition Directory
 
 ```bash

@@ -8,9 +8,7 @@ user-invocable: true
 
 You are executing the **ADD TO BACKLOG** workflow - an interactive process to capture new features, enhancements, tech debt, or bug fixes in the JSON-based backlog.
 
-> **CRITICAL: Never write directly to backlog.json, in-progress.json, or completed.json!**
->
-> To add a new item, you MUST write to `docs/planning/.transition/intent.json` with the transition type. The hook will handle adding items atomically. Direct writes will cause data inconsistency.
+> **Note**: To add items to the backlog, write to `docs/planning/.transition/intent.json`. Direct writes to backlog JSON files are blocked by the hook system.
 
 ## Target File
 

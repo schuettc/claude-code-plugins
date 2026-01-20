@@ -43,25 +43,39 @@ fi
 # Only process if this is our transition intent file
 if [[ "$FILE_PATH" != *"docs/planning/.transition/intent.json" ]]; then
 
-  # Detect direct writes to backlog files and warn
+  # Detect direct writes to backlog files - BLOCK and instruct to use intent.json
   if [[ "$FILE_PATH" == *"docs/planning/backlog.json" ]] || \
      [[ "$FILE_PATH" == *"docs/planning/in-progress.json" ]] || \
      [[ "$FILE_PATH" == *"docs/planning/completed.json" ]]; then
-    echo -e "\033[0;33m[feature-workflow WARNING]\033[0m Direct write to $(basename "$FILE_PATH") detected." >&2
-    echo -e "  Your changes have been accepted - no action needed." >&2
-    echo -e "  For future transitions, use the intent.json pattern:" >&2
-    echo -e "    Write to docs/planning/.transition/intent.json" >&2
-    echo -e "  This ensures atomic transitions and prevents duplicates." >&2
 
-    # After warning, sync summaries to fix any inconsistency
-    PROJECT_ROOT=$(dirname "$(dirname "$FILE_PATH")")
-    source "$SCRIPT_DIR/lib/summary.sh"
-    sync_global_summary \
-      "$PROJECT_ROOT/docs/planning/backlog.json" \
-      "$PROJECT_ROOT/docs/planning/in-progress.json" \
-      "$PROJECT_ROOT/docs/planning/completed.json" \
-      "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")" 2>/dev/null || true
-    echo -e "  \033[0;32m[auto-synced summaries]\033[0m" >&2
+    FILENAME=$(basename "$FILE_PATH")
+
+    # Output to stdout so Claude sees the error clearly
+    echo ""
+    echo "═══════════════════════════════════════════════════════════════════"
+    echo "  BLOCKED: Direct write to $FILENAME is not allowed"
+    echo "═══════════════════════════════════════════════════════════════════"
+    echo ""
+    echo "  To update backlog status, write to: docs/planning/.transition/intent.json"
+    echo ""
+    echo "  Example for moving backlog → in-progress:"
+    echo "    {"
+    echo "      \"type\": \"backlog-to-inprogress\","
+    echo "      \"itemId\": \"your-feature-id\","
+    echo "      \"projectRoot\": \"/absolute/path/to/project\""
+    echo "    }"
+    echo ""
+    echo "  Example for moving in-progress → completed:"
+    echo "    {"
+    echo "      \"type\": \"inprogress-to-completed\","
+    echo "      \"itemId\": \"your-feature-id\","
+    echo "      \"projectRoot\": \"/absolute/path/to/project\""
+    echo "    }"
+    echo ""
+    echo "═══════════════════════════════════════════════════════════════════"
+
+    # Exit with error to signal the write should not have happened
+    exit 1
   fi
 
   exit 0
