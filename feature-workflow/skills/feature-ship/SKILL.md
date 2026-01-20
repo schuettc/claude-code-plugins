@@ -8,6 +8,8 @@ user-invocable: true
 
 You are executing the **COMPLETE FEATURE** workflow - a quality gate process that ensures features meet security, quality, and testing standards before being marked as completed.
 
+**First step**: Read in-progress features from `docs/planning/in-progress.json`
+
 > **Note**: To mark a feature as completed, write to `docs/planning/.transition/intent.json`. Direct writes to backlog JSON files are blocked by the hook system.
 
 ## Contents

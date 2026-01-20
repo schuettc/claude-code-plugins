@@ -8,6 +8,8 @@ user-invocable: true
 
 You are executing the **IMPLEMENT FEATURE** workflow - a comprehensive feature kickoff process that ensures proper planning before any implementation begins.
 
+**First step**: Read the backlog from `docs/planning/backlog.json`
+
 > **Note**: To update backlog status, write to `docs/planning/.transition/intent.json`. Direct writes to backlog JSON files are blocked by the hook system.
 
 ## Contents
