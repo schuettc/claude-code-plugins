@@ -8,6 +8,8 @@ user-invocable: true
 
 You are executing the **ADD TO BACKLOG** workflow - an interactive process to capture new features, enhancements, tech debt, or bug fixes in the JSON-based backlog.
 
+**First step**: Read existing backlog from `docs/planning/backlog.json` (to check for duplicates and understand context)
+
 > **Note**: To add items to the backlog, write to `docs/planning/.transition/intent.json`. Direct writes to backlog JSON files are blocked by the hook system.
 
 ## Target File
