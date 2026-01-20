@@ -43,17 +43,27 @@ fi
 # Only process if this is our transition intent file
 if [[ "$FILE_PATH" != *"docs/planning/.transition/intent.json" ]]; then
 
-  # Detect direct writes to backlog files - BLOCK and instruct to use intent.json
+  # Detect direct writes to backlog files - REVERT and instruct to use intent.json
   if [[ "$FILE_PATH" == *"docs/planning/backlog.json" ]] || \
      [[ "$FILE_PATH" == *"docs/planning/in-progress.json" ]] || \
      [[ "$FILE_PATH" == *"docs/planning/completed.json" ]]; then
 
     FILENAME=$(basename "$FILE_PATH")
 
+    # Get project root from file path
+    PROJECT_ROOT=$(echo "$FILE_PATH" | sed 's|/docs/planning/.*||')
+
+    # Revert the change using git restore
+    cd "$PROJECT_ROOT" 2>/dev/null && git restore "$FILE_PATH" 2>/dev/null
+    REVERTED=$?
+
     # Output to stdout so Claude sees the error clearly
     echo ""
     echo "═══════════════════════════════════════════════════════════════════"
-    echo "  BLOCKED: Direct write to $FILENAME is not allowed"
+    echo "  REVERTED: Direct write to $FILENAME is not allowed"
+    if [[ $REVERTED -eq 0 ]]; then
+      echo "  (Change has been automatically undone)"
+    fi
     echo "═══════════════════════════════════════════════════════════════════"
     echo ""
     echo "  To update backlog status, write to: docs/planning/.transition/intent.json"
@@ -62,14 +72,15 @@ if [[ "$FILE_PATH" != *"docs/planning/.transition/intent.json" ]]; then
     echo "    {"
     echo "      \"type\": \"backlog-to-inprogress\","
     echo "      \"itemId\": \"your-feature-id\","
-    echo "      \"projectRoot\": \"/absolute/path/to/project\""
+    echo "      \"planPath\": \"docs/planning/features/[id]/plan.md\","
+    echo "      \"projectRoot\": \"$PROJECT_ROOT\""
     echo "    }"
     echo ""
     echo "  Example for moving in-progress → completed:"
     echo "    {"
     echo "      \"type\": \"inprogress-to-completed\","
     echo "      \"itemId\": \"your-feature-id\","
-    echo "      \"projectRoot\": \"/absolute/path/to/project\""
+    echo "      \"projectRoot\": \"$PROJECT_ROOT\""
     echo "    }"
     echo ""
     echo "═══════════════════════════════════════════════════════════════════"
