@@ -10,7 +10,7 @@ You are executing the **COMPLETE FEATURE** workflow - a quality gate process tha
 
 **First step**: Read in-progress features from `docs/planning/in-progress.json`
 
-> **Note**: To mark a feature as completed, write to `docs/planning/.transition/intent.json`. Direct writes to backlog JSON files are blocked by the hook system.
+> **Note**: To mark a feature as completed, write to `docs/planning/.transition/intent.json`. The PostToolUse hook runs automatically after you write - do NOT run any manual scripts. Just check `result.json` afterward.
 
 ## Contents
 

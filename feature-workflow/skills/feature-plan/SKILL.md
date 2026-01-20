@@ -10,7 +10,7 @@ You are executing the **IMPLEMENT FEATURE** workflow - a comprehensive feature k
 
 **First step**: Read the backlog from `docs/planning/backlog.json`
 
-> **Note**: To update backlog status, write to `docs/planning/.transition/intent.json`. Direct writes to backlog JSON files are blocked by the hook system.
+> **Note**: To update backlog status, write to `docs/planning/.transition/intent.json`. The PostToolUse hook runs automatically after you write - do NOT run any manual scripts. Just check `result.json` afterward.
 
 ## Contents
 

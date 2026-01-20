@@ -10,7 +10,7 @@ You are executing the **ADD TO BACKLOG** workflow - an interactive process to ca
 
 **First step**: Read existing backlog from `docs/planning/backlog.json` (to check for duplicates and understand context)
 
-> **Note**: To add items to the backlog, write to `docs/planning/.transition/intent.json`. Direct writes to backlog JSON files are blocked by the hook system.
+> **Note**: To add items to the backlog, write to `docs/planning/.transition/intent.json`. The PostToolUse hook runs automatically after you write - do NOT run any manual scripts. Just check `result.json` afterward.
 
 ## Target File
 
