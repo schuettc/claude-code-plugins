@@ -106,7 +106,9 @@ Write the following to `docs/planning/.transition/intent.json`:
 
 ## Step 3: Verify Result
 
-After writing the intent file, the hook automatically:
+**IMPORTANT**: Writing the intent file automatically triggers the PostToolUse hook. You do NOT need to run any script manually. The hook runs immediately after your Write tool completes.
+
+The hook automatically:
 1. Validates the item exists in backlog.json
 2. Updates item status and timestamps
 3. Writes to in-progress.json FIRST (atomic pattern)
