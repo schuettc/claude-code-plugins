@@ -119,3 +119,15 @@ case "$TRANSITION_TYPE" in
     exit 2
     ;;
 esac
+
+# Clean up .transition directory after successful transition
+RESULT_FILE="$PROJECT_ROOT/docs/planning/.transition/result.json"
+if [[ -f "$RESULT_FILE" ]]; then
+  SUCCESS=$(jq -r '.success // false' "$RESULT_FILE")
+  if [[ "$SUCCESS" == "true" ]]; then
+    log_info "Transition successful, cleaning up .transition directory"
+    rm -rf "$PROJECT_ROOT/docs/planning/.transition"
+  else
+    log_info "Transition failed, keeping .transition directory for debugging"
+  fi
+fi
