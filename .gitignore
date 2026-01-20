@@ -1,2 +1,5 @@
 # Planning documents (local only)
 docs/planning/
+
+# Local development tools
+.claude/
