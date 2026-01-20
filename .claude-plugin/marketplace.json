@@ -8,7 +8,7 @@
       "name": "feature-workflow",
       "source": "./feature-workflow",
       "description": "Feature lifecycle management with JSON-based backlog tracking and atomic file transitions via hooks",
-      "version": "2.0.0"
+      "version": "2.8.3"
     }
   ]
 }
