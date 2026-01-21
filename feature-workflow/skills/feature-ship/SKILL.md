@@ -163,6 +163,42 @@ Any follow-up items, known limitations, or context for future maintainers...
 
 ---
 
+## Fallback: Manual Ship
+
+If the workflow commits but doesn't create shipped.md (statusline still shows feature), use the manual ship script:
+
+```bash
+# From project root, run:
+~/.claude/plugins/cache/schuettc-claude-code-plugins/feature-workflow/*/hooks/ship-feature.sh \
+  "$(pwd)" \
+  "[feature-id]" \
+  "Summary of what was shipped"
+```
+
+Or create shipped.md manually:
+
+```bash
+cat > docs/features/[feature-id]/shipped.md << 'EOF'
+---
+shipped: $(date +%Y-%m-%d)
+---
+
+# Shipped: [Feature Name]
+
+## Summary
+Feature completed and committed.
+EOF
+```
+
+Then regenerate the dashboard:
+```bash
+~/.claude/plugins/cache/schuettc-claude-code-plugins/feature-workflow/*/hooks/generate-dashboard.sh "$(pwd)"
+```
+
+**Note**: Git commits with shipping keywords (complete, ship, finish, done) will also trigger statusline clearing automatically.
+
+---
+
 ## Philosophy: "Quality is Not Optional"
 
 This workflow ensures:
