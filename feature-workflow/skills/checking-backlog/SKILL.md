@@ -1,6 +1,6 @@
 ---
 name: checking-backlog
-description: Check project backlog when discussing feature ideas or priorities. Use when user mentions adding features, asks what's planned, discusses priorities, or proposes new functionality. Silently reads backlog.json to show relevant items and suggest /feature-capture for untracked ideas.
+description: Check project backlog when discussing feature ideas or priorities. Use when user mentions adding features, asks what's planned, discusses priorities, or proposes new functionality. Silently reads DASHBOARD.md to show relevant items and suggest /feature-capture for untracked ideas.
 allowed-tools: Read, Glob
 ---
 

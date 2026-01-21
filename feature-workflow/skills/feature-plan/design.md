@@ -50,7 +50,7 @@ Launch single agent: **feature-workflow:api-designer**
 ```
 Design the API layer for [feature name]:
 
-Requirements: docs/planning/features/[feature-id]/requirements.md
+Requirements: docs/features/[feature-id]/requirements.md
 **Effort Level**: [effort]
 
 **Scaling guidance**:
@@ -75,7 +75,7 @@ Launch IN PARALLEL: **feature-workflow:ux-optimizer** + **feature-workflow:front
 ```
 Analyze user flows and optimize UX for [feature name]:
 
-Requirements: docs/planning/features/[feature-id]/requirements.md
+Requirements: docs/features/[feature-id]/requirements.md
 **Effort Level**: [effort]
 
 **Scaling guidance**:
@@ -96,7 +96,7 @@ Output: UX recommendations scaled to effort level.
 ```
 Design React component architecture for [feature name]:
 
-Requirements: docs/planning/features/[feature-id]/requirements.md
+Requirements: docs/features/[feature-id]/requirements.md
 **Effort Level**: [effort]
 
 **Scaling guidance**:
@@ -125,7 +125,7 @@ Launch IN PARALLEL: **feature-workflow:api-designer** + **feature-workflow:front
 ```
 Design integration layer for [feature name]:
 
-Requirements: docs/planning/features/[feature-id]/requirements.md
+Requirements: docs/features/[feature-id]/requirements.md
 **Effort Level**: [effort]
 
 **Scaling guidance**:
@@ -157,7 +157,7 @@ Launch single agent: **feature-workflow:system-designer**
 Design the system architecture for this feature:
 
 Feature: [name]
-Requirements: docs/planning/features/[feature-id]/requirements.md
+Requirements: docs/features/[feature-id]/requirements.md
 **Effort Level**: [effort]
 
 **Scaling guidance**:
@@ -178,7 +178,7 @@ Output: System design scaled to effort level.
 
 ## Step 3: Save Design Documents
 
-**Save combined output to**: `docs/planning/features/[feature-id]/design.md`
+**Save combined output to**: `docs/features/[feature-id]/design.md`
 
 If no system design was needed (simple feature), skip creating design.md.
 

@@ -10,12 +10,12 @@
 
 First, create the feature directory:
 ```bash
-mkdir -p docs/planning/features/[feature-id]
+mkdir -p docs/features/[feature-id]
 ```
 
 ## Effort-Based Scaling
 
-The workflow adapts based on the effort level from backlog.json:
+The workflow adapts based on the effort level from the feature's idea.md:
 
 | Effort | Analysis Depth | Design Scope |
 |--------|----------------|--------------|
@@ -115,6 +115,6 @@ Output a requirements document scaled to the effort level.
 "
 ```
 
-**Save output to**: `docs/planning/features/[feature-id]/requirements.md`
+**Save output to**: `docs/features/[feature-id]/requirements.md`
 
 **Output**: Comprehensive requirements document saved

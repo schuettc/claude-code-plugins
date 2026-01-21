@@ -8,7 +8,7 @@
       "name": "feature-workflow",
       "source": "./feature-workflow",
       "description": "Feature lifecycle management with directory-based architecture. Status determined by file presence (idea.md, plan.md, shipped.md) with auto-generated DASHBOARD.md",
-      "version": "3.0.0"
+      "version": "3.0.1"
     }
   ]
 }

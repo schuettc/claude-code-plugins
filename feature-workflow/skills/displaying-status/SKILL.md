@@ -1,6 +1,6 @@
 ---
 name: displaying-status
-description: Display project status and backlog overview. Use when user asks about current status, what's in progress, what to work on next, or wants a summary of the backlog. Read-only skill that formats backlog.json into a clear dashboard view.
+description: Display project status and backlog overview. Use when user asks about current status, what's in progress, what to work on next, or wants a summary of the backlog. Read-only skill that formats DASHBOARD.md into a clear dashboard view.
 allowed-tools: Read
 ---
 

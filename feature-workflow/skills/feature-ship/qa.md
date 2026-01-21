@@ -15,8 +15,8 @@ Perform QA validation for this feature:
 
 Feature ID: [id]
 Feature Name: [name]
-Requirements: docs/planning/features/[feature-id]/requirements.md
-Implementation Plan: docs/planning/features/[feature-id]/plan.md
+Requirements: docs/features/[feature-id]/requirements.md
+Implementation Plan: docs/features/[feature-id]/plan.md
 
 Tasks:
 1. Review requirements and acceptance criteria

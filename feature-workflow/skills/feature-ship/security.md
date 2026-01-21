@@ -17,8 +17,8 @@ Perform a comprehensive security review for this feature:
 
 Feature ID: [id]
 Feature Name: [name]
-Feature Directory: docs/planning/features/[feature-id]/
-Implementation Plan: docs/planning/features/[feature-id]/plan.md
+Feature Directory: docs/features/[feature-id]/
+Implementation Plan: docs/features/[feature-id]/plan.md
 
 Tasks:
 1. Read the implementation plan to understand what was built
