@@ -73,9 +73,11 @@ Proceed? (yes/no)
 
 ---
 
-# Phase 5: Write shipped.md
+# Phase 5: Write shipped.md (REQUIRED)
 
-Create the shipped.md file to mark the feature as completed.
+**You MUST write shipped.md BEFORE committing.** This file marks the feature as completed and triggers the status update.
+
+Do not skip this step. Do not commit first.
 
 ## Write shipped.md
 
@@ -117,13 +119,16 @@ The hook automatically:
 2. Clears the terminal statusline
 3. Regenerates DASHBOARD.md (feature moves to Completed section)
 
-## Stage Changes
+## Stage and Commit
+
+After writing shipped.md (and confirming the hook updated DASHBOARD.md):
 
 ```bash
 git add docs/features/[id]/ docs/features/DASHBOARD.md
+git commit -m "Ship: [feature-name]"
 ```
 
-**Output**: Feature marked as completed, statusline cleared
+**Output**: Feature marked as completed, statusline cleared, changes committed
 
 ---
 
@@ -173,10 +178,8 @@ Display comprehensive completion report:
 ---
 
 ## Next Steps
-1. Consider creating a commit for this completion:
-   `git commit -m "Complete feature: [feature-name]"`
-2. Review backlog for next feature:
-   `/feature-plan`
+1. Push if ready: `git push`
+2. Review backlog for next feature: `/feature-plan`
 
 ---
 
