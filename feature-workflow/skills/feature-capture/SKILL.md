@@ -1,6 +1,6 @@
 ---
 name: feature-capture
-description: Interactive workflow for adding items to the JSON backlog. Use when user wants to add a new feature, track an idea, capture requirements, or mentions something that should be in the backlog.
+description: Interactive workflow for adding items to the backlog. Use when user wants to add a new feature, track an idea, capture requirements, or mentions something that should be in the backlog.
 user-invocable: true
 ---
 
@@ -8,7 +8,11 @@ user-invocable: true
 
 You are executing the **ADD TO BACKLOG** workflow - an interactive process to capture new features, enhancements, tech debt, or bug fixes.
 
-**First step**: Read `docs/features/DASHBOARD.md` to check for duplicates and understand current features.
+## First Step (Do This Now)
+
+**Read the file at path: `docs/features/DASHBOARD.md`**
+
+Check for duplicates and understand current features. If the file doesn't exist, that's OK - you'll create the first feature.
 
 > **Note**: To add a feature, create `docs/features/[id]/idea.md`. The PostToolUse hook automatically regenerates DASHBOARD.md - do NOT edit DASHBOARD.md directly.
 

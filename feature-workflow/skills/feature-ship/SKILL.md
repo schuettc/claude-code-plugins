@@ -8,7 +8,11 @@ user-invocable: true
 
 You are executing the **COMPLETE FEATURE** workflow - a quality gate process that ensures features meet security, quality, and testing standards before being marked as completed.
 
-**First step**: Read `docs/features/DASHBOARD.md` to see in-progress items.
+## First Step (Do This Now)
+
+**Read the file at path: `docs/features/DASHBOARD.md`**
+
+This file shows in-progress features. Look at the "In Progress" section to find features ready to ship.
 
 > **Note**: To complete a feature, create `docs/features/[id]/shipped.md`. The PostToolUse hook automatically updates DASHBOARD.md and clears the statusline - do NOT edit DASHBOARD.md directly.
 

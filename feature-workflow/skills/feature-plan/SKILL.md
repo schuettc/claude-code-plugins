@@ -1,6 +1,6 @@
 ---
 name: feature-plan
-description: Start implementing a feature from the JSON backlog with adaptive agent dispatch. Use when user wants to begin work on a backlog item, start implementation, or mentions a specific feature ID to work on.
+description: Start implementing a feature from the backlog with adaptive agent dispatch. Use when user wants to begin work on a backlog item, start implementation, or mentions a specific feature ID to work on.
 user-invocable: true
 ---
 
@@ -8,7 +8,11 @@ user-invocable: true
 
 You are executing the **IMPLEMENT FEATURE** workflow - a comprehensive feature kickoff process that ensures proper planning before any implementation begins.
 
-**First step**: Read `docs/features/DASHBOARD.md` to see backlog items.
+## First Step (Do This Now)
+
+**Read the file at path: `docs/features/DASHBOARD.md`**
+
+This file contains the backlog. If it doesn't exist, check if `docs/features/` directory exists - if not, the project hasn't been set up for feature tracking yet.
 
 > **Note**: To start a feature, create `docs/features/[id]/plan.md`. The PostToolUse hook automatically updates DASHBOARD.md and sets the statusline - do NOT edit DASHBOARD.md directly.
 
