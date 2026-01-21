@@ -5,7 +5,20 @@
 # Removes the ~/.claude/sessions/${SESSION_ID}.feature file
 # Called when feature is shipped/completed
 
-# Get session ID from iTerm session mapping
+# Primary: Check for SESSION_ID environment variable (set by hooks)
+if [[ -n "${SESSION_ID:-}" ]]; then
+  FEATURE_FILE="$HOME/.claude/sessions/${SESSION_ID}.feature"
+  if [[ -f "$FEATURE_FILE" ]]; then
+    FEATURE_ID=$(cat "$FEATURE_FILE")
+    rm -f "$FEATURE_FILE"
+    echo "Feature context cleared: $FEATURE_ID"
+  else
+    echo "No feature context to clear"
+  fi
+  exit 0
+fi
+
+# Fallback: iTerm session mapping
 if [[ -n "$ITERM_SESSION_ID" ]]; then
   SESSION_FILE="$HOME/.claude/sessions/iterm-${ITERM_SESSION_ID}.session"
   if [[ -f "$SESSION_FILE" ]]; then

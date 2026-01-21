@@ -12,7 +12,16 @@ if [[ -z "$FEATURE_ID" ]]; then
   exit 1
 fi
 
-# Get session ID from iTerm session mapping
+mkdir -p "$HOME/.claude/sessions"
+
+# Primary: Check for SESSION_ID environment variable (set by hooks)
+if [[ -n "${SESSION_ID:-}" ]]; then
+  echo "$FEATURE_ID" > "$HOME/.claude/sessions/${SESSION_ID}.feature"
+  echo "Feature context set: $FEATURE_ID"
+  exit 0
+fi
+
+# Fallback: iTerm session mapping
 if [[ -n "$ITERM_SESSION_ID" ]]; then
   SESSION_FILE="$HOME/.claude/sessions/iterm-${ITERM_SESSION_ID}.session"
   if [[ -f "$SESSION_FILE" ]]; then

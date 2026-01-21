@@ -79,6 +79,5 @@ What would you like to do?
 ## Integration Notes
 
 This skill works with:
-- `loading-feature-context` skill - Uses same idea.md and plan.md
 - `checking-backlog` skill - For checking if idea is already tracked
 - `/feature-capture` - For adding out-of-scope items

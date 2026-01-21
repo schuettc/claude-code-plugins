@@ -85,5 +85,4 @@ Remaining steps: 4 of 7
 ## Integration Notes
 
 This skill works with:
-- `loading-feature-context` skill - Reads the same plan.md
 - `/feature-ship` - Relies on accurate progress tracking
