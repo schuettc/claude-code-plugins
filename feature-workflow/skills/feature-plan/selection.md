@@ -2,45 +2,74 @@
 
 ## Workflow Steps
 
-1. Read backlog and identify/select feature
-2. Check dependencies
-3. Proceed to Phase 2
+1. Read DASHBOARD.md and identify/select feature
+2. Read feature's idea.md for details
+3. Verify feature is in backlog status
+4. Proceed to Phase 2
 
-> **Note**: The terminal statusline is automatically updated when you write to the feature directory (e.g., `docs/planning/features/[id]/plan.md`). No manual action needed.
+> **Note**: The terminal statusline is automatically updated when you write plan.md. No manual action needed.
 
 ---
 
-## Step 1: Read Backlog and Select Feature
+## Step 1: Read Dashboard and Select Feature
 
-Read `docs/planning/backlog.json` to get the current backlog.
+Read `docs/features/DASHBOARD.md` to see the current backlog.
 
 **If Feature ID Provided** ($ARGUMENTS not empty):
-- Find item in `items` array where `id` matches
-- If not found, list available items and ask user to select
+- Look for the ID in the Backlog table
+- If not in Backlog table, check In Progress table (may already be started)
+- If not found anywhere, list available items and ask user to select
 
 **If No Feature ID Provided**:
-- Filter items where `status === "backlog"`
-- Display organized by priority
+- Display features from the Backlog section
+- Organize by priority (P0 first)
 - Ask user to select by ID
 
 ---
 
-## Step 2: Dependency Check
+## Step 2: Read Feature Details
 
-Before proceeding with planning, check if this feature has unmet dependencies.
+Once a feature is selected, read its idea.md:
 
-1. Get the `dependsOn` array for the selected feature
-2. If empty or missing, skip to Phase 2 (no dependencies)
-3. If dependencies exist, check each one:
-   - Find the dependency item in the backlog
-   - Check its `status` field
-   - **Met**: status === "completed"
-   - **Unmet**: status === "backlog" or "in-progress"
+```
+docs/features/[id]/idea.md
+```
 
-**If blocked**, display warning and ask user to proceed, show alternatives, or cancel.
+This contains:
+- Full problem statement
+- Priority, effort, impact
+- Affected areas
+- Any proposed solution hints
 
 ---
 
-## Step 3: Proceed to Phase 2
+## Step 3: Verify Feature Status
 
-Once feature is selected and dependencies are checked, continue to Phase 2 (Requirements).
+Check the feature's current status by file presence:
+
+```
+docs/features/[id]/
+├── idea.md    ← Must exist
+├── plan.md    ← Should NOT exist (otherwise already in-progress)
+└── shipped.md ← Should NOT exist (otherwise already completed)
+```
+
+**If plan.md exists**:
+- Feature is already in-progress
+- Ask user: "Continue working on this feature?" or "Start a different feature?"
+
+**If shipped.md exists**:
+- Feature is already completed
+- Ask user to select a different feature
+
+---
+
+## Step 4: Proceed to Phase 2
+
+Once feature is selected and verified to be in backlog status, continue to Phase 2 (Requirements).
+
+Store the feature details for later phases:
+- Feature ID
+- Feature name (from idea.md frontmatter)
+- Priority, effort, impact
+- Problem statement

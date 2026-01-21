@@ -3,7 +3,7 @@
 ## Contents
 
 - [Phase 4: Final Verification](#phase-4-final-verification-1)
-- [Phase 5: Status Update](#phase-5-status-update-hook-based)
+- [Phase 5: Write shipped.md](#phase-5-write-shippedmd)
 - [Phase 6: Completion Summary](#phase-6-completion-summary)
 
 ---
@@ -30,7 +30,7 @@ npm run build 2>/dev/null || echo "No build command"
 
 ## Review Implementation Checklist
 
-Check that all items in `docs/planning/features/[feature-id]/plan.md` are marked complete:
+Check that all items in `docs/features/[id]/plan.md` are marked complete:
 - Read the plan file
 - Count checked `- [x]` vs unchecked `- [ ]` items
 - If unchecked items remain, ask user:
@@ -61,9 +61,10 @@ Plan Tasks: [N/N] complete
 Ready to mark feature as completed?
 
 This will:
-- Update status to "completed"
-- Set completedAt timestamp
-- Feature files will remain in docs/planning/features/[id]/ as a record
+- Create shipped.md with completion notes
+- Update DASHBOARD.md (move to Completed section)
+- Clear terminal statusline
+- Feature files will remain in docs/features/[id]/ as a record
 
 Proceed? (yes/no)
 ```
@@ -72,65 +73,57 @@ Proceed? (yes/no)
 
 ---
 
-# Phase 5: Status Update (Hook-Based)
+# Phase 5: Write shipped.md
 
-Trigger the atomic transition by writing an intent file. The hook handles all file manipulation reliably.
+Create the shipped.md file to mark the feature as completed.
 
-## Step 1: Create Transition Directory
+## Write shipped.md
 
-```bash
-mkdir -p docs/planning/.transition
+Write `docs/features/[id]/shipped.md` with the following format:
+
+```markdown
+---
+shipped: YYYY-MM-DD
+---
+
+# Shipped: [Feature Name]
+
+## Summary
+Brief summary of what was delivered...
+
+## Key Changes
+- Change 1
+- Change 2
+- Change 3
+
+## Testing
+- Tests: [N] passing
+- Coverage: [X]% (if available)
+- Manual testing completed
+
+## Quality Gates Passed
+- Security Review: Passed
+- QA Validation: Passed
+- Build: Successful
+
+## Notes
+Any follow-up items, known limitations, or context for future maintainers...
 ```
 
-## Step 2: Write Transition Intent File
-
-Write the following to `docs/planning/.transition/intent.json`:
-
-```json
-{
-  "type": "inprogress-to-completed",
-  "itemId": "[feature-id]",
-  "projectRoot": "[absolute path to project root]"
-}
-```
-
-**Important**: The `projectRoot` must be an absolute path (e.g., `/Users/username/project`).
-
-## Step 3: Verify Result
-
-**IMPORTANT**: Writing the intent file automatically triggers the PostToolUse hook. You do NOT need to run any script manually. The hook runs immediately after your Write tool completes.
+**IMPORTANT**: Writing shipped.md automatically triggers the PostToolUse hook. You do NOT need to run any script manually or update DASHBOARD.md directly.
 
 The hook automatically:
-1. Validates the item exists in in-progress.json
-2. Updates item status and completedAt timestamp
-3. Writes to completed.json FIRST (atomic pattern)
-4. Verifies write success
-5. Removes from in-progress.json
-6. Syncs global summary across all files
-7. Calculates unblocked features
+1. Detects the new shipped.md file
+2. Clears the terminal statusline
+3. Regenerates DASHBOARD.md (feature moves to Completed section)
 
-Read the result from `docs/planning/.transition/result.json`:
-
-```json
-{
-  "success": true,
-  "transition": "inprogress-to-completed",
-  "itemId": "[id]",
-  "timestamp": "[ISO timestamp]",
-  "filesModified": ["docs/planning/in-progress.json", "docs/planning/completed.json"],
-  "unblockedFeatures": ["feature-id-1", "feature-id-2"]
-}
-```
-
-The `unblockedFeatures` array contains IDs of features that are now fully unblocked.
-
-## Step 4: Stage Changes
+## Stage Changes
 
 ```bash
-git add docs/planning/*.json
+git add docs/features/[id]/ docs/features/DASHBOARD.md
 ```
 
-**Output**: Item moved from in-progress.json to completed.json
+**Output**: Feature marked as completed, statusline cleared
 
 ---
 
@@ -147,9 +140,9 @@ Display comprehensive completion report:
 ---
 
 ## Timeline
-- Created: [createdAt]
-- Started: [startedAt]
-- Completed: [completedAt]
+- Created: [from idea.md frontmatter]
+- Started: [from plan.md frontmatter]
+- Completed: [today]
 - Duration: [days] days
 
 ---
@@ -173,21 +166,9 @@ Display comprehensive completion report:
 ---
 
 ## Artifacts (preserved as record)
-- `docs/planning/features/[feature-id]/requirements.md`
-- `docs/planning/features/[feature-id]/design.md` (if applicable)
-- `docs/planning/features/[feature-id]/plan.md`
-
----
-
-## Features Now Unblocked
-
-[If unblockedFeatures array is not empty:]
-
-### Fully Unblocked (ready to start)
-- **[name]** ([id]): All dependencies now met - ready for `/feature-plan`
-
-[If no dependents existed:]
-No features were waiting on this one.
+- `docs/features/[id]/idea.md` - Original problem statement
+- `docs/features/[id]/plan.md` - Implementation plan
+- `docs/features/[id]/shipped.md` - Completion notes
 
 ---
 
@@ -202,6 +183,6 @@ No features were waiting on this one.
 Congratulations on completing this feature!
 ```
 
-> **Note**: The terminal statusline is automatically cleared when the completion transition runs.
+> **Note**: The terminal statusline is automatically cleared when shipped.md is written.
 
 **Output**: Complete summary displayed

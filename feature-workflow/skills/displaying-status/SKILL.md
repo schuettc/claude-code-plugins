@@ -19,33 +19,36 @@ Invoke this skill when the user asks:
 
 ## Instructions
 
-### Step 1: Load Backlog Files
+### Step 1: Load Dashboard
 
-Read these files (some may not exist):
-- `docs/planning/backlog.json` - Items waiting to start
-- `docs/planning/in-progress.json` - Items being worked on
-- `docs/planning/completed.json` - Finished items
+Read `docs/features/DASHBOARD.md` - this is the auto-generated dashboard that shows all features organized by status.
 
-Any file contains the global `summary` with counts across all statuses.
+If it doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
 
-### Step 2: Calculate Status
+### Step 2: Parse Dashboard Sections
 
-For each backlog item, check dependency status:
-- **Ready**: `dependsOn` empty OR all dependencies completed
-- **Blocked**: One or more dependencies not completed
-
-For in-progress items, note what features they block via `blockedBy`.
+The DASHBOARD.md contains three tables:
+- **In Progress** - Features currently being worked on
+- **Backlog** - Features waiting to start
+- **Completed** - Finished features
 
 ### Step 3: Format Response
 
-Display a scannable dashboard with:
+Display a scannable summary with:
 1. **Summary counts** - In progress, backlog (by priority), completed
-2. **In Progress** - Name, duration, what it blocks
-3. **Ready to Start** - Backlog items with no blockers, sorted by priority
-4. **Blocked** - Items waiting on dependencies
-5. **Recently Completed** - Last 3-5 items
+2. **In Progress** - Name, priority, when started
+3. **Ready to Start** - Backlog items sorted by priority
+4. **Recently Completed** - Last 3-5 items
 
-Use tables for lists. Highlight P0 items and long-running work.
+Use tables for lists. Highlight P0 items.
+
+For additional context on any feature, read its files:
+```
+docs/features/[id]/
+├── idea.md      # Full problem statement
+├── plan.md      # Implementation details (if in-progress)
+└── shipped.md   # Completion notes (if completed)
+```
 
 ## Example
 
@@ -55,24 +58,20 @@ Use tables for lists. Highlight P0 items and long-running work.
 ```
 # Project Status
 
-**Summary**: 1 in progress, 4 in backlog (2 ready, 2 blocked), 3 completed
+**Summary**: 1 in progress, 4 in backlog, 3 completed
 
 ## In Progress
-- **Dark Mode Toggle** (P1) - Started 3 days ago
-  Blocks: dashboard-theme, settings-page
+- **Dark Mode Toggle** (P1) - Started 2024-01-18
 
-## Ready to Start
+## Backlog (Ready to Start)
 | Priority | Name | Effort |
 |----------|------|--------|
 | P0 | User Authentication | Medium |
-| P1 | API Rate Limiting | Low |
-
-## Blocked
-- **Analytics Dashboard** - Needs: analytics-api (in-progress)
+| P1 | API Rate Limiting | Small |
 
 ## Recently Completed
-- Export Feature (2 days ago)
-- Search Improvements (5 days ago)
+- Export Feature (2024-01-15)
+- Search Improvements (2024-01-10)
 ```
 
 ## Integration Notes

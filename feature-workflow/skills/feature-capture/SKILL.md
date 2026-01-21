@@ -4,25 +4,26 @@ description: Interactive workflow for adding items to the JSON backlog. Use when
 user-invocable: true
 ---
 
-# Add Item to Backlog Command
+# Add Feature to Backlog
 
-You are executing the **ADD TO BACKLOG** workflow - an interactive process to capture new features, enhancements, tech debt, or bug fixes in the JSON-based backlog.
+You are executing the **ADD TO BACKLOG** workflow - an interactive process to capture new features, enhancements, tech debt, or bug fixes.
 
-**First step**: Read existing backlog from `docs/planning/backlog.json` (to check for duplicates and understand context)
+**First step**: Read `docs/features/DASHBOARD.md` to check for duplicates and understand current features.
 
-> **Note**: To add items to the backlog, write to `docs/planning/.transition/intent.json`. The PostToolUse hook runs automatically after you write - do NOT run any manual scripts. Just check `result.json` afterward.
+> **Note**: To add a feature, create `docs/features/[id]/idea.md`. The PostToolUse hook automatically regenerates DASHBOARD.md - do NOT edit DASHBOARD.md directly.
 
-## Target File
+## Target Files
 
-`docs/planning/backlog.json`
+- **Read**: `docs/features/DASHBOARD.md` (to check for duplicates)
+- **Write**: `docs/features/[id]/idea.md` (to add new feature)
 
 ## Workflow Overview
 
 | Phase | Description | Details |
 |-------|-------------|---------|
-| 1 | Interactive Questions | Capture essential information through 8 focused questions |
-| 2 | Validation | Check for duplicate IDs, validate dependencies |
-| 3 | JSON Update | Add entry via hook-based transition |
+| 1 | Interactive Questions | Capture essential information through focused questions |
+| 2 | Validation | Check for duplicate IDs in DASHBOARD.md |
+| 3 | Create Feature Directory | Write idea.md with frontmatter + problem statement |
 | 4 | Git Staging | Optionally stage changes |
 | 5 | Confirmation | Display summary and next steps |
 
@@ -30,21 +31,19 @@ You are executing the **ADD TO BACKLOG** workflow - an interactive process to ca
 
 ### Phase 1: Interactive Questions
 **See**: [interview.md](interview.md)
-- Ask 8 questions using AskUserQuestion tool
-- Capture type, name, problem, priority, effort, impact, areas, dependencies
+- Ask questions using AskUserQuestion tool
+- Capture type, name, problem, priority, effort, impact, areas
 
 ### Phase 2: Validation
 **See**: [validation.md](validation.md)
-- Detect single-file vs multi-file format
-- Initialize or load backlog.json
-- Generate kebab-case ID
-- Check for duplicates and circular dependencies
+- Read DASHBOARD.md to check existing features
+- Generate kebab-case ID from feature name
+- Check for duplicate IDs
 
-### Phase 3: Add to Backlog
+### Phase 3: Create Feature Directory
 **See**: [capture.md](capture.md)
-- Create transition intent file
-- Hook handles atomic JSON update
-- Verify result from hook
+- Create `docs/features/[id]/idea.md` with frontmatter and content
+- Hook automatically regenerates DASHBOARD.md
 
 ### Phase 4-5: Git Staging & Confirmation
 **See**: [confirmation.md](confirmation.md)
@@ -55,44 +54,78 @@ You are executing the **ADD TO BACKLOG** workflow - an interactive process to ca
 
 ## File Organization
 
-All planning files are organized cleanly:
+Features are stored in directories with status determined by file presence:
 
 ```
-docs/planning/
-├── backlog.json                    # Items with status: "backlog"
-├── in-progress.json                # Items with status: "in-progress" (created by /feature-plan)
-├── completed.json                  # Items with status: "completed" (created by /feature-ship)
-└── features/
-    └── [feature-id]/               # Created when implementing (not when adding)
-        ├── plan.md
-        ├── requirements.md
-        └── design.md
+docs/features/
+├── DASHBOARD.md              # Auto-generated, read-only for Claude
+├── my-feature/
+│   ├── idea.md               # Problem statement + metadata (backlog)
+│   ├── plan.md               # Implementation plan (in-progress)
+│   └── shipped.md            # Completion notes (completed)
+└── another-feature/
+    └── idea.md
 ```
+
+### Status Detection by File Presence
+
+| Files Present | Status |
+|---------------|--------|
+| `idea.md` only | backlog |
+| `idea.md` + `plan.md` | in-progress |
+| `idea.md` + `plan.md` + `shipped.md` | completed |
 
 **Key Principles**:
-- Items are split by status across three JSON files (multi-file format v2.0)
-- Each file contains a global `summary` for quick dashboard access
-- `/feature-capture` adds new items to `backlog.json` only
-- `/feature-plan` moves items from `backlog.json` to `in-progress.json`
-- `/feature-ship` moves items from `in-progress.json` to `completed.json`
-- Feature directories are created by `/feature-plan` when work starts
+- `/feature-capture` creates `idea.md` only (backlog status)
+- `/feature-plan` adds `plan.md` (changes to in-progress)
+- `/feature-ship` adds `shipped.md` (changes to completed)
+- DASHBOARD.md is auto-regenerated by hooks - never edit directly
+
+---
+
+## idea.md Format
+
+Write idea.md with YAML frontmatter followed by content:
+
+```markdown
+---
+id: my-feature
+name: Human Readable Name
+type: Feature|Enhancement|Bug Fix|Tech Debt
+priority: P0|P1|P2
+effort: Small|Medium|Large
+impact: Low|Medium|High
+created: 2024-01-20
+---
+
+# My Feature Name
+
+## Problem Statement
+Description of the problem this feature solves...
+
+## Proposed Solution
+High-level approach (optional, keep brief)...
+
+## Affected Areas
+- area1
+- area2
+```
 
 ---
 
 ## Integration Notes
 
-This command works with `/feature-plan` to provide a complete feature lifecycle:
+This command works with `/feature-plan` and `/feature-ship` for a complete lifecycle:
 
-1. **`/feature-capture`** - Captures idea in backlog (YOU ARE HERE)
-2. **`/feature-plan [id]`** - Creates feature directory and detailed planning
+1. **`/feature-capture`** - Creates idea.md in backlog (YOU ARE HERE)
+2. **`/feature-plan [id]`** - Adds plan.md, changes to in-progress
+3. **`/feature-ship [id]`** - Adds shipped.md, changes to completed
 
 ---
 
 ## What Makes a Good Backlog Item?
 
 **IMPORTANT: Capture the WHAT and WHY, not the HOW.**
-
-This phase is about documenting what you want and why it matters. The implementation details come later during `/feature-plan`.
 
 ### DO Capture:
 - **What you need** - The feature, fix, or improvement
@@ -104,28 +137,22 @@ This phase is about documenting what you want and why it matters. The implementa
 - **Implementation details** - Don't describe how to build it yet
 - **Technical designs** - That's for `/feature-plan`
 - **Architecture decisions** - That's for `/feature-plan`
-- **Specific technologies** - That's for `/feature-plan`
 
 ### Examples
 
 **Good (focuses on what/why):**
 > "Users can't find their validation reports after running a scan. They have to search through multiple pages and often give up."
 
-**Good (new feature):**
-> "We need dark mode support. Many users work late and have requested reduced eye strain options."
-
 **Bad (jumps to solution):**
 > "We need to add a reports dashboard with filters and a search bar that queries the DynamoDB table."
-
-Save the "how" for the planning phase where you'll have proper context and can make informed architectural decisions.
 
 ---
 
 ## Error Handling
 
-- If `docs/planning/` directory doesn't exist, create it
-- If JSON is malformed, report error and ask user to fix manually
-- If duplicate ID found, offer to choose different name
+- If `docs/features/` directory doesn't exist, create it
+- If duplicate ID found in DASHBOARD.md, offer to choose different name
+- If DASHBOARD.md doesn't exist yet, that's OK - hook will create it
 
 ---
 

@@ -7,8 +7,8 @@
     {
       "name": "feature-workflow",
       "source": "./feature-workflow",
-      "description": "Feature lifecycle management with JSON-based backlog tracking and atomic file transitions via hooks",
-      "version": "2.8.4"
+      "description": "Feature lifecycle management with directory-based architecture. Status determined by file presence (idea.md, plan.md, shipped.md) with auto-generated DASHBOARD.md",
+      "version": "3.0.0"
     }
   ]
 }

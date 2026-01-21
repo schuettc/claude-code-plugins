@@ -3,32 +3,32 @@
 ## Contents
 
 - [Phase 4: Implementation Plan](#phase-4-implementation-plan-1)
-- [Phase 5: Backlog Status Update](#phase-5-backlog-status-update-hook-based)
+- [Phase 5: Write plan.md](#phase-5-write-planmd)
 - [Phase 6: Kickoff Summary](#phase-6-kickoff-summary--todo-creation)
 
 ---
 
-Create file: `docs/planning/features/[feature-id]/plan.md`
+## Phase 4: Implementation Plan
+
+Create the implementation plan document to write to `docs/features/[id]/plan.md`.
 
 Use this template:
 
 ```markdown
-# [Feature Name]
+---
+started: YYYY-MM-DD
+---
 
-**Status**: In Progress
-**Priority**: [priority]
-**Effort**: [effort]
-**Started**: [YYYY-MM-DD]
-**Backlog ID**: [id]
+# Implementation Plan: [Feature Name]
 
-## Problem Statement
-[From requirements.md - why we're building this]
+## Overview
+[Brief summary of what will be implemented and why]
 
-## Requirements
-[Summary from requirements.md - key acceptance criteria]
+## Requirements Summary
+[Key requirements from idea.md and requirements analysis]
 
 ## System Design
-[Summary from design.md, or "No architecture changes required"]
+[Summary from design phase, or "No architecture changes required"]
 
 ## Implementation Steps
 - [ ] Step 1: [Specific, actionable task with file references]
@@ -59,11 +59,7 @@ Each step should:
 - [ ] Update [doc file 1] - [what needs updating]
 - [ ] Update [doc file 2] - [what needs updating]
 
-## Dependencies
-- [Any prerequisite work]
-- [Any external dependencies]
-
-## Risks/Unknowns
+## Risks & Mitigations
 - **Risk**: [Description]
   - **Mitigation**: [How to address]
 
@@ -73,71 +69,32 @@ Each step should:
 - Next: [First implementation step]
 ```
 
-Write this file using the Write tool.
-
-**Output**: Implementation plan file created at `docs/planning/features/[feature-id]/plan.md`
-
 ---
 
-# Phase 5: Backlog Status Update (Hook-Based)
+# Phase 5: Write plan.md
 
-Trigger the atomic transition by writing an intent file. The hook handles all file manipulation reliably.
+Write the plan document to `docs/features/[id]/plan.md`.
 
-## Step 1: Create Transition Directory
-
-```bash
-mkdir -p docs/planning/.transition
-```
-
-## Step 2: Write Transition Intent File
-
-Write the following to `docs/planning/.transition/intent.json`:
-
-```json
-{
-  "type": "backlog-to-inprogress",
-  "itemId": "[feature-id]",
-  "planPath": "docs/planning/features/[feature-id]/plan.md",
-  "projectRoot": "[absolute path to project root]"
-}
-```
-
-**Important**: The `projectRoot` must be an absolute path (e.g., `/Users/username/project`).
-
-## Step 3: Verify Result
-
-**IMPORTANT**: Writing the intent file automatically triggers the PostToolUse hook. You do NOT need to run any script manually. The hook runs immediately after your Write tool completes.
+**IMPORTANT**: Writing plan.md automatically triggers the PostToolUse hook. You do NOT need to run any script manually or update DASHBOARD.md directly.
 
 The hook automatically:
-1. Validates the item exists in backlog.json
-2. Updates item status and timestamps
-3. Writes to in-progress.json FIRST (atomic pattern)
-4. Verifies write success
-5. Removes from backlog.json
-6. Syncs global summary across all files
+1. Detects the new plan.md file
+2. Sets the terminal statusline to the feature ID
+3. Regenerates DASHBOARD.md (feature moves to In Progress section)
 
-Read the result from `docs/planning/.transition/result.json`:
+## Verification
 
-```json
-{
-  "success": true,
-  "transition": "backlog-to-inprogress",
-  "itemId": "[id]",
-  "timestamp": "[ISO timestamp]",
-  "filesModified": ["docs/planning/backlog.json", "docs/planning/in-progress.json"]
-}
-```
+After writing plan.md:
+1. Check that the file was created successfully
+2. Read DASHBOARD.md to verify the feature appears in the In Progress table
 
-If there's an error, display it and stop the workflow.
-
-## Step 4: Stage Changes
+## Stage Changes
 
 ```bash
-git add docs/planning/*.json
-git add docs/planning/features/[feature-id]/
+git add docs/features/[id]/ docs/features/DASHBOARD.md
 ```
 
-**Output**: Item moved from backlog.json to in-progress.json, feature files staged
+**Output**: Feature transitioned to in-progress, statusline set
 
 ---
 
@@ -156,10 +113,9 @@ git add docs/planning/features/[feature-id]/
 
 ---
 
-## Feature Files Created:
-- `docs/planning/features/[feature-id]/requirements.md` - Detailed requirements
-- `docs/planning/features/[feature-id]/design.md` - System design [if applicable]
-- `docs/planning/features/[feature-id]/plan.md` - Implementation plan
+## Feature Files:
+- `docs/features/[id]/idea.md` - Problem statement & context
+- `docs/features/[id]/plan.md` - Implementation plan (just created)
 
 ---
 
@@ -167,14 +123,15 @@ git add docs/planning/features/[feature-id]/
 - Requirements analyzed with detailed acceptance criteria
 - System design completed [or "No architecture changes needed"]
 - Implementation plan created with [N] actionable steps
-- Backlog status updated to "in-progress"
+- Feature status: in-progress (shown in DASHBOARD.md)
+- Terminal statusline set to feature ID
 
 ---
 
 ## Next Steps:
 
 ### 1. Review Your Plan
-Read: docs/planning/features/[feature-id]/plan.md
+Read: docs/features/[id]/plan.md
 
 ### 2. Start First Implementation Step
 Task: [First step description]
@@ -184,6 +141,9 @@ Files: [Affected files]
 - Update progress in plan.md as you work
 - Run tests frequently
 - Before committing: ensure tests pass
+
+### 4. When Done
+Run `/feature-ship [id]` to complete the feature
 
 ---
 

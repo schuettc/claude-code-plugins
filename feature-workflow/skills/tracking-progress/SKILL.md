@@ -24,13 +24,13 @@ This skill modifies files. **Always ask before making changes.**
 
 ### Step 1: Identify the Feature
 
-Read `docs/planning/in-progress.json` to find the current feature.
+Read `docs/features/DASHBOARD.md` and look at the **In Progress** section to find current features.
 
 If multiple exist, check context or ask which one.
 
 ### Step 2: Load the Plan
 
-Read `docs/planning/features/[feature-id]/plan.md`
+Read `docs/features/[id]/plan.md`
 
 Locate:
 - **Progress Log** section (usually at the end)

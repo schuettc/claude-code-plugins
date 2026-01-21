@@ -1,6 +1,12 @@
 #!/bin/bash
-# PreToolUse hook to block direct writes to backlog JSON files
+# PreToolUse hook to block direct writes to auto-generated files
 # Exit code 2 = block the tool call (only stderr is shown to Claude)
+#
+# Blocks:
+# - docs/features/DASHBOARD.md (auto-generated from feature directories)
+#
+# Allows:
+# - All writes to docs/features/[id]/*.md (feature directories)
 
 # Read the tool input from stdin
 INPUT=$(cat)
@@ -13,58 +19,25 @@ if [[ -z "$FILE_PATH" ]]; then
   exit 0
 fi
 
-# Check if this is a direct write to backlog files
-if [[ "$FILE_PATH" == *"docs/planning/backlog.json" ]] || \
-   [[ "$FILE_PATH" == *"docs/planning/in-progress.json" ]] || \
-   [[ "$FILE_PATH" == *"docs/planning/completed.json" ]]; then
-
-  FILENAME=$(basename "$FILE_PATH")
-  PROJECT_ROOT=$(echo "$FILE_PATH" | sed 's|/docs/planning/.*||')
-
-  # Output to stderr (this is what Claude sees when blocked)
+# Block direct writes to DASHBOARD.md (it's auto-generated)
+if [[ "$FILE_PATH" == *"docs/features/DASHBOARD.md" ]]; then
   echo "" >&2
   echo "═══════════════════════════════════════════════════════════════════" >&2
-  echo "  BLOCKED: Direct write to $FILENAME is not allowed" >&2
+  echo "  BLOCKED: Direct write to DASHBOARD.md is not allowed" >&2
   echo "═══════════════════════════════════════════════════════════════════" >&2
   echo "" >&2
-  echo "  First: mkdir -p docs/planning/.transition" >&2
-  echo "  Then write to: docs/planning/.transition/intent.json" >&2
+  echo "  DASHBOARD.md is auto-generated from feature directories." >&2
   echo "" >&2
-  echo "  For adding a NEW item to backlog:" >&2
-  echo "    {" >&2
-  echo "      \"type\": \"add-to-backlog\"," >&2
-  echo "      \"projectRoot\": \"$PROJECT_ROOT\"," >&2
-  echo "      \"item\": {" >&2
-  echo "        \"id\": \"kebab-case-id\"," >&2
-  echo "        \"name\": \"Feature Name\"," >&2
-  echo "        \"type\": \"Feature|Enhancement|Tech Debt|Bug Fix\"," >&2
-  echo "        \"priority\": \"P0|P1|P2\"," >&2
-  echo "        \"effort\": \"Low|Medium|Large\"," >&2
-  echo "        \"impact\": \"Low|Medium|High\"," >&2
-  echo "        \"problemStatement\": \"Description of the problem\"," >&2
-  echo "        \"status\": \"backlog\"," >&2
-  echo "        \"dependsOn\": []" >&2
-  echo "      }" >&2
-  echo "    }" >&2
+  echo "  To update the dashboard, write to feature directories instead:" >&2
   echo "" >&2
-  echo "  For moving backlog → in-progress:" >&2
-  echo "    {" >&2
-  echo "      \"type\": \"backlog-to-inprogress\"," >&2
-  echo "      \"itemId\": \"the-feature-id\"," >&2
-  echo "      \"planPath\": \"docs/planning/features/[id]/plan.md\"," >&2
-  echo "      \"projectRoot\": \"$PROJECT_ROOT\"" >&2
-  echo "    }" >&2
+  echo "  Add to backlog:    Write docs/features/[id]/idea.md" >&2
+  echo "  Start work:        Write docs/features/[id]/plan.md" >&2
+  echo "  Complete feature:  Write docs/features/[id]/shipped.md" >&2
   echo "" >&2
-  echo "  For moving in-progress → completed:" >&2
-  echo "    {" >&2
-  echo "      \"type\": \"inprogress-to-completed\"," >&2
-  echo "      \"itemId\": \"the-feature-id\"," >&2
-  echo "      \"projectRoot\": \"$PROJECT_ROOT\"" >&2
-  echo "    }" >&2
+  echo "  The hook will automatically regenerate DASHBOARD.md." >&2
   echo "" >&2
   echo "═══════════════════════════════════════════════════════════════════" >&2
 
-  # Exit code 2 blocks the tool call
   exit 2
 fi
 

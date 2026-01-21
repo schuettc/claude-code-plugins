@@ -2,35 +2,36 @@
 
 ## Read In-Progress Items
 
-Read `docs/planning/in-progress.json` to get current in-progress items.
+Read `docs/features/DASHBOARD.md` to see current in-progress items.
 
-**Note**: In multi-file format (v2.0), in-progress items are in their own file. If file doesn't exist, there are no in-progress items.
+Look for the **In Progress** section table.
 
 ## If Feature ID Provided ($ARGUMENTS not empty)
 
-1. Find item in `items` array where `id` matches the argument
-2. If not found in `in-progress.json`:
-   - Check `docs/planning/backlog.json` - if found there with status "backlog": Ask user to run `/feature-plan` first
-   - Check `docs/planning/completed.json` - if found there: Inform user feature is already completed
-3. Verify implementation artifacts exist:
-   - `docs/planning/features/[feature-id]/plan.md`
-   - `docs/planning/features/[feature-id]/requirements.md`
+1. Look for the ID in the In Progress table
+2. If not found in In Progress:
+   - Check Backlog table - if there: Ask user to run `/feature-plan` first
+   - Check Completed table - if there: Inform user feature is already completed
+3. Read the feature's files and verify artifacts exist:
+   - `docs/features/[id]/idea.md` (must exist)
+   - `docs/features/[id]/plan.md` (must exist for in-progress)
+   - No `docs/features/[id]/shipped.md` (should not exist yet)
 
 ## If No Feature ID Provided
 
-1. Read `docs/planning/in-progress.json`
-2. If file doesn't exist or items array is empty:
+1. Read `docs/features/DASHBOARD.md`
+2. If In Progress section is empty:
    ```
    ## No In-Progress Features
 
    No features are currently in-progress.
    Run `/feature-plan` to start a feature from the backlog.
    ```
-3. Otherwise display available items:
+3. Otherwise display available items from the In Progress table:
    ```
    ## In-Progress Features Ready for Completion
 
-   - [id]: [name] - Started [startedAt]
+   - [id]: [name] - Started [started date]
    ```
 4. Ask user to select by ID
 
@@ -40,9 +41,9 @@ Display and verify:
 ```
 ## Pre-flight Check: [feature-name]
 
-Feature status: in-progress
+Feature status: in-progress (plan.md exists, no shipped.md)
 Implementation plan exists
-Requirements documented
+Problem statement documented (idea.md)
 
 Ready to proceed with quality gates.
 ```
@@ -53,9 +54,9 @@ Ready to proceed with quality gates.
 
 # Effort-Based Workflow Selection
 
-The ship workflow scales based on effort level from backlog.json:
+The ship workflow scales based on effort level from idea.md frontmatter:
 
-## Low Effort (< 8 hours)
+## Small Effort (< 8 hours)
 
 Skip agent-based reviews. Run quick verification instead:
 - **Skip Phase 2**: Run `npm audit --audit-level=high` instead of security-reviewer agent

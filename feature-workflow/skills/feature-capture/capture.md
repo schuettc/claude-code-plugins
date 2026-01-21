@@ -1,71 +1,77 @@
-# Phase 3: Add to Backlog (Hook-Based)
+# Phase 3: Create Feature Directory
 
-Trigger the atomic addition by writing a transition intent file. The hook will handle all JSON manipulation reliably.
+Create the feature's idea.md file, which triggers the hook to regenerate DASHBOARD.md.
 
-## Step 1: Create Transition Directory
+## Step 1: Create Feature Directory
 
 ```bash
-mkdir -p docs/planning/.transition
+mkdir -p docs/features/[id]
 ```
 
-## Step 2: Write Transition Intent File
+## Step 2: Write idea.md
 
-Write the following to `docs/planning/.transition/intent.json`:
+Write `docs/features/[id]/idea.md` with the following format:
 
-```json
-{
-  "type": "add-to-backlog",
-  "projectRoot": "[absolute path to project root]",
-  "item": {
-    "id": "[kebab-case-name]",
-    "name": "[Original Name]",
-    "type": "[Feature|Enhancement|Tech Debt|Bug Fix]",
-    "priority": "[P0|P1|P2]",
-    "effort": "[Low|Medium|Large]",
-    "impact": "[Low|Medium|High]",
-    "problemStatement": "[User's problem description]",
-    "proposedSolution": "",
-    "affectedAreas": ["[parsed from user input]"],
-    "status": "backlog",
-    "dependsOn": ["[parsed dependency IDs, or empty array]"],
-    "blockedBy": [],
-    "metadata": {}
-  }
-}
+```markdown
+---
+id: [kebab-case-id]
+name: [Original Name]
+type: [Feature|Enhancement|Bug Fix|Tech Debt]
+priority: [P0|P1|P2]
+effort: [Small|Medium|Large]
+impact: [Low|Medium|High]
+created: [YYYY-MM-DD]
+---
+
+# [Original Name]
+
+## Problem Statement
+[User's problem description - the WHAT and WHY]
+
+## Proposed Solution
+[High-level approach, if provided - keep brief]
+
+## Affected Areas
+- [area1]
+- [area2]
 ```
 
-**Important**: The `projectRoot` must be an absolute path (e.g., `/Users/username/project`).
+## Frontmatter Fields
 
-## Step 3: Verify Result
+All metadata goes in YAML frontmatter between `---` markers:
 
-**IMPORTANT**: Writing the intent file automatically triggers the PostToolUse hook. You do NOT need to run any script manually. The hook runs immediately after your Write tool completes.
+| Field | Required | Description |
+|-------|----------|-------------|
+| id | Yes | Kebab-case identifier (matches directory name) |
+| name | Yes | Human-readable name |
+| type | Yes | Feature, Enhancement, Bug Fix, or Tech Debt |
+| priority | Yes | P0 (critical), P1 (important), P2 (nice to have) |
+| effort | Yes | Small (<1 day), Medium (1-3 days), Large (>3 days) |
+| impact | Yes | Low, Medium, High |
+| created | Yes | Date in YYYY-MM-DD format |
+
+## Hook Behavior
+
+**IMPORTANT**: Writing idea.md automatically triggers the PostToolUse hook. You do NOT need to run any script manually.
 
 The hook automatically:
-1. Validates the item structure
-2. Checks for duplicate IDs across all status files
-3. Validates dependencies exist and no circular dependencies
-4. Adds item to backlog.json
-5. Updates blockedBy arrays on dependency targets
-6. Syncs global summary across all files
+1. Detects the new idea.md file
+2. Parses the frontmatter metadata
+3. Regenerates DASHBOARD.md with the new feature in the Backlog section
 
-Read the result from `docs/planning/.transition/result.json`:
+## Verification
 
-```json
-{
-  "success": true,
-  "transition": "add-to-backlog",
-  "itemId": "[id]",
-  "timestamp": "[ISO timestamp]",
-  "filesModified": ["docs/planning/backlog.json"]
-}
-```
+After writing idea.md:
+1. Check that the file was created successfully
+2. Read DASHBOARD.md to verify the feature appears in the Backlog table
 
-If there's an error, the result will contain:
-```json
-{
-  "success": false,
-  "error": "[error message]"
-}
-```
+## Error Handling
 
-Display the error to the user and stop the workflow.
+If the write fails:
+- Check that docs/features/ directory exists
+- Verify file permissions
+- Display error to user
+
+If hook fails to update DASHBOARD.md:
+- The feature is still valid (idea.md exists)
+- User can manually run: `./hooks/generate-dashboard.sh [project-root]`

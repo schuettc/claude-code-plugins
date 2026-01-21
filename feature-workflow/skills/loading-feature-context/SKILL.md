@@ -21,7 +21,7 @@ Invoke this skill when the user:
 
 ### Step 1: Identify In-Progress Features
 
-Read `docs/planning/in-progress.json` to find current work.
+Read `docs/features/DASHBOARD.md` and look at the **In Progress** section to find current work.
 
 If multiple features are in-progress:
 1. Check if user mentioned a specific feature name/ID
@@ -30,22 +30,31 @@ If multiple features are in-progress:
 
 ### Step 2: Load Feature Context
 
-For the relevant feature, read these files (if they exist):
+For the relevant feature, read these files:
 ```
-docs/planning/features/[feature-id]/
-├── requirements.md    # Acceptance criteria, user stories
-├── design.md          # Architecture, component design
-└── plan.md            # Implementation steps, progress
+docs/features/[id]/
+├── idea.md    # Problem statement, priority, context
+└── plan.md    # Implementation steps, progress, technical decisions
 ```
+
+The `idea.md` contains:
+- Problem statement (what and why)
+- Priority, effort, impact
+- Affected areas
+
+The `plan.md` contains:
+- Implementation steps (with checkboxes)
+- Technical decisions
+- Testing strategy
+- Progress log
 
 ### Step 3: Use Context Naturally
 
 Reference context when responding - don't dump it all at once:
-- Reference **requirements** when discussing what to build
-- Reference **design** when discussing how to build
-- Reference **plan** when discussing what's next
+- Reference **idea.md** when discussing what to build or why
+- Reference **plan.md** when discussing how to build or what's next
 
-Also note dependency relationships (`dependsOn`, `blockedBy`) when relevant.
+Also check the implementation steps in plan.md to see what's completed vs remaining.
 
 ## Example
 
@@ -58,14 +67,14 @@ Looking at your implementation plan for **User Authentication**:
 You've completed 3 of 7 steps. The next step is:
 - [ ] Implement JWT token refresh logic in `auth/tokens.ts`
 
-Key requirement for this step: Tokens must refresh 5 minutes before expiry.
+Key requirement from idea.md: Tokens must refresh 5 minutes before expiry.
 
-The design specifies using the existing `TokenManager` class.
+The plan specifies using the existing `TokenManager` class.
 ```
 
 ## Integration Notes
 
 This skill works with:
 - `tracking-progress` skill - Updates the plan.md this skill reads
-- `guarding-scope` skill - Uses requirements.md to check scope
+- `guarding-scope` skill - Uses idea.md to check scope
 - `/feature-ship` - Uses these files for completion review

@@ -1,86 +1,49 @@
 # Phase 2: Validation
 
-## Step 1: Format Detection
+## Step 1: Check for Existing Features
 
-Determine if using single-file (v1.x) or multi-file (v2.0) format:
+1. **Read DASHBOARD.md**: Check `docs/features/DASHBOARD.md` if it exists
+   - If it doesn't exist yet, that's OK - hook will create it
+   - Parse the tables to find existing feature IDs
 
-1. **Check for multi-file indicators**:
-   - If `docs/planning/in-progress.json` exists -> multi-file format
-   - If `docs/planning/completed.json` exists -> multi-file format
-   - If `docs/planning/backlog.json` exists with `version === "2.0.0"` -> multi-file format
-   - Otherwise -> single-file format (or new backlog)
-
-2. **Store format for later phases**:
-   - `isMultiFile = true` if any multi-file indicator found
-   - This determines whether to sync summaries to other files
-
-## Step 2: Initialize or Load Backlog
-
-1. **Check if backlog.json exists**: If not, create initial structure:
-```json
-{
-  "version": "2.0.0",
-  "lastUpdated": "[current ISO timestamp]",
-  "summary": {
-    "total": 0,
-    "byStatus": { "backlog": 0, "in-progress": 0, "completed": 0 },
-    "byPriority": { "P0": 0, "P1": 0, "P2": 0 }
-  },
-  "items": []
-}
-```
-
-2. **Read existing backlog**: Load `docs/planning/backlog.json`
-
-3. **Generate ID**: Convert feature name to kebab-case
+2. **Generate ID**: Convert feature name to kebab-case
    - "Dark Mode Toggle" -> "dark-mode-toggle"
    - Remove special characters, lowercase, replace spaces with hyphens
 
-4. **Check for duplicate ID**: Search items array for matching id
+3. **Check for duplicate ID**: Look for matching IDs in DASHBOARD.md tables
    - If duplicate exists, ask user to choose a different name or cancel
 
-5. **Validate required fields**: Ensure all required data is captured
+## Step 2: Validate Required Fields
 
-6. **Validate dependencies (if provided)**:
-   a. Parse comma-separated list, trim whitespace
-   b. For each dependency ID:
-      - Check it exists in the items array -> If not found: "Feature '[id]' not found. Available IDs: [list]"
-      - Check it's not the same as new item's ID -> If same: "A feature cannot depend on itself"
-   c. Check for circular dependencies using BFS algorithm (see below)
-   d. If any validation fails, report error and ask for correction
+Ensure all required data was captured from interview phase:
 
-## Circular Dependency Detection Algorithm
+| Field | Required | Validation |
+|-------|----------|------------|
+| name | Yes | Non-empty string |
+| type | Yes | One of: Feature, Enhancement, Bug Fix, Tech Debt |
+| priority | Yes | One of: P0, P1, P2 |
+| effort | Yes | One of: Small, Medium, Large |
+| impact | Yes | One of: Low, Medium, High |
+| problemStatement | Yes | Non-empty string |
 
-Before adding dependencies, verify no cycles would be created:
+## Step 3: Check Feature Directory
 
-```
-FUNCTION hasCircularDependency(newItemId, targetDepId, allItems):
-    """
-    Check if making newItemId depend on targetDepId would create a cycle.
-    A cycle exists if targetDepId already depends (directly or transitively) on newItemId.
-    """
+1. **Check if directory exists**: `docs/features/[id]/`
+   - If exists, this is a duplicate - ask user to choose different name
+   - If not exists, proceed to Phase 3
 
-    visited = Set()
-    queue = [targetDepId]
+## Duplicate Detection Methods
 
-    WHILE queue is not empty:
-        current = queue.shift()
+There are two ways to detect duplicates:
 
-        IF current === newItemId:
-            RETURN true  // Cycle detected!
+1. **Parse DASHBOARD.md**: Look for ID links like `[my-feature](./my-feature/)`
+2. **Check filesystem**: Check if `docs/features/[id]/` directory exists
 
-        IF current in visited:
-            CONTINUE
+Both methods should be used for reliable duplicate detection.
 
-        visited.add(current)
+## Error Handling
 
-        item = findItemById(current, allItems)
-        IF item AND item.dependsOn:
-            FOR EACH depId IN item.dependsOn:
-                IF depId not in visited:
-                    queue.push(depId)
-
-    RETURN false  // No cycle
-```
-
-If a cycle is detected, reject with: "Circular dependency detected: [chain path]"
+If validation fails:
+- Display specific error message
+- Ask user to correct the issue
+- Do NOT proceed to Phase 3 until validation passes

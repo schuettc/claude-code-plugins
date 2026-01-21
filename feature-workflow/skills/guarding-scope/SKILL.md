@@ -26,21 +26,25 @@ Invoke this skill when the user:
 
 ### Step 1: Identify Current Feature
 
-Read `docs/planning/in-progress.json` to find the active feature.
+Read `docs/features/DASHBOARD.md` and look at the **In Progress** section to find the active feature.
 
 If none or unclear, skip scope check - don't block the user.
 
 ### Step 2: Load Requirements
 
-Read `docs/planning/features/[feature-id]/requirements.md`
+Read `docs/features/[id]/idea.md`
 
-Extract: user stories, acceptance criteria, scope boundaries.
+Extract: problem statement, affected areas, proposed solution hints.
+
+Also read `docs/features/[id]/plan.md` for:
+- Implementation steps (what was planned)
+- Technical decisions made
 
 ### Step 3: Analyze the Request
 
-**In Scope** - Implements acceptance criteria, reasonable interpretation of user story, bug fix, or implementation detail.
+**In Scope** - Implements the problem statement, reasonable extension of the feature, bug fix, or implementation detail.
 
-**Potential Scope Creep** - New functionality not in requirements, affects other areas, would require updating requirements.
+**Potential Scope Creep** - New functionality not related to problem statement, affects other areas beyond what's listed, would require updating the plan significantly.
 
 **Clearly Out of Scope** - Unrelated to problem statement, better as its own feature.
 
@@ -75,6 +79,6 @@ What would you like to do?
 ## Integration Notes
 
 This skill works with:
-- `loading-feature-context` skill - Uses same requirements.md
+- `loading-feature-context` skill - Uses same idea.md and plan.md
 - `checking-backlog` skill - For checking if idea is already tracked
 - `/feature-capture` - For adding out-of-scope items

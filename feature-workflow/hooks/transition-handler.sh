@@ -1,13 +1,16 @@
 #!/bin/bash
-# Main hook dispatcher for feature-workflow transitions
+# Hook dispatcher for feature-workflow
 #
 # This script is called by Claude Code's PostToolUse hook when the Write or Edit tool is used.
-# It detects when Claude writes to the transition intent file and dispatches to
-# the appropriate transition script.
+# It detects when Claude writes to feature directories and:
+# 1. Regenerates DASHBOARD.md from feature directory state
+# 2. Sets statusline when plan.md is created
+# 3. Clears statusline when shipped.md is created
 #
-# Also handles statusline updates by detecting:
-# - Writes to docs/planning/features/[id]/ or .feature-workflow/[id]/ → set statusline to feature ID
-# - Completion transitions → clear statusline
+# Status detection by file presence:
+# - idea.md only → backlog
+# - idea.md + plan.md → in-progress
+# - idea.md + plan.md + shipped.md → completed
 
 set -euo pipefail
 
@@ -26,108 +29,33 @@ if [[ "$TOOL_NAME" != "Write" && "$TOOL_NAME" != "Edit" ]]; then
   exit 0
 fi
 
-# =============================================================================
-# STATUSLINE: Detect writes to feature directory and set context
-# Matches both docs/planning/features/[id]/ and .feature-workflow/[id]/
-# =============================================================================
-if [[ "$FILE_PATH" =~ docs/planning/features/([^/]+)/ ]]; then
+# Detect writes to docs/features/[id]/*.md
+if [[ "$FILE_PATH" =~ docs/features/([^/]+)/(idea|plan|shipped)\.md$ ]]; then
   FEATURE_ID="${BASH_REMATCH[1]}"
-  # Set statusline context (silently, don't block on errors)
-  "$SCRIPT_DIR/set-feature-context.sh" "$FEATURE_ID" 2>/dev/null || true
-elif [[ "$FILE_PATH" =~ \.feature-workflow/([^/]+)/ ]]; then
-  FEATURE_ID="${BASH_REMATCH[1]}"
-  # Set statusline context (silently, don't block on errors)
-  "$SCRIPT_DIR/set-feature-context.sh" "$FEATURE_ID" 2>/dev/null || true
-fi
+  FILE_TYPE="${BASH_REMATCH[2]}"
 
-# Only process if this is our transition intent file
-if [[ "$FILE_PATH" != *"docs/planning/.transition/intent.json" ]]; then
+  # Get project root (everything before docs/features/)
+  PROJECT_ROOT=$(echo "$FILE_PATH" | sed 's|/docs/features/.*||')
 
-  # Direct writes to backlog files are blocked by PreToolUse hook
-  # This PostToolUse hook only processes intent.json transitions
+  log_info "Detected feature file write: $FEATURE_ID/$FILE_TYPE.md"
+
+  # STATUSLINE: Set context on plan.md, clear on shipped.md
+  if [[ "$FILE_TYPE" == "plan" ]]; then
+    "$SCRIPT_DIR/set-feature-context.sh" "$FEATURE_ID" 2>/dev/null || true
+    log_info "Statusline set to: $FEATURE_ID"
+  elif [[ "$FILE_TYPE" == "shipped" ]]; then
+    "$SCRIPT_DIR/clear-feature-context.sh" 2>/dev/null || true
+    log_info "Statusline cleared"
+  fi
+
+  # DASHBOARD: Regenerate from feature directories
+  log_info "Regenerating DASHBOARD.md"
+  "$SCRIPT_DIR/generate-dashboard.sh" "$PROJECT_ROOT" || {
+    log_info "Warning: Dashboard regeneration failed"
+  }
 
   exit 0
 fi
 
-log_info "Detected transition intent file write"
-
-# Read the intent file
-if [[ ! -f "$FILE_PATH" ]]; then
-  echo "Intent file not found: $FILE_PATH" >&2
-  exit 2
-fi
-
-INTENT=$(cat "$FILE_PATH")
-TRANSITION_TYPE=$(echo "$INTENT" | jq -r '.type // empty')
-PROJECT_ROOT=$(echo "$INTENT" | jq -r '.projectRoot // empty')
-
-if [[ -z "$TRANSITION_TYPE" ]]; then
-  echo "No transition type specified in intent file" >&2
-  exit 2
-fi
-
-if [[ -z "$PROJECT_ROOT" ]]; then
-  echo "No projectRoot specified in intent file" >&2
-  exit 2
-fi
-
-# Create result directory if needed
-mkdir -p "$PROJECT_ROOT/docs/planning/.transition"
-
-# Check for stale lock (recovery)
-LOCKFILE="$PROJECT_ROOT/docs/planning/.transition/.lock"
-if [[ -f "$LOCKFILE" ]]; then
-  # Check lock age (macOS stat syntax)
-  if [[ "$(uname)" == "Darwin" ]]; then
-    LOCK_AGE=$(( $(date +%s) - $(stat -f %m "$LOCKFILE") ))
-  else
-    LOCK_AGE=$(( $(date +%s) - $(stat -c %Y "$LOCKFILE") ))
-  fi
-
-  if [[ $LOCK_AGE -gt 300 ]]; then  # 5 minute timeout
-    log_info "Stale lock detected, running recovery"
-    "$SCRIPT_DIR/lib/recover.sh" "$PROJECT_ROOT"
-    rm -f "$LOCKFILE"
-  else
-    echo "Transition in progress (locked). Wait or manually remove .transition/.lock" >&2
-    exit 2
-  fi
-fi
-
-# Create lock
-touch "$LOCKFILE"
-trap "rm -f '$LOCKFILE'" EXIT
-
-# Dispatch to appropriate transition script
-log_info "Dispatching transition: $TRANSITION_TYPE"
-
-case "$TRANSITION_TYPE" in
-  "backlog-to-inprogress")
-    "$SCRIPT_DIR/transitions/backlog-to-inprogress.sh" <<< "$INTENT"
-    ;;
-  "inprogress-to-completed")
-    "$SCRIPT_DIR/transitions/inprogress-to-completed.sh" <<< "$INTENT"
-    # Clear statusline on completion (silently)
-    "$SCRIPT_DIR/clear-feature-context.sh" 2>/dev/null || true
-    ;;
-  "add-to-backlog")
-    "$SCRIPT_DIR/transitions/add-to-backlog.sh" <<< "$INTENT"
-    ;;
-  *)
-    echo "Unknown transition type: $TRANSITION_TYPE" >&2
-    echo "{\"success\":false,\"error\":\"Unknown transition type: $TRANSITION_TYPE\"}" > "$PROJECT_ROOT/docs/planning/.transition/result.json"
-    exit 2
-    ;;
-esac
-
-# Clean up .transition directory after successful transition
-RESULT_FILE="$PROJECT_ROOT/docs/planning/.transition/result.json"
-if [[ -f "$RESULT_FILE" ]]; then
-  SUCCESS=$(jq -r '.success // false' "$RESULT_FILE")
-  if [[ "$SUCCESS" == "true" ]]; then
-    log_info "Transition successful, cleaning up .transition directory"
-    rm -rf "$PROJECT_ROOT/docs/planning/.transition"
-  else
-    log_info "Transition failed, keeping .transition directory for debugging"
-  fi
-fi
+# No matching pattern - allow operation silently
+exit 0

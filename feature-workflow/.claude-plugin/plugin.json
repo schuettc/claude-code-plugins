@@ -1,7 +1,7 @@
 {
   "name": "feature-workflow",
-  "version": "2.8.4",
-  "description": "Feature lifecycle management with JSON-based backlog tracking. Add features to backlog, implement with adaptive agent dispatch, and complete with quality gates. Includes atomic file transitions via hooks for reliable operation.",
+  "version": "3.0.0",
+  "description": "Feature lifecycle management with directory-based architecture. Capture ideas (idea.md), plan implementations (plan.md), and complete with quality gates (shipped.md). Status determined by file presence with auto-generated DASHBOARD.md.",
   "author": {
     "name": "Court Schuett"
   },
@@ -47,17 +47,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/transition-handler.sh",
             "timeout": 30
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "rm -rf ${CLAUDE_PROJECT_DIR}/docs/planning/.transition 2>/dev/null || true",
-            "timeout": 5
           }
         ]
       }

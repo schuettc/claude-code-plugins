@@ -18,32 +18,36 @@ Invoke this skill when the user:
 
 ## Instructions
 
-### Step 1: Load Backlog Files
+### Step 1: Load Dashboard
 
-Read these files (some may not exist):
-- `docs/planning/backlog.json` - Items waiting to start
-- `docs/planning/in-progress.json` - Items being worked on
-- `docs/planning/completed.json` - Finished items
+Read `docs/features/DASHBOARD.md` to see all features by status.
 
-Combine all `items` arrays to search across all statuses.
-
-If no files exist: "No backlog found. Use `/feature-capture` to start tracking."
+If it doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
 
 ### Step 2: Search for Matches
 
-Search `items` for:
-- `name` (partial match, case-insensitive)
-- `problemStatement` (keyword match)
+Parse the DASHBOARD.md tables to find:
+- Feature IDs and names in each section (In Progress, Backlog, Completed)
+- Priority and effort information
+
+For deeper context on a specific feature, read its files:
+```
+docs/features/[id]/
+├── idea.md      # Problem statement, priority, effort, impact
+├── plan.md      # Implementation details (if in-progress)
+└── shipped.md   # Completion notes (if completed)
+```
+
+Search `idea.md` for:
+- `name` in frontmatter (partial match, case-insensitive)
+- Problem statement content (keyword match)
 - `affectedAreas` (if user mentions specific areas)
-- `dependsOn` / `blockedBy` (if discussing dependencies)
 
 ### Step 3: Respond Based on Results
 
-- **Feature exists**: Show status, priority, dependencies. Suggest `/feature-plan [id]` if ready.
+- **Feature exists**: Show status, priority from DASHBOARD.md. Suggest `/feature-plan [id]` if in backlog.
 - **Related items found**: List them, ask if user's idea is an extension or new feature.
 - **Not tracked**: Suggest `/feature-capture` to add it.
-
-Include dependency status (blocked/ready) when relevant.
 
 ## Example
 
@@ -56,7 +60,6 @@ This feature is already tracked:
 **Dark Mode Toggle** (ID: dark-mode-toggle)
 - Status: backlog
 - Priority: P1
-- Dependencies: None
 
 Ready to start! Use `/feature-plan dark-mode-toggle`
 ```
@@ -65,5 +68,5 @@ Ready to start! Use `/feature-plan dark-mode-toggle`
 
 This skill works with:
 - `/feature-capture` - Suggest when idea isn't tracked
-- `/feature-plan` - Suggest when item is ready to start
+- `/feature-plan` - Suggest when item is in backlog
 - `displaying-status` skill - For broader status queries
