@@ -8,13 +8,16 @@ user-invocable: true
 
 You are executing the **ADD TO BACKLOG** workflow - an interactive process to capture new features, enhancements, tech debt, or bug fixes.
 
+## Critical Rules
+
+1. **NEVER edit DASHBOARD.md** - It's auto-generated. Attempts will be blocked by hooks.
+2. **ALWAYS include YAML frontmatter** in idea.md on the first write (not as a second edit)
+
 ## First Step (Do This Now)
 
 **Read the file at path: `docs/features/DASHBOARD.md`**
 
 Check for duplicates and understand current features. If the file doesn't exist, that's OK - you'll create the first feature.
-
-> **Note**: To add a feature, create `docs/features/[id]/idea.md`. The PostToolUse hook automatically regenerates DASHBOARD.md - do NOT edit DASHBOARD.md directly.
 
 ## Target Files
 
@@ -46,8 +49,9 @@ Check for duplicates and understand current features. If the file doesn't exist,
 
 ### Phase 3: Create Feature Directory
 **See**: [capture.md](capture.md)
-- Create `docs/features/[id]/idea.md` with frontmatter and content
+- Create `docs/features/[id]/idea.md` with frontmatter AND content in ONE write
 - Hook automatically regenerates DASHBOARD.md
+- Do NOT attempt to edit DASHBOARD.md - it will be blocked
 
 ### Phase 4-5: Git Staging & Confirmation
 **See**: [confirmation.md](confirmation.md)
@@ -89,7 +93,7 @@ docs/features/
 
 ## idea.md Format
 
-Write idea.md with YAML frontmatter followed by content:
+**IMPORTANT**: Write idea.md with YAML frontmatter on the FIRST write. Do not write content first and add frontmatter later.
 
 ```markdown
 ---
