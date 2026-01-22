@@ -11,7 +11,7 @@ user-invocable: true
 Run this exact command immediately:
 
 ```bash
-bash ~/.claude/plugins/cache/schuettc-claude-code-plugins/feature-workflow/*/skills/feature-init/scripts/init.sh "$(pwd)"
+bash "${CLAUDE_PLUGIN_ROOT}/skills/feature-init/scripts/init.sh" "$(pwd)"
 ```
 
 **STOP. Do not search for files. Do not read files. Do not explore. Just run the command above.**
