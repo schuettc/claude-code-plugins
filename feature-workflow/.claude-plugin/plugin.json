@@ -1,6 +1,6 @@
 {
   "name": "feature-workflow",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "description": "Feature lifecycle management with event-driven architecture. Capture ideas (idea.md), plan implementations (plan.md), and complete with quality gates (shipped.md). Status determined by file presence with auto-generated DASHBOARD.md. Context auto-loads on session start.",
   "author": {
     "name": "Court Schuett"

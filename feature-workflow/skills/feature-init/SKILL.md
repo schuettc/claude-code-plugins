@@ -6,32 +6,16 @@ user-invocable: true
 
 # Initialize Feature Workflow
 
-Run the bundled initialization script to create the `docs/features/` directory structure.
+## DO THIS NOW - NO EXPLORATION NEEDED
 
-## Execute This Script
+Run this exact command immediately:
 
 ```bash
 bash ~/.claude/plugins/cache/schuettc-claude-code-plugins/feature-workflow/*/skills/feature-init/scripts/init.sh "$(pwd)"
 ```
 
-Or if using the skill directory directly:
+**STOP. Do not search for files. Do not read files. Do not explore. Just run the command above.**
 
-```bash
-bash "$(dirname "$0")/scripts/init.sh" "$(pwd)"
-```
+The script creates `docs/features/` and `docs/features/DASHBOARD.md`.
 
-## What It Creates
-
-- `docs/features/` - Directory for all features
-- `docs/features/DASHBOARD.md` - Initial dashboard template
-
-## After Initialization
-
-Use these commands:
-- `/feature-capture` - Add a feature to the backlog
-- `/feature-plan` - Start implementing a feature
-- `/feature-ship` - Complete a feature
-
-## Script Location
-
-The init script is bundled at: [scripts/init.sh](scripts/init.sh)
+That's it. Nothing else to do.
