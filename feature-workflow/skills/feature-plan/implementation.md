@@ -75,12 +75,16 @@ Each step should:
 
 Write the plan document to `docs/features/[id]/plan.md`.
 
-**IMPORTANT**: Writing plan.md automatically triggers the PostToolUse hook. You do NOT need to run any script manually or update DASHBOARD.md directly.
+**IMPORTANT**: Writing plan.md automatically triggers the PostToolUse hook which regenerates DASHBOARD.md. You do NOT need to update DASHBOARD.md directly.
 
 The hook automatically:
 1. Detects the new plan.md file
-2. Sets the terminal statusline to the feature ID
-3. Regenerates DASHBOARD.md (feature moves to In Progress section)
+2. Regenerates DASHBOARD.md (feature moves to In Progress section)
+
+**Set statusline** (after writing plan.md):
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/feature-plan/scripts/set-context.sh [feature-id]
+```
 
 ## Verification
 
@@ -124,7 +128,6 @@ git add docs/features/[id]/ docs/features/DASHBOARD.md
 - System design completed [or "No architecture changes needed"]
 - Implementation plan created with [N] actionable steps
 - Feature status: in-progress (shown in DASHBOARD.md)
-- Terminal statusline set to feature ID
 
 ---
 

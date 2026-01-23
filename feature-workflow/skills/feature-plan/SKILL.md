@@ -14,7 +14,7 @@ You are executing the **IMPLEMENT FEATURE** workflow - a comprehensive feature k
 
 This file contains the backlog. If it doesn't exist, check if `docs/features/` directory exists - if not, the project hasn't been set up for feature tracking yet.
 
-> **Note**: To start a feature, create `docs/features/[id]/plan.md`. The PostToolUse hook automatically updates DASHBOARD.md and sets the statusline - do NOT edit DASHBOARD.md directly.
+> **Note**: To start a feature, create `docs/features/[id]/plan.md`. The PostToolUse hook automatically updates DASHBOARD.md - do NOT edit DASHBOARD.md directly.
 
 ## Contents
 
@@ -122,9 +122,8 @@ This command orchestrates a 6-phase workflow:
 **See**: [implementation.md](implementation.md)
 
 - Create plan.md with implementation steps
-- Writing plan.md triggers hook to:
-  - Update DASHBOARD.md (move to In Progress)
-  - Set statusline to feature ID
+- Writing plan.md triggers hook to update DASHBOARD.md (move to In Progress)
+- **Set statusline** by running: `${CLAUDE_PLUGIN_ROOT}/skills/feature-plan/scripts/set-context.sh <feature-id>`
 - Stage changes with git
 - Display kickoff summary with next steps
 

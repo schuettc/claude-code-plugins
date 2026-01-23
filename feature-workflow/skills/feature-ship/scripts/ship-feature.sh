@@ -10,12 +10,13 @@
 # Usage: ship-feature.sh <project_root> <feature_id> [summary]
 #
 # Example:
-#   ./hooks/ship-feature.sh /path/to/project my-feature "Implemented the feature"
+#   ./skills/feature-ship/scripts/ship-feature.sh /path/to/project my-feature "Implemented the feature"
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+source "$PLUGIN_ROOT/hooks/lib/common.sh"
 
 PROJECT_ROOT="${1:-}"
 FEATURE_ID="${2:-}"
@@ -25,7 +26,7 @@ if [[ -z "$PROJECT_ROOT" || -z "$FEATURE_ID" ]]; then
   echo "Usage: ship-feature.sh <project_root> <feature_id> [summary]"
   echo ""
   echo "Example:"
-  echo "  ./hooks/ship-feature.sh /path/to/project my-feature \"Implemented the feature\""
+  echo "  ./skills/feature-ship/scripts/ship-feature.sh /path/to/project my-feature \"Implemented the feature\""
   exit 1
 fi
 
@@ -78,11 +79,11 @@ log_info "Created: $SHIPPED_FILE"
 
 # Clear statusline
 log_info "Clearing statusline..."
-"$SCRIPT_DIR/clear-feature-context.sh" 2>/dev/null || true
+"$SCRIPT_DIR/clear-context.sh" 2>/dev/null || true
 
 # Regenerate dashboard
 log_info "Regenerating DASHBOARD.md..."
-"$SCRIPT_DIR/generate-dashboard.sh" "$PROJECT_ROOT" || {
+"$PLUGIN_ROOT/hooks/generate-dashboard.sh" "$PROJECT_ROOT" || {
   log_info "Warning: Dashboard regeneration failed"
 }
 

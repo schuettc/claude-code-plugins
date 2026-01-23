@@ -63,7 +63,6 @@ Ready to mark feature as completed?
 This will:
 - Create shipped.md with completion notes
 - Update DASHBOARD.md (move to Completed section)
-- Clear terminal statusline
 - Feature files will remain in docs/features/[id]/ as a record
 
 Proceed? (yes/no)
@@ -112,12 +111,16 @@ Brief summary of what was delivered...
 Any follow-up items, known limitations, or context for future maintainers...
 ```
 
-**IMPORTANT**: Writing shipped.md automatically triggers the PostToolUse hook. You do NOT need to run any script manually or update DASHBOARD.md directly.
+**IMPORTANT**: Writing shipped.md automatically triggers the PostToolUse hook which regenerates DASHBOARD.md. You do NOT need to update DASHBOARD.md directly.
 
 The hook automatically:
 1. Detects the new shipped.md file
-2. Clears the terminal statusline
-3. Regenerates DASHBOARD.md (feature moves to Completed section)
+2. Regenerates DASHBOARD.md (feature moves to Completed section)
+
+**Clear statusline** (after writing shipped.md):
+```bash
+${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/clear-context.sh
+```
 
 ## Stage and Commit
 
@@ -186,6 +189,6 @@ Display comprehensive completion report:
 Congratulations on completing this feature!
 ```
 
-> **Note**: The terminal statusline is automatically cleared when shipped.md is written.
+> **Note**: Remember to clear the terminal statusline by running the clear-context.sh script after writing shipped.md.
 
 **Output**: Complete summary displayed

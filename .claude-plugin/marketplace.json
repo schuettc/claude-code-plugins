@@ -7,8 +7,8 @@
     {
       "name": "feature-workflow",
       "source": "./feature-workflow",
-      "description": "Feature lifecycle management with event-driven architecture. Context auto-loads on session start. Status determined by file presence (idea.md, plan.md, shipped.md) with auto-generated DASHBOARD.md",
-      "version": "4.0.5"
+      "description": "Feature lifecycle management with minimal hook architecture. Status determined by file presence (idea.md, plan.md, shipped.md) with auto-generated DASHBOARD.md",
+      "version": "5.0.0"
     }
   ]
 }

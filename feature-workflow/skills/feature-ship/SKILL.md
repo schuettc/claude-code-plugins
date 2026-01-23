@@ -14,7 +14,7 @@ You are executing the **COMPLETE FEATURE** workflow - a quality gate process tha
 
 This file shows in-progress features. Look at the "In Progress" section to find features ready to ship.
 
-> **Note**: To complete a feature, create `docs/features/[id]/shipped.md`. The PostToolUse hook automatically updates DASHBOARD.md and clears the statusline - do NOT edit DASHBOARD.md directly.
+> **Note**: To complete a feature, create `docs/features/[id]/shipped.md`. The PostToolUse hook automatically updates DASHBOARD.md - do NOT edit DASHBOARD.md directly.
 
 ## Contents
 
@@ -121,7 +121,8 @@ This command orchestrates a 6-phase quality gate workflow:
 - Run full test suite, type check, lint, build
 - Review implementation checklist from plan.md
 - Get user confirmation
-- Write shipped.md (triggers hook to update DASHBOARD.md and clear statusline)
+- Write shipped.md (triggers hook to update DASHBOARD.md)
+- **Clear statusline** by running: `${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/clear-context.sh`
 - Display completion summary
 
 ---
@@ -169,10 +170,16 @@ Any follow-up items, known limitations, or context for future maintainers...
 
 ## Fallback: Manual Ship
 
-If shipped.md wasn't created, you can create it manually:
+If shipped.md wasn't created, you can use the ship script:
 
 ```bash
-# Create shipped.md
+# Use the ship-feature.sh script
+${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/ship-feature.sh <project_root> <feature-id> "Summary message"
+```
+
+Or create shipped.md manually:
+
+```bash
 cat > docs/features/[feature-id]/shipped.md << 'EOF'
 ---
 shipped: $(date +%Y-%m-%d)
@@ -185,9 +192,7 @@ Feature completed and committed.
 EOF
 ```
 
-The Stop hook will regenerate DASHBOARD.md automatically on your next interaction.
-
-**Note**: Git commits with shipping keywords (complete, ship, finish, done) will also trigger statusline clearing automatically.
+The PostToolUse hook will regenerate DASHBOARD.md when the file is written.
 
 ---
 
