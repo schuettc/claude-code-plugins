@@ -121,7 +121,11 @@ This command orchestrates a 6-phase quality gate workflow:
 - Run full test suite, type check, lint, build
 - Review implementation checklist from plan.md
 - Get user confirmation
-- Write shipped.md (triggers hook to update DASHBOARD.md)
+- Write shipped.md
+- **After writing shipped.md, regenerate the dashboard** by running:
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
+  ```
 - **Clear statusline** by running: `${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/clear-context.sh`
 - Display completion summary
 
@@ -192,7 +196,10 @@ Feature completed and committed.
 EOF
 ```
 
-The PostToolUse hook will regenerate DASHBOARD.md when the file is written.
+After creating shipped.md, regenerate the dashboard:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
+```
 
 ---
 

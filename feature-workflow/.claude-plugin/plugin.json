@@ -1,7 +1,7 @@
 {
   "name": "feature-workflow",
-  "version": "5.0.0",
-  "description": "Feature lifecycle management with minimal hook architecture. Capture ideas (idea.md), plan implementations (plan.md), and complete with quality gates (shipped.md). Status determined by file presence with auto-generated DASHBOARD.md.",
+  "version": "6.0.0",
+  "description": "Feature lifecycle management with skill-centric architecture. Capture ideas (idea.md), plan implementations (plan.md), and complete with quality gates (shipped.md). Status determined by file presence with auto-generated DASHBOARD.md. Shared Python library for dashboard generation with minimal hooks.",
   "author": {
     "name": "Court Schuett"
   },
@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/block-direct-writes.sh",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/pre_tool_use.py",
             "timeout": 5
           }
         ]
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/block-direct-writes.sh",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/pre_tool_use.py",
             "timeout": 5
           }
         ]
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/generate-dashboard-hook.sh",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/post_tool_use.py",
             "timeout": 30
           }
         ]
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/generate-dashboard-hook.sh",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/post_tool_use.py",
             "timeout": 30
           }
         ]

@@ -71,7 +71,10 @@ Check for duplicates and understand current features. If the file doesn't exist,
 ### Phase 3: Create Feature Directory
 **See**: [capture.md](capture.md)
 - Create `docs/features/[id]/idea.md` with frontmatter AND content in ONE write
-- Hook automatically regenerates DASHBOARD.md
+- **After writing idea.md, regenerate the dashboard** by running:
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
+  ```
 - Do NOT attempt to edit DASHBOARD.md - it will be blocked
 
 ### Phase 4-5: Git Staging & Confirmation
@@ -213,7 +216,12 @@ Users cannot log in securely...
 - api
 ```
 
-**That's it. Do not create any other files. The hook handles DASHBOARD.md.**
+3. Regenerate the dashboard:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
+```
+
+**That's it. The dashboard regeneration ensures DASHBOARD.md is up to date.**
 
 ---
 

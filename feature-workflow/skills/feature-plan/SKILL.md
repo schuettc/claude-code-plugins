@@ -122,7 +122,10 @@ This command orchestrates a 6-phase workflow:
 **See**: [implementation.md](implementation.md)
 
 - Create plan.md with implementation steps
-- Writing plan.md triggers hook to update DASHBOARD.md (move to In Progress)
+- **After writing plan.md, regenerate the dashboard** by running:
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
+  ```
 - **Set statusline** by running: `${CLAUDE_PLUGIN_ROOT}/skills/feature-plan/scripts/set-context.sh <feature-id>`
 - Stage changes with git
 - Display kickoff summary with next steps
