@@ -126,7 +126,10 @@ This command orchestrates a 6-phase quality gate workflow:
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
   ```
-- **Clear statusline** by running: `${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/clear-context.sh`
+- **Clear statusline** by running:
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/statusline.py clear
+  ```
 - Display completion summary
 
 ---
@@ -177,8 +180,8 @@ Any follow-up items, known limitations, or context for future maintainers...
 If shipped.md wasn't created, you can use the ship script:
 
 ```bash
-# Use the ship-feature.sh script
-${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/ship-feature.sh <project_root> <feature-id> "Summary message"
+# Use the ship_feature.py script
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/ship_feature.py <project_root> <feature-id> "Summary message"
 ```
 
 Or create shipped.md manually:

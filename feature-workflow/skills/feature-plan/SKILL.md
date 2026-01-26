@@ -126,7 +126,10 @@ This command orchestrates a 6-phase workflow:
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
   ```
-- **Set statusline** by running: `${CLAUDE_PLUGIN_ROOT}/skills/feature-plan/scripts/set-context.sh <feature-id>`
+- **Set statusline** by running:
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/statusline.py set <feature-id>
+  ```
 - Stage changes with git
 - Display kickoff summary with next steps
 

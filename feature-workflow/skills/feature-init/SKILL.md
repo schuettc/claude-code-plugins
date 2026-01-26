@@ -11,7 +11,7 @@ user-invocable: true
 Run this exact command immediately:
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/skills/feature-init/scripts/init.sh" "$(pwd)"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/feature-init/scripts/init.py" "$(pwd)"
 ```
 
 **STOP. Do not search for files. Do not read files. Do not explore. Just run the command above.**
