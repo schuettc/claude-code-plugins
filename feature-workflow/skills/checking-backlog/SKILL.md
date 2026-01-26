@@ -69,4 +69,4 @@ Ready to start! Use `/feature-plan dark-mode-toggle`
 This skill works with:
 - `/feature-capture` - Suggest when idea isn't tracked
 - `/feature-plan` - Suggest when item is in backlog
-- `displaying-status` skill - For broader status queries
+- `/feature-status` - For broader status queries
