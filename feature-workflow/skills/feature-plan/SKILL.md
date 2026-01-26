@@ -91,6 +91,10 @@ This command orchestrates a 6-phase workflow:
 - Read the feature's `idea.md` for full details
 - Verify feature is in backlog status (no plan.md exists yet)
 - Handle already-in-progress features with user options
+- **Set statusline immediately after selection** by running:
+  ```bash
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/statusline.py set <feature-id>
+  ```
 
 ### Phase 2: Requirements Deep Dive
 
@@ -125,10 +129,6 @@ This command orchestrates a 6-phase workflow:
 - **After writing plan.md, regenerate the dashboard** by running:
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
-  ```
-- **Set statusline** by running:
-  ```bash
-  python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/statusline.py set <feature-id>
   ```
 - Stage changes with git
 - Display kickoff summary with next steps
