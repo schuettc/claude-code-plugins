@@ -94,6 +94,48 @@ another: value
         assert result["empty"] == ""
         assert result["another"] == "value"
 
+    def test_array_values(self):
+        """Test parsing YAML array syntax."""
+        content = """---
+name: Test
+dependsOn: [feature-a, feature-b]
+blockedBy: [feature-c]
+---
+"""
+        result = parse_frontmatter_string(content)
+        assert result["name"] == "Test"
+        assert result["dependsOn"] == ["feature-a", "feature-b"]
+        assert result["blockedBy"] == ["feature-c"]
+
+    def test_empty_array(self):
+        """Test parsing empty array."""
+        content = """---
+name: Test
+dependsOn: []
+---
+"""
+        result = parse_frontmatter_string(content)
+        assert result["name"] == "Test"
+        assert result["dependsOn"] == []
+
+    def test_array_with_quotes(self):
+        """Test parsing array with quoted values."""
+        content = """---
+dependsOn: ['feature-a', "feature-b"]
+---
+"""
+        result = parse_frontmatter_string(content)
+        assert result["dependsOn"] == ["feature-a", "feature-b"]
+
+    def test_array_with_spaces(self):
+        """Test parsing array with spaces around values."""
+        content = """---
+dependsOn: [ feature-a , feature-b ]
+---
+"""
+        result = parse_frontmatter_string(content)
+        assert result["dependsOn"] == ["feature-a", "feature-b"]
+
 
 class TestParseFrontmatter:
     """Tests for parse_frontmatter function (file-based)."""

@@ -64,6 +64,30 @@ docs/features/[id]/
 
 ---
 
+## Step 3.5: Check Dependencies
+
+Check for unmet dependencies in the feature's idea.md frontmatter:
+
+1. Read the `dependsOn` field from idea.md frontmatter
+2. For each dependency ID, check if it exists and is COMPLETED
+3. If unmet dependencies exist, show a warning:
+
+**Warning format:**
+```
+⚠️ This feature has unmet dependencies:
+- [dep-id-1]: Not completed
+- [dep-id-2]: Not found
+
+Options:
+1. Continue anyway (dependencies are advisory)
+2. Start a dependency first
+3. Cancel and choose different feature
+```
+
+**Note**: Dependencies are advisory only - user can proceed regardless. This is a soft warning to help maintain logical feature order.
+
+---
+
 ## Step 4: Proceed to Phase 2
 
 Once feature is selected and verified to be in backlog status, continue to Phase 2 (Requirements).

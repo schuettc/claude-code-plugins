@@ -101,3 +101,147 @@ created: not-a-date
         ctx = FeatureContext.from_directory(feature_dir)
         assert ctx is not None
         assert ctx.created is None
+
+    def test_depends_on_array(self, tmp_path: Path):
+        """Test parsing dependsOn array from frontmatter."""
+        feature_dir = tmp_path / "dependent-feature"
+        feature_dir.mkdir()
+        (feature_dir / "idea.md").write_text("""---
+name: Dependent Feature
+dependsOn: [feature-a, feature-b]
+---
+
+# Content
+""")
+
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx is not None
+        assert ctx.depends_on == ["feature-a", "feature-b"]
+        assert ctx.blocked_by == []
+
+    def test_blocked_by_array(self, tmp_path: Path):
+        """Test parsing blockedBy array from frontmatter."""
+        feature_dir = tmp_path / "blocking-feature"
+        feature_dir.mkdir()
+        (feature_dir / "idea.md").write_text("""---
+name: Blocking Feature
+blockedBy: [feature-x, feature-y]
+---
+
+# Content
+""")
+
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx is not None
+        assert ctx.depends_on == []
+        assert ctx.blocked_by == ["feature-x", "feature-y"]
+
+    def test_depends_on_single_string(self, tmp_path: Path):
+        """Test dependsOn with single string value (backward compatibility)."""
+        feature_dir = tmp_path / "single-dep-feature"
+        feature_dir.mkdir()
+        (feature_dir / "idea.md").write_text("""---
+name: Single Dep Feature
+dependsOn: feature-a
+---
+
+# Content
+""")
+
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx is not None
+        assert ctx.depends_on == ["feature-a"]
+
+    def test_has_unmet_dependencies_all_missing(self, tmp_path: Path):
+        """Test has_unmet_dependencies when dependencies don't exist."""
+        feature_dir = tmp_path / "test-feature"
+        feature_dir.mkdir()
+        (feature_dir / "idea.md").write_text("""---
+name: Test Feature
+dependsOn: [feature-a, feature-b]
+---
+
+# Content
+""")
+
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx is not None
+
+        all_features = {ctx.feature_id: ctx}
+        unmet = ctx.has_unmet_dependencies(all_features)
+        assert unmet == ["feature-a", "feature-b"]
+
+    def test_has_unmet_dependencies_some_completed(self, tmp_path: Path):
+        """Test has_unmet_dependencies when some deps are completed."""
+        # Create the dependent feature
+        dep_feature_dir = tmp_path / "dep-feature"
+        dep_feature_dir.mkdir()
+        (dep_feature_dir / "idea.md").write_text("""---
+name: Dependent Feature
+dependsOn: [feature-a, feature-b]
+---
+""")
+
+        # Create completed dependency (feature-a)
+        feature_a_dir = tmp_path / "feature-a"
+        feature_a_dir.mkdir()
+        (feature_a_dir / "idea.md").write_text("""---
+name: Feature A
+---
+""")
+        (feature_a_dir / "plan.md").write_text("---\nstarted: 2024-01-01\n---")
+        (feature_a_dir / "shipped.md").write_text("---\nshipped: 2024-01-10\n---")
+
+        # Create incomplete dependency (feature-b)
+        feature_b_dir = tmp_path / "feature-b"
+        feature_b_dir.mkdir()
+        (feature_b_dir / "idea.md").write_text("""---
+name: Feature B
+---
+""")
+
+        dep_ctx = FeatureContext.from_directory(dep_feature_dir)
+        a_ctx = FeatureContext.from_directory(feature_a_dir)
+        b_ctx = FeatureContext.from_directory(feature_b_dir)
+
+        all_features = {
+            dep_ctx.feature_id: dep_ctx,
+            a_ctx.feature_id: a_ctx,
+            b_ctx.feature_id: b_ctx,
+        }
+
+        unmet = dep_ctx.has_unmet_dependencies(all_features)
+        assert unmet == ["feature-b"]
+        assert "feature-a" not in unmet
+
+    def test_has_unmet_dependencies_all_completed(self, tmp_path: Path):
+        """Test has_unmet_dependencies when all deps are completed."""
+        # Create the dependent feature
+        dep_feature_dir = tmp_path / "dep-feature"
+        dep_feature_dir.mkdir()
+        (dep_feature_dir / "idea.md").write_text("""---
+name: Dependent Feature
+dependsOn: [feature-a]
+---
+""")
+
+        # Create completed dependency
+        feature_a_dir = tmp_path / "feature-a"
+        feature_a_dir.mkdir()
+        (feature_a_dir / "idea.md").write_text("""---
+name: Feature A
+---
+""")
+        (feature_a_dir / "plan.md").write_text("---\nstarted: 2024-01-01\n---")
+        (feature_a_dir / "shipped.md").write_text("---\nshipped: 2024-01-10\n---")
+
+        dep_ctx = FeatureContext.from_directory(dep_feature_dir)
+        a_ctx = FeatureContext.from_directory(feature_a_dir)
+
+        all_features = {
+            dep_ctx.feature_id: dep_ctx,
+            a_ctx.feature_id: a_ctx,
+        }
+
+        unmet = dep_ctx.has_unmet_dependencies(all_features)
+        assert unmet == []

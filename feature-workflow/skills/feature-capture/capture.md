@@ -21,6 +21,8 @@ priority: [P0|P1|P2]
 effort: [Small|Medium|Large]
 impact: [Low|Medium|High]
 created: [YYYY-MM-DD]
+dependsOn: [id1, id2]
+blockedBy: [id3, id4]
 ---
 
 # [Original Name]
@@ -49,6 +51,21 @@ All metadata goes in YAML frontmatter between `---` markers:
 | effort | Yes | Small (<1 day), Medium (1-3 days), Large (>3 days) |
 | impact | Yes | Low, Medium, High |
 | created | Yes | Date in YYYY-MM-DD format |
+| dependsOn | No | Array of feature IDs this feature depends on: `[id1, id2]` |
+| blockedBy | No | Array of feature IDs that list this feature as a dependency |
+
+## Dependency Handling
+
+When capturing a feature with dependencies:
+
+1. **Validate IDs**: Check that each dependency ID exists (soft warning if not found - may be capturing future feature)
+2. **Write dependsOn**: Add `dependsOn: [id1, id2]` to new feature's idea.md
+3. **Update blockedBy**: For each dependency target, add this feature's ID to its `blockedBy` field
+
+Example bidirectional sync:
+- Feature B depends on Feature A
+- B's idea.md: `dependsOn: [feature-a]`
+- A's idea.md: `blockedBy: [feature-b]`
 
 ## Hook Behavior
 

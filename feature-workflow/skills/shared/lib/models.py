@@ -30,12 +30,22 @@ class FeatureContext:
     effort: str = ""
     impact: str = ""
     created: Optional[date] = None
+    depends_on: list[str] = field(default_factory=list)
+    blocked_by: list[str] = field(default_factory=list)
 
     # From plan.md frontmatter
     started: Optional[date] = None
 
     # From shipped.md frontmatter
     shipped: Optional[date] = None
+
+    def has_unmet_dependencies(self, all_features: dict[str, "FeatureContext"]) -> list[str]:
+        """Return list of dependency IDs that are not yet completed."""
+        return [
+            dep_id for dep_id in self.depends_on
+            if all_features.get(dep_id) is None
+            or all_features[dep_id].status != FeatureStatus.COMPLETED
+        ]
 
     @classmethod
     def from_directory(cls, feature_dir: Path) -> Optional["FeatureContext"]:
@@ -79,6 +89,14 @@ class FeatureContext:
         started = _parse_date(plan_fm.get("started"))
         shipped = _parse_date(shipped_fm.get("shipped"))
 
+        # Parse dependency fields (handle both string and list)
+        depends_on = idea_fm.get("dependsOn", [])
+        if isinstance(depends_on, str):
+            depends_on = [depends_on] if depends_on else []
+        blocked_by = idea_fm.get("blockedBy", [])
+        if isinstance(blocked_by, str):
+            blocked_by = [blocked_by] if blocked_by else []
+
         return cls(
             feature_id=feature_dir.name,
             feature_dir=feature_dir,
@@ -91,6 +109,8 @@ class FeatureContext:
             created=created,
             started=started,
             shipped=shipped,
+            depends_on=depends_on,
+            blocked_by=blocked_by,
         )
 
 

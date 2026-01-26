@@ -73,6 +73,15 @@ def parse_frontmatter_string(content: str) -> dict[str, Any]:
         elif value.startswith("'") and value.endswith("'"):
             value = value[1:-1]
 
+        # Handle YAML array syntax [item1, item2]
+        if value.startswith("[") and value.endswith("]"):
+            inner = value[1:-1].strip()
+            if inner:
+                result[key] = [item.strip().strip("'\"") for item in inner.split(",")]
+            else:
+                result[key] = []
+            continue
+
         result[key] = value
 
     return result

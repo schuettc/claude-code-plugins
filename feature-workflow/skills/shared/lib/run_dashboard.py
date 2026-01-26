@@ -81,15 +81,23 @@ def generate_dashboard(project_root: Path) -> None:
 
     lines.extend(["", "## Backlog"])
 
+    # Build a lookup of all features for dependency checking
+    all_features: dict[str, FeatureContext] = {}
+    for ctx in backlog_items + inprogress_items + completed_items:
+        all_features[ctx.feature_id] = ctx
+
     if not backlog_items:
         lines.append("*No features in backlog*")
     else:
         lines.append("")
-        lines.append("| ID | Name | Priority | Effort | Added |")
-        lines.append("|----|------|----------|--------|-------|")
+        lines.append("| ID | Name | Priority | Effort | Added | Blocked By |")
+        lines.append("|----|------|----------|--------|-------|------------|")
         for ctx in backlog_items:
             created = str(ctx.created) if ctx.created else ""
-            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.priority} | {ctx.effort} | {created} |")
+            # Show unmet dependencies
+            unmet = ctx.has_unmet_dependencies(all_features)
+            blocked_by = ", ".join(unmet) if unmet else ""
+            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.priority} | {ctx.effort} | {created} | {blocked_by} |")
 
     lines.extend(["", "## Completed"])
 
