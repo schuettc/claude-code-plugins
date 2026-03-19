@@ -2,7 +2,7 @@
 """Statusline management for feature-workflow plugin.
 
 Manages feature context for Claude Code statusline display.
-Writes/clears feature ID to ~/.claude/sessions/${SESSION_ID}.feature
+Uses CLAUDE_PLUGIN_DATA for persistent state that survives plugin updates.
 
 Usage:
     # Set context
@@ -19,8 +19,12 @@ from typing import Optional
 
 
 def get_sessions_dir() -> Path:
-    """Get the Claude sessions directory, creating if needed."""
-    sessions_dir = Path.home() / ".claude" / "sessions"
+    """Get the sessions directory for storing feature context.
+
+    Uses CLAUDE_PLUGIN_DATA (persistent plugin state that survives updates).
+    """
+    plugin_data = os.environ["CLAUDE_PLUGIN_DATA"]
+    sessions_dir = Path(plugin_data) / "sessions"
     sessions_dir.mkdir(parents=True, exist_ok=True)
     return sessions_dir
 

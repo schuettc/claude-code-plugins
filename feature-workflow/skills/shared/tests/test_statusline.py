@@ -19,11 +19,19 @@ class TestGetSessionsDir:
     """Tests for get_sessions_dir function."""
 
     def test_creates_directory(self, tmp_path: Path):
-        """Test that sessions directory is created if it doesn't exist."""
-        with patch.dict(os.environ, {"HOME": str(tmp_path)}):
+        """Test that sessions directory is created under CLAUDE_PLUGIN_DATA."""
+        plugin_data = tmp_path / "plugin-data"
+        with patch.dict(os.environ, {"CLAUDE_PLUGIN_DATA": str(plugin_data)}, clear=False):
             sessions_dir = get_sessions_dir()
             assert sessions_dir.exists()
-            assert sessions_dir == tmp_path / ".claude" / "sessions"
+            assert sessions_dir == plugin_data / "sessions"
+
+    def test_raises_without_plugin_data(self):
+        """Test that missing CLAUDE_PLUGIN_DATA raises KeyError."""
+        env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PLUGIN_DATA"}
+        with patch.dict(os.environ, env, clear=True):
+            with pytest.raises(KeyError):
+                get_sessions_dir()
 
 
 class TestGetSessionId:

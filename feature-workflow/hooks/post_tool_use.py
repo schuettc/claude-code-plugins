@@ -2,8 +2,7 @@
 """PostToolUse hook: Regenerate DASHBOARD.md when feature files change.
 
 Called by Claude Code's PostToolUse hook when Write or Edit tools are used.
-This is a lightweight backup - skills should call dashboard generation directly.
-Only regenerates DASHBOARD.md when docs/features/**/*.md files are modified.
+Returns additionalContext via hookSpecificOutput to inform Claude of updates.
 
 Status detection by file presence:
 - idea.md only → backlog
@@ -56,9 +55,6 @@ def main() -> int:
     if not project_root:
         project_root = "."
 
-    print(f"[hook] Detected feature file write: {feature_id}/{file_type}.md", file=sys.stderr)
-    print(f"[hook] Regenerating DASHBOARD.md", file=sys.stderr)
-
     # Find the dashboard generation script
     plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "")
     if not plugin_root:
@@ -73,6 +69,7 @@ def main() -> int:
         return 0
 
     # Run the dashboard generation script
+    dashboard_updated = False
     try:
         result = subprocess.run(
             [sys.executable, str(dashboard_script), project_root],
@@ -86,6 +83,7 @@ def main() -> int:
             if result.stderr:
                 print(result.stderr, file=sys.stderr)
         else:
+            dashboard_updated = True
             if result.stderr:
                 print(result.stderr, file=sys.stderr)
 
@@ -93,6 +91,19 @@ def main() -> int:
         print("[hook] Warning: Dashboard regeneration timed out", file=sys.stderr)
     except Exception as e:
         print(f"[hook] Warning: Dashboard regeneration error: {e}", file=sys.stderr)
+
+    # Return context to Claude about what happened
+    if dashboard_updated:
+        output = {
+            "hookSpecificOutput": {
+                "hookEventName": "PostToolUse",
+                "additionalContext": (
+                    f"Feature file {feature_id}/{file_type}.md was written. "
+                    f"DASHBOARD.md has been automatically regenerated."
+                ),
+            }
+        }
+        json.dump(output, sys.stdout)
 
     return 0
 

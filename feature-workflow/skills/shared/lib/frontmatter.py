@@ -41,6 +41,7 @@ def parse_frontmatter_string(content: str) -> dict[str, Any]:
     in_frontmatter = False
     frontmatter_lines: list[str] = []
 
+    found_closing = False
     for line in lines:
         if line.strip() == "---":
             if not in_frontmatter:
@@ -48,10 +49,15 @@ def parse_frontmatter_string(content: str) -> dict[str, Any]:
                 continue
             else:
                 # End of frontmatter
+                found_closing = True
                 break
 
         if in_frontmatter:
             frontmatter_lines.append(line)
+
+    # Require both opening and closing delimiters
+    if not found_closing:
+        return result
 
     # Parse simple YAML key: value pairs
     for line in frontmatter_lines:
