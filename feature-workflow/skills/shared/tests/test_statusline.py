@@ -1,94 +1,34 @@
 """Tests for statusline management."""
 
-import os
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from statusline import (
-    get_sessions_dir,
-    get_session_id,
     set_context,
     clear_context,
     get_context,
+    FEATURE_CONTEXT_FILE,
 )
-
-
-class TestGetSessionsDir:
-    """Tests for get_sessions_dir function."""
-
-    def test_creates_directory(self, tmp_path: Path):
-        """Test that sessions directory is created under CLAUDE_PLUGIN_DATA."""
-        plugin_data = tmp_path / "plugin-data"
-        with patch.dict(os.environ, {"CLAUDE_PLUGIN_DATA": str(plugin_data)}, clear=False):
-            sessions_dir = get_sessions_dir()
-            assert sessions_dir.exists()
-            assert sessions_dir == plugin_data / "sessions"
-
-    def test_raises_without_plugin_data(self):
-        """Test that missing CLAUDE_PLUGIN_DATA raises KeyError."""
-        env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PLUGIN_DATA"}
-        with patch.dict(os.environ, env, clear=True):
-            with pytest.raises(KeyError):
-                get_sessions_dir()
-
-
-class TestGetSessionId:
-    """Tests for get_session_id function."""
-
-    def test_from_session_id_env(self):
-        """Test getting session ID from SESSION_ID environment variable."""
-        with patch.dict(os.environ, {"SESSION_ID": "test-session-123"}, clear=False):
-            session_id = get_session_id()
-            assert session_id == "test-session-123"
-
-    def test_from_iterm_mapping(self, tmp_path: Path):
-        """Test getting session ID from iTerm session mapping."""
-        # Set up environment and session file
-        sessions_dir = tmp_path / ".claude" / "sessions"
-        sessions_dir.mkdir(parents=True)
-        session_file = sessions_dir / "iterm-abc123.session"
-        session_file.write_text("mapped-session-456")
-
-        with patch.dict(
-            os.environ,
-            {"HOME": str(tmp_path), "ITERM_SESSION_ID": "abc123"},
-            clear=True,
-        ):
-            with patch("statusline.get_sessions_dir", return_value=sessions_dir):
-                session_id = get_session_id()
-                assert session_id == "mapped-session-456"
-
-    def test_returns_none_when_no_session(self):
-        """Test that None is returned when no session ID can be determined."""
-        with patch.dict(os.environ, {}, clear=True):
-            session_id = get_session_id()
-            assert session_id is None
 
 
 class TestSetContext:
     """Tests for set_context function."""
 
-    def test_sets_context_with_session_id(self, tmp_path: Path):
-        """Test setting context when SESSION_ID is available."""
-        sessions_dir = tmp_path / ".claude" / "sessions"
-        sessions_dir.mkdir(parents=True)
-
-        with patch.dict(os.environ, {"SESSION_ID": "test-session"}, clear=False):
-            with patch("statusline.get_sessions_dir", return_value=sessions_dir):
-                result = set_context("my-feature")
-                assert result is True
-
-                feature_file = sessions_dir / "test-session.feature"
-                assert feature_file.exists()
-                assert feature_file.read_text() == "my-feature"
-
-    def test_returns_false_when_no_session(self):
-        """Test that False is returned when no session ID."""
-        with patch.dict(os.environ, {}, clear=True):
+    def test_sets_context(self, tmp_path: Path):
+        """Test setting feature context."""
+        fake_file = tmp_path / "feature-context"
+        with patch("statusline.FEATURE_CONTEXT_FILE", fake_file):
             result = set_context("my-feature")
-            assert result is False
+            assert result is True
+            assert fake_file.read_text() == "my-feature"
+
+    def test_overwrites_existing(self, tmp_path: Path):
+        """Test overwriting existing context."""
+        fake_file = tmp_path / "feature-context"
+        fake_file.write_text("old-feature")
+        with patch("statusline.FEATURE_CONTEXT_FILE", fake_file):
+            set_context("new-feature")
+            assert fake_file.read_text() == "new-feature"
 
 
 class TestClearContext:
@@ -96,26 +36,19 @@ class TestClearContext:
 
     def test_clears_existing_context(self, tmp_path: Path):
         """Test clearing an existing feature context."""
-        sessions_dir = tmp_path / ".claude" / "sessions"
-        sessions_dir.mkdir(parents=True)
-        feature_file = sessions_dir / "test-session.feature"
-        feature_file.write_text("my-feature")
-
-        with patch.dict(os.environ, {"SESSION_ID": "test-session"}, clear=False):
-            with patch("statusline.get_sessions_dir", return_value=sessions_dir):
-                result = clear_context()
-                assert result is True
-                assert not feature_file.exists()
+        fake_file = tmp_path / "feature-context"
+        fake_file.write_text("my-feature")
+        with patch("statusline.FEATURE_CONTEXT_FILE", fake_file):
+            result = clear_context()
+            assert result is True
+            assert not fake_file.exists()
 
     def test_returns_false_when_no_context(self, tmp_path: Path):
         """Test clearing when no context exists."""
-        sessions_dir = tmp_path / ".claude" / "sessions"
-        sessions_dir.mkdir(parents=True)
-
-        with patch.dict(os.environ, {"SESSION_ID": "test-session"}, clear=False):
-            with patch("statusline.get_sessions_dir", return_value=sessions_dir):
-                result = clear_context()
-                assert result is False
+        fake_file = tmp_path / "feature-context"
+        with patch("statusline.FEATURE_CONTEXT_FILE", fake_file):
+            result = clear_context()
+            assert result is False
 
 
 class TestGetContext:
@@ -123,28 +56,23 @@ class TestGetContext:
 
     def test_gets_existing_context(self, tmp_path: Path):
         """Test getting an existing feature context."""
-        sessions_dir = tmp_path / ".claude" / "sessions"
-        sessions_dir.mkdir(parents=True)
-        feature_file = sessions_dir / "test-session.feature"
-        feature_file.write_text("my-feature")
-
-        with patch.dict(os.environ, {"SESSION_ID": "test-session"}, clear=False):
-            with patch("statusline.get_sessions_dir", return_value=sessions_dir):
-                context = get_context()
-                assert context == "my-feature"
+        fake_file = tmp_path / "feature-context"
+        fake_file.write_text("my-feature")
+        with patch("statusline.FEATURE_CONTEXT_FILE", fake_file):
+            context = get_context()
+            assert context == "my-feature"
 
     def test_returns_none_when_no_context(self, tmp_path: Path):
-        """Test getting context when none exists."""
-        sessions_dir = tmp_path / ".claude" / "sessions"
-        sessions_dir.mkdir(parents=True)
+        """Test getting context when file doesn't exist."""
+        fake_file = tmp_path / "feature-context"
+        with patch("statusline.FEATURE_CONTEXT_FILE", fake_file):
+            context = get_context()
+            assert context is None
 
-        with patch.dict(os.environ, {"SESSION_ID": "test-session"}, clear=False):
-            with patch("statusline.get_sessions_dir", return_value=sessions_dir):
-                context = get_context()
-                assert context is None
-
-    def test_returns_none_when_no_session(self):
-        """Test getting context when no session ID."""
-        with patch.dict(os.environ, {}, clear=True):
+    def test_returns_none_when_empty(self, tmp_path: Path):
+        """Test getting context when file is empty."""
+        fake_file = tmp_path / "feature-context"
+        fake_file.write_text("")
+        with patch("statusline.FEATURE_CONTEXT_FILE", fake_file):
             context = get_context()
             assert context is None
