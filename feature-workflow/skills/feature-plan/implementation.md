@@ -102,7 +102,7 @@ git add docs/features/[id]/ docs/features/DASHBOARD.md
 
 ---
 
-# Phase 6: Kickoff Summary & Todo Creation
+# Phase 6: Kickoff Summary & Implementation Handoff
 
 1. **Create TodoWrite list** with implementation steps from the plan
 
@@ -128,29 +128,28 @@ git add docs/features/[id]/ docs/features/DASHBOARD.md
 - System design completed [or "No architecture changes needed"]
 - Implementation plan created with [N] actionable steps
 - Feature status: in-progress (shown in DASHBOARD.md)
-
----
-
-## Next Steps:
-
-### 1. Review Your Plan
-Read: docs/features/[id]/plan.md
-
-### 2. Start First Implementation Step
-Task: [First step description]
-Files: [Affected files]
-
-### 3. Development Workflow
-- Update progress in plan.md as you work
-- Run tests frequently
-- Before committing: ensure tests pass
-
-### 4. When Done
-Run `/feature-ship [id]` to complete the feature
-
----
-
-Ready to start coding!
 ```
 
-**Output**: Complete kickoff summary with clear next steps
+3. **Launch implementation in a clean context**
+
+Ask the user: **"Plan is ready. Want to start implementation with a fresh context?"**
+
+If yes, check if cmux is available and launch accordingly:
+
+```bash
+# Check for cmux
+if command -v cmux &> /dev/null; then
+  cmux new-workspace --cwd "$PWD" --command "claude --prompt '/feature-workflow:feature-implement [id]'"
+else
+  echo "NO_CMUX"
+fi
+```
+
+- **If cmux is available**: The command above opens a new workspace with a fresh Claude session that auto-starts implementation. Tell the user: *"Opened a new workspace to start implementation."*
+- **If cmux is not available**: Tell the user to start a new session:
+  ```
+  To start implementation with a clean context, run /clear and then:
+  /feature-workflow:feature-implement [id]
+  ```
+
+**Output**: Complete kickoff summary with implementation handoff
