@@ -97,6 +97,11 @@ Brief summary of what was delivered...
 - Change 2
 - Change 3
 
+## Files Changed
+- `path/to/file1.ts`
+- `path/to/file2.ts`
+- `path/to/file3.ts`
+
 ## Testing
 - Tests: [N] passing
 - Coverage: [X]% (if available)
@@ -110,6 +115,24 @@ Brief summary of what was delivered...
 ## Notes
 Any follow-up items, known limitations, or context for future maintainers...
 ```
+
+## Gathering Files Changed
+
+Before writing shipped.md, collect the list of files changed for this feature. Run:
+
+```bash
+git diff --name-only $(git log --all --grep="[feature-id]" --format=%H | tail -1)^..HEAD -- . ':!docs/features/'
+```
+
+If that doesn't capture all changes, use the commit range from when `plan.md` was created to now:
+
+```bash
+git log --oneline docs/features/[id]/plan.md
+# Use that commit hash as the start point
+git diff --name-only <plan-commit>^..HEAD -- . ':!docs/features/'
+```
+
+Include all implementation files (source, tests, config) but exclude the feature's own docs directory (`docs/features/[id]/`).
 
 **IMPORTANT**: Writing shipped.md automatically triggers the PostToolUse hook which regenerates DASHBOARD.md. You do NOT need to update DASHBOARD.md directly.
 

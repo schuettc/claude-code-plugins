@@ -153,6 +153,10 @@ Brief summary of what was delivered...
 - Change 2
 - Change 3
 
+## Files Changed
+- `path/to/file1.ts`
+- `path/to/file2.ts`
+
 ## Testing
 How the feature was tested and verified...
 
