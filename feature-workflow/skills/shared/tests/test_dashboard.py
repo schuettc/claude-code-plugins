@@ -114,8 +114,8 @@ class TestGenerateDashboard:
         content = dashboard_path.read_text()
 
         # Check backlog table headers
-        assert "| ID | Name | Priority | Effort | Added |" in content
-        assert "|----|------|----------|--------|-------|" in content
+        assert "| ID | Name | Category | Priority | Effort | Added |" in content
+        assert "|----|------|----------|----------|--------|-------|" in content
 
     def test_feature_links(self, feature_in_backlog: Path):
         """Test that feature IDs are links to directories."""
@@ -127,6 +127,33 @@ class TestGenerateDashboard:
 
         # Check that ID is a link
         assert "[test-feature](./test-feature/)" in content
+
+    def test_backlog_table_includes_category(self, feature_in_backlog: Path):
+        """Test that backlog table includes Category column."""
+        project_root = feature_in_backlog.parent.parent.parent
+        generate_dashboard(project_root)
+
+        dashboard_path = project_root / "docs" / "features" / "DASHBOARD.md"
+        content = dashboard_path.read_text()
+
+        assert "| ID | Name | Category |" in content
+        assert "| general |" in content or "general" in content
+
+    def test_in_progress_table_includes_category(self, feature_in_progress: Path):
+        """Test that in-progress table includes Category column."""
+        project_root = feature_in_progress.parent.parent.parent
+        generate_dashboard(project_root)
+
+        dashboard_path = project_root / "docs" / "features" / "DASHBOARD.md"
+        content = dashboard_path.read_text()
+
+        # Check that the in-progress table header has Category
+        lines = content.split("\n")
+        for line in lines:
+            if "| ID | Name | Category | Priority | Started |" in line:
+                break
+        else:
+            pytest.fail("In Progress table missing Category column header")
 
     def test_skips_non_feature_directories(self, temp_project: Path):
         """Test that directories without idea.md are skipped."""

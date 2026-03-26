@@ -68,6 +68,13 @@ Does this feature depend on any other backlog items being completed first?
 Example: analytics-api, user-auth
 ```
 
+## Question 9: Category (Optional)
+
+```
+What category does this belong to? (e.g., coding, business, infrastructure, design)
+Leave blank for "general".
+```
+
 **Note**: Dependencies create bidirectional relationships:
 - The new item's `dependsOn` array will include the specified IDs
 - Each dependency target's `blockedBy` array will include this new item's ID

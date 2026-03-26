@@ -18,6 +18,13 @@ Invoke this skill when the user asks:
 - "Show me the backlog"
 - "What have we completed recently?"
 
+## Arguments
+
+`$ARGUMENTS` can be:
+- Empty — show full dashboard
+- `cat:<category>` — filter all tables to only show features matching that category (case-insensitive)
+- A feature ID — show details for that specific feature
+
 ## Instructions
 
 ### Step 1: Load Dashboard
@@ -25,6 +32,10 @@ Invoke this skill when the user asks:
 Read `docs/features/DASHBOARD.md` - this is the auto-generated dashboard that shows all features organized by status.
 
 If it doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
+
+### Step 1.5: Apply Category Filter
+
+If `$ARGUMENTS` starts with `cat:`, extract the category name (everything after `cat:`). Filter all dashboard tables to only show features whose Category column matches (case-insensitive). Display a header: **"Filtered by category: [name]"**
 
 ### Step 2: Parse Dashboard Sections
 

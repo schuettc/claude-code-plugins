@@ -33,6 +33,8 @@ $ARGUMENTS
 
 If no specific feature ID was provided above, you will help the user select from the backlog.
 
+If `$ARGUMENTS` starts with `cat:`, filter the backlog to only show features matching that category (case-insensitive) and let the user select from the filtered list.
+
 ---
 
 ## File Organization

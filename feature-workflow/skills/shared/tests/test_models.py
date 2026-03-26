@@ -152,6 +152,53 @@ dependsOn: feature-a
         assert ctx is not None
         assert ctx.depends_on == ["feature-a"]
 
+    def test_category_from_frontmatter(self, tmp_path: Path):
+        """Test that category is parsed from frontmatter."""
+        feature_dir = tmp_path / "categorized-feature"
+        feature_dir.mkdir()
+        (feature_dir / "idea.md").write_text("""---
+name: Categorized Feature
+category: coding
+---
+
+# Content
+""")
+
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx is not None
+        assert ctx.category == "coding"
+
+    def test_category_default(self, tmp_path: Path):
+        """Test that missing category defaults to 'general'."""
+        feature_dir = tmp_path / "no-category-feature"
+        feature_dir.mkdir()
+        (feature_dir / "idea.md").write_text("""---
+name: No Category Feature
+---
+
+# Content
+""")
+
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx is not None
+        assert ctx.category == "general"
+
+    def test_category_empty_string(self, tmp_path: Path):
+        """Test that empty category value defaults to 'general'."""
+        feature_dir = tmp_path / "empty-category-feature"
+        feature_dir.mkdir()
+        (feature_dir / "idea.md").write_text("""---
+name: Empty Category Feature
+category:
+---
+
+# Content
+""")
+
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx is not None
+        assert ctx.category == "general"
+
     def test_has_unmet_dependencies_all_missing(self, tmp_path: Path):
         """Test has_unmet_dependencies when dependencies don't exist."""
         feature_dir = tmp_path / "test-feature"

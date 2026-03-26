@@ -97,11 +97,11 @@ def _generate_dashboard_content(
         lines.append("*No features in progress*")
     else:
         lines.append("")
-        lines.append("| ID | Name | Priority | Started |")
-        lines.append("|----|------|----------|---------|")
+        lines.append("| ID | Name | Category | Priority | Started |")
+        lines.append("|----|------|----------|----------|---------|")
         for ctx in in_progress:
             started = _format_date(ctx.started)
-            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.priority} | {started} |")
+            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.category} | {ctx.priority} | {started} |")
 
     lines.extend(["", "## Backlog"])
 
@@ -109,11 +109,11 @@ def _generate_dashboard_content(
         lines.append("*No features in backlog*")
     else:
         lines.append("")
-        lines.append("| ID | Name | Priority | Effort | Added |")
-        lines.append("|----|------|----------|--------|-------|")
+        lines.append("| ID | Name | Category | Priority | Effort | Added |")
+        lines.append("|----|------|----------|----------|--------|-------|")
         for ctx in backlog:
             created = _format_date(ctx.created)
-            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.priority} | {ctx.effort} | {created} |")
+            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.category} | {ctx.priority} | {ctx.effort} | {created} |")
 
     lines.extend(["", "## Completed"])
 

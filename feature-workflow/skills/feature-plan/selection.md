@@ -20,8 +20,15 @@ Read `docs/features/DASHBOARD.md` to see the current backlog.
 - If not in Backlog table, check In Progress table (may already be started)
 - If not found anywhere, list available items and ask user to select
 
+**If `cat:<category>` Provided**:
+- Filter backlog to only features matching that category (case-insensitive)
+- Display filtered features organized by priority (P0 first)
+- Show category next to each feature in the selection list
+- Ask user to select by ID
+
 **If No Feature ID Provided**:
 - Display features from the Backlog section
+- Show category next to each feature in the selection list
 - Organize by priority (P0 first)
 - Ask user to select by ID
 

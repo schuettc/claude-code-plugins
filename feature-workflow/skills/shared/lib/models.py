@@ -29,6 +29,7 @@ class FeatureContext:
     priority: str = ""
     effort: str = ""
     impact: str = ""
+    category: str = "general"
     created: Optional[date] = None
     depends_on: list[str] = field(default_factory=list)
     blocked_by: list[str] = field(default_factory=list)
@@ -106,6 +107,7 @@ class FeatureContext:
             priority=idea_fm.get("priority", ""),
             effort=idea_fm.get("effort", ""),
             impact=idea_fm.get("impact", ""),
+            category=idea_fm.get("category", "general") or "general",
             created=created,
             started=started,
             shipped=shipped,

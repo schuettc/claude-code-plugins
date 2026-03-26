@@ -45,8 +45,8 @@ Search `idea.md` for:
 
 ### Step 3: Respond Based on Results
 
-- **Feature exists**: Show status, priority from DASHBOARD.md. Suggest `/feature-plan [id]` if in backlog.
-- **Related items found**: List them, ask if user's idea is an extension or new feature.
+- **Feature exists**: Show status, priority, and category from DASHBOARD.md. Suggest `/feature-plan [id]` if in backlog.
+- **Related items found**: List them with their category, ask if user's idea is an extension or new feature.
 - **Not tracked**: Suggest `/feature-capture` to add it.
 
 ## Example

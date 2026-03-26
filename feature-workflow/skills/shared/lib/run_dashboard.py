@@ -73,11 +73,11 @@ def generate_dashboard(project_root: Path) -> None:
         lines.append("*No features in progress*")
     else:
         lines.append("")
-        lines.append("| ID | Name | Priority | Started |")
-        lines.append("|----|------|----------|---------|")
+        lines.append("| ID | Name | Category | Priority | Started |")
+        lines.append("|----|------|----------|----------|---------|")
         for ctx in inprogress_items:
             started = str(ctx.started) if ctx.started else ""
-            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.priority} | {started} |")
+            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.category} | {ctx.priority} | {started} |")
 
     lines.extend(["", "## Backlog"])
 
@@ -90,14 +90,14 @@ def generate_dashboard(project_root: Path) -> None:
         lines.append("*No features in backlog*")
     else:
         lines.append("")
-        lines.append("| ID | Name | Priority | Effort | Added | Blocked By |")
-        lines.append("|----|------|----------|--------|-------|------------|")
+        lines.append("| ID | Name | Category | Priority | Effort | Added | Blocked By |")
+        lines.append("|----|------|----------|----------|--------|-------|------------|")
         for ctx in backlog_items:
             created = str(ctx.created) if ctx.created else ""
             # Show unmet dependencies
             unmet = ctx.has_unmet_dependencies(all_features)
             blocked_by = ", ".join(unmet) if unmet else ""
-            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.priority} | {ctx.effort} | {created} | {blocked_by} |")
+            lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.category} | {ctx.priority} | {ctx.effort} | {created} | {blocked_by} |")
 
     lines.extend(["", "## Completed"])
 
