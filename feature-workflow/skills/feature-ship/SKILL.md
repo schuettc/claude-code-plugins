@@ -114,6 +114,22 @@ This command orchestrates a 6-phase quality gate workflow:
 - **Medium/Large**: Run qa-engineer agent
 - **BLOCKS** completion if critical issues or test failures
 
+### Phase 3.5: External Review Gate
+
+Check for an independent external review verdict before proceeding to final verification.
+
+1. Read `docs/features/<id>/reviews/review-status.md` (if it exists)
+2. Based on the verdict:
+
+| Verdict | Action |
+|---------|--------|
+| `fail` | **BLOCKS completion** unless `--force` was passed in $ARGUMENTS. Display all blocking issues. If `--force`: display warning "⚠ Proceeding despite FAILING external review" and require explicit user confirmation before continuing. Without `--force`: stop and tell user to address the issues or re-run with `--force`. |
+| `conditional-pass` | Display recommendations from the review. Ask user to acknowledge before proceeding. |
+| `pass` | Display: "External review: PASS". Proceed. |
+| File absent | **Non-blocking** (reviewer is optional). Display: "Note: No external review was performed for this feature." Proceed. |
+
+If verdict details are available, also read the most recent review file (`reviews/pre-ship-review.md`, `reviews/impl-review-*.md`, or `reviews/plan-review.md`) to provide context.
+
 ### Phases 4-6: Verification & Completion
 
 **See**: [completion.md](completion.md)

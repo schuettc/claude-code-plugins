@@ -21,6 +21,9 @@ from pathlib import Path
 # Pattern to match feature file writes
 FEATURE_FILE_PATTERN = re.compile(r"docs/features/([^/]+)/(idea|plan|shipped)\.md$")
 
+# Pattern to match review status file writes
+REVIEW_STATUS_PATTERN = re.compile(r"docs/features/([^/]+)/reviews/review-status\.md$")
+
 
 def main() -> int:
     """Check if dashboard needs regeneration after a tool call."""
@@ -40,6 +43,39 @@ def main() -> int:
     file_path = tool_input.get("file_path", "")
 
     if not file_path:
+        return 0
+
+    # Check if this is a review status file write
+    review_match = REVIEW_STATUS_PATTERN.search(file_path)
+    if review_match:
+        feature_id = review_match.group(1)
+        # Parse verdict from the file to provide context
+        try:
+            status_file = Path(file_path)
+            if status_file.exists():
+                content = status_file.read_text(encoding="utf-8")
+                # Extract verdict from frontmatter
+                verdict = ""
+                phase = ""
+                for line in content.split("\n"):
+                    if line.startswith("verdict:"):
+                        verdict = line.split(":", 1)[1].strip()
+                    elif line.startswith("phase:"):
+                        phase = line.split(":", 1)[1].strip()
+                if verdict:
+                    output = {
+                        "hookSpecificOutput": {
+                            "hookEventName": "PostToolUse",
+                            "additionalContext": (
+                                f"External review verdict for feature '{feature_id}' "
+                                f"({phase} phase): {verdict.upper()}. "
+                                f"See docs/features/{feature_id}/reviews/ for details."
+                            ),
+                        }
+                    }
+                    json.dump(output, sys.stdout)
+        except Exception:
+            pass  # Non-critical, don't block on review status parsing
         return 0
 
     # Check if this is a feature file write

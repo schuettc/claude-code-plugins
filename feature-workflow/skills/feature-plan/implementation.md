@@ -92,13 +92,32 @@ After writing plan.md:
 1. Check that the file was created successfully
 2. Read DASHBOARD.md to verify the feature appears in the In Progress table
 
+## Signal External Reviewer
+
+After writing plan.md, create a review request file to signal the reviewer terminal (if one is running). This is **non-blocking** — the implementer proceeds regardless of whether a reviewer is active.
+
+Write the file `docs/features/[id]/reviews/request-plan.md`:
+
+```markdown
+---
+phase: plan
+requested: YYYY-MM-DD HH:MM:SS
+---
+
+# Review Requested: Plan
+
+External review requested for the **plan** phase.
+```
+
+> **Note**: This simply creates a signal file. If a reviewer terminal is running `/feature-review <id> --watch`, it will automatically pick up this request and begin a plan review. If no reviewer is active, the file has no effect.
+
 ## Stage Changes
 
 ```bash
 git add docs/features/[id]/ docs/features/DASHBOARD.md
 ```
 
-**Output**: Feature transitioned to in-progress, statusline set
+**Output**: Feature transitioned to in-progress, statusline set, review requested
 
 ---
 
