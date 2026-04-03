@@ -37,6 +37,17 @@ Based on arguments, follow the appropriate mode:
 - **No `--respond` flag** → [submit.md](submit.md) (create branch, open draft PR, push)
 - **`--respond` flag** → [respond.md](respond.md) (read PR reviews, address feedback, push updates)
 
+## Branching Strategy
+
+```
+feature/<id>  →  dev  →  main
+```
+
+- Feature branches are created from `dev`
+- Draft PRs target `dev`
+- `/feature-ship` merges the PR into `dev`
+- `dev` → `main` promotion is handled separately (releases, etc.)
+
 ## Guidelines
 
 - **Stay on the feature branch** — all review work happens on `feature/<id>`

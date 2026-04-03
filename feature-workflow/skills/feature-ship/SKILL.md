@@ -92,27 +92,27 @@ This command orchestrates a 7-phase quality gate workflow:
 
 ### Phase 0: Merge PR
 
-If the implementation was submitted for external review via `/feature-submit`, there will be an open draft PR. This phase merges it.
+If the implementation was submitted for external review via `/feature-submit`, there will be an open draft PR targeting `dev`. This phase merges it.
 
 1. Check if a PR exists for this feature:
    ```bash
-   gh pr list --head feature/<id> --json number,url,state,isDraft --jq '.[0]'
+   gh pr list --head feature/<id> --json number,url,state,isDraft,baseRefName --jq '.[0]'
    ```
 2. If a PR exists:
    - If still in draft, mark it ready:
      ```bash
      gh pr ready <pr-number>
      ```
-   - Confirm with user: **"Merge PR #<number> for feature/<id>?"**
+   - Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
    - Merge the PR:
      ```bash
      gh pr merge <pr-number> --merge --delete-branch
      ```
-   - Switch back to the base branch:
+   - Switch to dev and pull:
      ```bash
-     git checkout <base-branch> && git pull
+     git checkout dev && git pull
      ```
-3. If no PR exists: check if on a feature branch and offer local merge, or skip this phase
+3. If no PR exists: check if on a feature branch and offer local merge to dev, or skip this phase
 
 ### Phase 1: Pre-flight Check & Effort Selection
 

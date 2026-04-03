@@ -17,11 +17,15 @@ gh pr list --head feature/<id> --json number,url,state --jq '.[0]'
 ```
 
 **If no feature branch exists (first submission):**
-1. Create and switch to the feature branch:
+1. Ensure you're on `dev` and up to date:
+   ```bash
+   git checkout dev && git pull
+   ```
+2. Create and switch to the feature branch from `dev`:
    ```bash
    git checkout -b feature/<id>
    ```
-2. If the branch already exists locally, switch to it:
+3. If the branch already exists locally, switch to it:
    ```bash
    git checkout feature/<id>
    ```
@@ -61,11 +65,11 @@ Generate the PR body using a hybrid approach:
 
 1. **Git diff summary** — what files changed:
    ```bash
-   git diff main --stat
+   git diff dev --stat
    ```
 2. **Commit messages** since branching:
    ```bash
-   git log main..HEAD --oneline
+   git log dev..HEAD --oneline
    ```
 3. **Plan.md progress** — read `docs/features/<id>/plan.md` and extract:
    - Which implementation steps are checked off `[x]`
@@ -102,16 +106,10 @@ Incorporate the user's edits into the final version.
 
 #### 4d: Create the Draft PR
 
-Determine the base branch (check what branch plan.md was created on — usually `main` or `dev`):
+The PR should target `dev` (feature branches merge to `dev`, then `dev` merges to `main`):
 
 ```bash
-git log --format=%D main | head -1
-```
-
-Default to the branch the repo was on before creating the feature branch. If uncertain, ask the user.
-
-```bash
-gh pr create --draft --title "feat(<id>): [feature name]" --base <base-branch> --body "<PR body>"
+gh pr create --draft --title "feat(<id>): [feature name]" --base dev --body "<PR body>"
 ```
 
 ### If PR already exists — update it:
