@@ -109,7 +109,7 @@ requested: YYYY-MM-DD HH:MM:SS
 External review requested for the **plan** phase.
 ```
 
-> **Note**: This simply creates a signal file. If a reviewer terminal is running `/feature-review <id> --watch`, it will automatically pick up this request and begin a plan review. If no reviewer is active, the file has no effect.
+> **Note**: This creates a signal file for external reviewers. If a Gemini or Codex reviewer session is active, it can pick up this request. If no reviewer is active, the file has no effect.
 
 ## Stage Changes
 

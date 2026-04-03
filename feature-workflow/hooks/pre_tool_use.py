@@ -7,12 +7,12 @@ Uses hookSpecificOutput JSON format for decisions:
 
 Blocks:
 - docs/features/DASHBOARD.md (auto-generated from feature directories)
-- docs/features/*/reviews/review-status.md (reviewer-only, unless in reviewer mode)
-- docs/features/*/reviews/*-review.md (reviewer-only, unless in reviewer mode)
+- docs/features/*/reviews/*-review-round-*.md (external reviewer files, unless in reviewer mode)
 
 Allows:
 - All writes to docs/features/[id]/*.md (feature directories)
 - docs/features/[id]/reviews/request-*.md (implementer review requests)
+- docs/features/[id]/reviews/context-round-*.md (implementer review context)
 """
 
 import json
@@ -22,12 +22,17 @@ import sys
 
 # Pattern to match review verdict/status files (reviewer-only)
 REVIEW_VERDICT_PATTERN = re.compile(
-    r"docs/features/[^/]+/reviews/(review-status\.md|.*-review(-\d+)?\.md)$"
+    r"docs/features/[^/]+/reviews/(review-status\.md|.*-review(-\d+|-round-\d+)?\.md)$"
 )
 
 # Pattern to match review request files (implementer-allowed)
 REVIEW_REQUEST_PATTERN = re.compile(
     r"docs/features/[^/]+/reviews/request-.*\.md$"
+)
+
+# Pattern to match review context files (implementer-allowed)
+REVIEW_CONTEXT_PATTERN = re.compile(
+    r"docs/features/[^/]+/reviews/context-round-\d+\.md$"
 )
 
 
@@ -84,6 +89,10 @@ def main() -> int:
     if not _is_reviewer_mode():
         # Allow review request files from implementer
         if REVIEW_REQUEST_PATTERN.search(file_path):
+            return 0
+
+        # Allow review context files from implementer
+        if REVIEW_CONTEXT_PATTERN.search(file_path):
             return 0
 
         # Block review verdict/status files from implementer
