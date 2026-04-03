@@ -90,26 +90,29 @@ This command orchestrates a 7-phase quality gate workflow:
 
 ## Phase Details
 
-### Phase 0: Branch Merge
+### Phase 0: Merge PR
 
-If the implementation was submitted for external review via `/feature-submit`, the work will be on a `feature/<id>` branch. This phase merges it back.
+If the implementation was submitted for external review via `/feature-submit`, there will be an open draft PR. This phase merges it.
 
-1. Check current branch:
+1. Check if a PR exists for this feature:
    ```bash
-   git branch --show-current
+   gh pr list --head feature/<id> --json number,url,state,isDraft --jq '.[0]'
    ```
-2. If on `feature/<id>` branch:
-   - Confirm with user: **"Merge feature/<id> to main?"**
-   - If user specifies a different target branch (e.g., `dev`), use that instead
-   - Merge with:
+2. If a PR exists:
+   - If still in draft, mark it ready:
      ```bash
-     git checkout main && git merge feature/<id> --no-ff -m "Merge feature/<id>: [feature name]"
+     gh pr ready <pr-number>
      ```
-   - Ask user if they want to delete the feature branch:
+   - Confirm with user: **"Merge PR #<number> for feature/<id>?"**
+   - Merge the PR:
      ```bash
-     git branch -d feature/<id>
+     gh pr merge <pr-number> --merge --delete-branch
      ```
-3. If already on main/dev: skip this phase
+   - Switch back to the base branch:
+     ```bash
+     git checkout <base-branch> && git pull
+     ```
+3. If no PR exists: check if on a feature branch and offer local merge, or skip this phase
 
 ### Phase 1: Pre-flight Check & Effort Selection
 
