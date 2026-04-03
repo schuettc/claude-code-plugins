@@ -108,9 +108,9 @@ If the implementation was submitted for external review via `/feature-submit`, t
      ```bash
      gh pr merge <pr-number> --merge --delete-branch
      ```
-   - Switch to dev and pull:
+   - Switch to dev, pull, and delete the local feature branch:
      ```bash
-     git checkout dev && git pull
+     git checkout dev && git pull && git branch -d feature/<id>
      ```
 3. If no PR exists: check if on a feature branch and offer local merge to dev, or skip this phase
 
