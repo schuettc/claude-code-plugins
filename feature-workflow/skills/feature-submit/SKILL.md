@@ -54,3 +54,5 @@ feature/<id>  →  dev  →  main
 - **Commit frequently** — each round of changes gets its own commit
 - **The PR is the review artifact** — all review context, feedback, and discussion lives on the PR
 - **Validate before dismissing** — if a reviewer flags something, investigate before disagreeing
+- **Do NOT self-review** — after submitting, STOP. Do not launch code review agents, run review skills, or analyze the code. External reviewers (Gemini/Codex) handle reviews in separate sessions.
+- **No review files** — do not create `reviews/` directories or write review markdown files. All feedback lives on the GitHub PR.

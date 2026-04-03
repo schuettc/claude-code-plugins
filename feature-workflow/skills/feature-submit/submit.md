@@ -120,7 +120,9 @@ gh pr create --draft --title "feat(<id>): [feature name]" --base dev --body "<PR
    gh pr comment <pr-number> --body "## Round N Update\n\n### Changes Made\n- [summary of changes]\n\n### Feedback Addressed\n- [which review items were fixed]"
    ```
 
-## Step 5: Display Next Steps
+## Step 5: Display Next Steps and STOP
+
+Display the following to the user, then **STOP**. Do NOT launch any code review agents, do NOT run any review skills, do NOT analyze the code further. Your job is done.
 
 ```
 ## Ready for Review
@@ -139,3 +141,5 @@ Run `/feature-submit <id> --respond` to read feedback and iterate.
 ### If reviews are satisfactory:
 Run `/feature-ship <id>` to merge and complete the feature.
 ```
+
+**IMPORTANT: After displaying the above, your turn is COMPLETE. Do not take any further action. The user will trigger external reviewers in separate terminals.**
