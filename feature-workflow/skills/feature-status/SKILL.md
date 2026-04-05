@@ -91,4 +91,6 @@ docs/features/[id]/
 This skill works with:
 - `checking-backlog` skill - For deeper dives into specific items
 - `/feature-plan` - Suggest for starting backlog items
-- `/feature-ship` - Suggest for finishing in-progress items
+- `/feature-implement` - Suggest for writing code for in-progress items
+- `/feature-submit` - Suggest for opening a draft PR after implementation
+- `/feature-ship` - Suggest for merging the PR after external reviews pass

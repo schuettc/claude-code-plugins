@@ -62,9 +62,11 @@ When all steps are done:
 
 1. Run the full test suite
 2. Summarize what was implemented
-3. Suggest next steps based on workflow:
-   - **With external review**: `/feature-submit <id>` to create a review branch and submit for Gemini/Codex review
-   - **Without external review**: `/feature-ship <id>` to run quality gates and complete the feature
+3. Suggest the next step: **`/feature-submit <id>`** — this creates a feature branch, opens a draft PR, and sets up external review by Gemini/Codex.
+
+The full workflow is: `/feature-capture` → `/feature-plan` → `/feature-implement` → **`/feature-submit`** → `/feature-ship`
+
+Do not suggest `/feature-ship` directly — that's the final merge step, run after reviews are satisfactory.
 
 ## Guidelines
 
