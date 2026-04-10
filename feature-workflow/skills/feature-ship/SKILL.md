@@ -6,7 +6,18 @@ user-invocable: true
 
 # Ship Feature
 
-You are executing the **SHIP FEATURE** workflow — writing the completion record, committing it to the feature branch, and merging the PR into dev.
+You are executing the **SHIP FEATURE** workflow — writing the completion record, committing it to the feature branch, and merging the PR.
+
+## Branch Configuration
+
+**Before doing anything else**, read `.feature-workflow.yml` in the project root for branch settings. See [../shared/config.md](../shared/config.md) for details.
+
+| Setting | Default | Used for |
+|---------|---------|----------|
+| `branch.prefix` | `feature/` | Branch naming: `<prefix><id>` |
+| `branch.target` | `dev` | Merge target, checkout after merge |
+
+Throughout this skill, replace `feature/<id>` with `<prefix><id>` and `dev` with `<target>` based on the config.
 
 ## First Step (Do This Now)
 

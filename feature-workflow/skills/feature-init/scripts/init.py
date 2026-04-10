@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Initialize feature-workflow directory structure.
+"""Initialize feature-workflow directory structure and config.
 
 Usage:
-    python3 init.py [project-root]
+    python3 init.py [project-root] [--prefix PREFIX] [--target TARGET]
 
 Creates:
     docs/features/
     docs/features/DASHBOARD.md (initial template)
+    .feature-workflow.yml (branch configuration)
 """
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -30,41 +32,56 @@ INITIAL_DASHBOARD = """# Feature Dashboard
 *No completed features*
 """
 
+CONFIG_TEMPLATE = """# Feature workflow configuration
+# Written by /feature-init — edit anytime to change settings
+
+branch:
+  prefix: "{prefix}"    # Branch naming: <prefix><feature-id>
+  target: "{target}"    # Base branch for PRs and merges
+"""
+
 
 def main() -> int:
-    project_root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.cwd()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("project_root", nargs="?", default=".")
+    parser.add_argument("--prefix", default="feature/")
+    parser.add_argument("--target", default="dev")
+    args = parser.parse_args()
+
+    project_root = Path(args.project_root).resolve()
     features_dir = project_root / "docs" / "features"
-
-    # Check if already initialized
-    if features_dir.is_dir():
-        print(f"Feature workflow already initialized at {features_dir}")
-
-        # Count existing features
-        feature_count = sum(1 for p in features_dir.iterdir() if p.is_dir())
-
-        if (features_dir / "DASHBOARD.md").exists():
-            print("DASHBOARD.md exists")
-
-        print(f"Found {feature_count} feature directories")
-        return 0
+    config_path = project_root / ".feature-workflow.yml"
 
     # Create directory structure
-    print("Initializing feature-workflow...")
-    features_dir.mkdir(parents=True, exist_ok=True)
+    if features_dir.is_dir():
+        feature_count = sum(1 for p in features_dir.iterdir() if p.is_dir())
+        print(f"docs/features/ already exists ({feature_count} features)")
+    else:
+        features_dir.mkdir(parents=True, exist_ok=True)
+        dashboard_path = features_dir / "DASHBOARD.md"
+        dashboard_path.write_text(INITIAL_DASHBOARD)
+        print("Created docs/features/ with DASHBOARD.md")
 
-    # Create initial DASHBOARD.md
-    dashboard_path = features_dir / "DASHBOARD.md"
-    dashboard_path.write_text(INITIAL_DASHBOARD)
+    # Write config
+    config_content = CONFIG_TEMPLATE.format(
+        prefix=args.prefix,
+        target=args.target,
+    )
+
+    if config_path.exists():
+        print(f"Updating .feature-workflow.yml")
+    else:
+        print(f"Creating .feature-workflow.yml")
+
+    config_path.write_text(config_content)
 
     print("")
     print("Feature workflow initialized!")
     print("")
-    print(f"Directory: {features_dir}")
-    print("")
-    print("Next steps:")
-    print("  /feature-capture  - Add a feature to the backlog")
-    print("  /feature-plan     - Start implementing a feature")
-    print("  /feature-ship     - Complete a feature")
+    print(f"  Branch prefix: {args.prefix}")
+    print(f"  Target branch: {args.target}")
+    print(f"  Branches:      {args.prefix}<feature-id>")
+    print(f"  PRs target:    {args.target}")
     print("")
 
     return 0

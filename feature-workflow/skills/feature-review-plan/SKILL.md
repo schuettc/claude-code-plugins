@@ -37,16 +37,23 @@ Based on arguments, follow the appropriate mode:
 - **No `--respond` flag** → [submit.md](submit.md) (create branch, open draft PR, push plan)
 - **`--respond` flag** → [../shared/respond.md](../shared/respond.md) (read PR reviews, address feedback, push updates)
 
-## Branching Strategy
+## Branch Configuration
+
+**Before doing anything else**, read `.feature-workflow.yml` in the project root for branch settings. See [../shared/config.md](../shared/config.md) for details.
+
+| Setting | Default | Used for |
+|---------|---------|----------|
+| `branch.prefix` | `feature/` | Branch naming: `<prefix><id>` |
+| `branch.target` | `dev` | Base branch for checkout, PR `--base`, merge target |
 
 ```
-feature/<id>  →  dev  →  main
+<prefix><id>  →  <target>  →  main
 ```
 
-- Feature branches are created from `dev` during plan review
-- Draft PRs target `dev`
+- Feature branches are created from `<target>` during plan review
+- Draft PRs target `<target>`
 - The same branch and PR are reused for `/feature-review-impl` later
-- `/feature-ship` merges the PR into `dev`
+- `/feature-ship` merges the PR into `<target>`
 
 ## Guidelines
 
