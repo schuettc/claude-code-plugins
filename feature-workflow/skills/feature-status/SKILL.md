@@ -92,5 +92,6 @@ This skill works with:
 - `checking-backlog` skill - For deeper dives into specific items
 - `/feature-plan` - Suggest for starting backlog items
 - `/feature-implement` - Suggest for writing code for in-progress items
-- `/feature-submit` - Suggest for opening a draft PR after implementation
+- `/feature-review-plan` - Suggest for submitting plan for external review
+- `/feature-review-impl` - Suggest for submitting implementation for external review
 - `/feature-ship` - Suggest for merging the PR after external reviews pass

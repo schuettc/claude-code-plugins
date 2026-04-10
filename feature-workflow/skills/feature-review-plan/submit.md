@@ -1,0 +1,144 @@
+# Submit Plan for Review
+
+Submit the feature plan for external review. Creates a feature branch (if needed), commits the plan, pushes, and opens a draft PR.
+
+## Step 1: Branch Management
+
+Check the current branch:
+
+```bash
+git branch --show-current
+```
+
+Check if a PR already exists for this feature:
+
+```bash
+gh pr list --head feature/<id> --json number,url,state --jq '.[0]'
+```
+
+**If no feature branch exists (first submission):**
+1. Ensure you're on `dev` and up to date:
+   ```bash
+   git checkout dev && git pull
+   ```
+2. Create and switch to the feature branch from `dev`:
+   ```bash
+   git checkout -b feature/<id>
+   ```
+
+**If feature branch already exists (subsequent submissions):**
+1. Verify you're on `feature/<id>` — if not, switch to it
+2. Continue on the existing branch
+
+## Step 2: Stage and Commit
+
+1. Stage plan and idea files:
+   ```bash
+   git add docs/features/<id>/idea.md docs/features/<id>/plan.md
+   ```
+2. Check if there are changes to commit:
+   ```bash
+   git status --porcelain
+   ```
+3. If there are changes, commit:
+   ```bash
+   git commit -m "docs(<id>): submit plan for review"
+   ```
+
+## Step 3: Push Branch
+
+```bash
+git push -u origin feature/<id>
+```
+
+## Step 4: Open or Update Draft PR
+
+### If no PR exists — create one:
+
+Generate the PR body:
+
+#### 4a: Gather Raw Data
+
+1. Read `docs/features/<id>/plan.md` and extract:
+   - Feature name and summary
+   - Implementation steps
+   - Testing strategy
+   - Risks and mitigations
+2. Read `docs/features/<id>/idea.md` — the original problem statement
+
+#### 4b: Draft the PR Body
+
+Generate a draft PR body with this structure:
+
+```markdown
+## Plan Review
+
+This PR contains the **plan** for feature `<id>`. No implementation yet — requesting review of the approach before coding begins.
+
+## Problem Statement
+- [From idea.md]
+
+## Proposed Approach
+- [Key design decisions from plan.md]
+
+## Implementation Steps
+- [Numbered steps from plan.md]
+
+## Testing Strategy
+- [From plan.md]
+
+## Risks & Mitigations
+- [From plan.md]
+
+## Areas of Concern
+- [Leave blank for user to fill in — what should reviewers focus on?]
+
+---
+*Feature: <id> | Phase: Plan Review | Plan: docs/features/<id>/plan.md*
+```
+
+#### 4c: Present Draft to User
+
+Show the draft to the user and ask:
+- **"Here's the auto-generated PR description. Please review and edit — especially the 'Areas of Concern' section. What should reviewers focus on?"**
+
+Incorporate the user's edits into the final version.
+
+#### 4d: Create the Draft PR
+
+```bash
+gh pr create --draft --title "plan(<id>): [feature name]" --base dev --body "<PR body>"
+```
+
+### If PR already exists — update it:
+
+1. Push is already done (Step 3), PR auto-updates with new commits
+2. Add a comment summarizing what changed:
+   ```bash
+   gh pr comment <pr-number> --body "## Plan Update\n\n### Changes Made\n- [summary of plan changes]\n\n### Feedback Addressed\n- [which review items were fixed]"
+   ```
+
+## Step 5: Display Next Steps and STOP
+
+Display the following to the user, then **STOP**. Do NOT launch any code review agents, do NOT run any review skills, do NOT analyze the plan further. Your job is done.
+
+```
+## Plan Ready for Review
+
+PR: <pr-url>
+Branch: feature/<id>
+Status: Draft
+Phase: Plan Review
+
+### To trigger reviewers:
+- **Gemini**: "Review the plan at <pr-url> for feature <id>"
+- **Codex**: "Review the plan at <pr-url> for feature <id>"
+
+### When reviews are complete:
+Run `/feature-review-plan <id> --respond` to read feedback and iterate.
+
+### When plan is approved:
+Run `/feature-implement <id>` to start coding.
+```
+
+**IMPORTANT: After displaying the above, your turn is COMPLETE. Do not take any further action. The user will trigger external reviewers in separate terminals.**

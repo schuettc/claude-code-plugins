@@ -173,7 +173,7 @@ docs/troubleshooting/
 
 - **Use with feature-audit**: If you need runtime evidence, trigger `/feature-audit` for specific verification
 - **Works with code-archaeologist**: For understanding unfamiliar code during investigation
-- **Complements feature workflow**: Can debug issues found during `/feature-ship`
+- **Complements feature workflow**: Can debug issues found during `/feature-review-impl` or `/feature-ship`
 
 ---
 

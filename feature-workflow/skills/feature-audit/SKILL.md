@@ -213,7 +213,7 @@ User chooses per-audit:
 
 ## Integration Points
 
-- **Complements feature workflow**: `/feature-plan` → `/feature-implement` → `/feature-audit` → `/feature-submit` → `/feature-ship`
+- **Complements feature workflow**: `/feature-plan` → `/feature-review-plan` → `/feature-implement` → `/feature-audit` → `/feature-review-impl` → `/feature-ship`
 - **Standalone use**: Audit any existing process without feature context
 - **Works with code-archaeologist**: Static analysis → audit to verify assumptions
 

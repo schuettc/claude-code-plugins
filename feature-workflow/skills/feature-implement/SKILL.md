@@ -62,9 +62,11 @@ When all steps are done:
 
 1. Run the full test suite
 2. Summarize what was implemented
-3. Suggest the next step: **`/feature-submit <id>`** — this creates a feature branch, opens a draft PR, and sets up external review by Gemini/Codex.
+3. Check if the plan was reviewed: look for a PR on `feature/<id>` with plan review comments. If none exists, warn:
+   **"Note: The plan hasn't been through external review yet. Consider running `/feature-review-plan <id>` before submitting the implementation."**
+4. Suggest the next step: **`/feature-review-impl <id>`** — this pushes the implementation to the feature branch and updates the draft PR for external code review by Gemini/Codex.
 
-The full workflow is: `/feature-capture` → `/feature-plan` → `/feature-implement` → **`/feature-submit`** → `/feature-ship`
+The full workflow is: `/feature-capture` → `/feature-plan` → `/feature-review-plan` → `/feature-implement` → **`/feature-review-impl`** → `/feature-ship`
 
 Do not suggest `/feature-ship` directly — that's the final merge step, run after reviews are satisfactory.
 

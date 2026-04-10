@@ -85,5 +85,5 @@ Remaining steps: 4 of 7
 ## Integration Notes
 
 This skill works with:
-- `/feature-submit` - Uses plan.md checkbox state to auto-generate PR body
+- `/feature-review-impl` - Uses plan.md checkbox state to auto-generate PR body
 - `/feature-ship` - Relies on accurate progress tracking

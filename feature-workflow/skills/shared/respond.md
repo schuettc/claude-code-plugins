@@ -1,6 +1,6 @@
-# Respond Mode
+# Respond to Review Feedback
 
-Read PR review feedback from external reviewers, validate findings, implement fixes, and push updates.
+Read PR review feedback from external reviewers, validate findings, implement fixes, and push updates. This file is shared by `/feature-review-plan` and `/feature-review-impl`.
 
 ## Step 1: Find the PR
 
@@ -8,7 +8,7 @@ Read PR review feedback from external reviewers, validate findings, implement fi
 gh pr list --head feature/<id> --json number,url --jq '.[0]'
 ```
 
-If no PR exists, inform the user and suggest running `/feature-submit <id>` first.
+If no PR exists, inform the user and suggest running `/feature-review-plan <id>` or `/feature-review-impl <id>` first.
 
 ## Step 2: Collect Review Feedback
 
@@ -89,8 +89,8 @@ Based on the user's input, classify each finding:
 ## Step 6: Implement Changes
 
 For each finding classified as "Agree":
-1. Make the code change
-2. Add or update tests if needed
+1. Make the change (code fix for impl review, plan update for plan review)
+2. Add or update tests if needed (impl review only)
 3. Briefly note what was changed
 
 Work through findings by severity (Critical first, then High, Medium, Low).
@@ -133,6 +133,7 @@ Changes pushed to feature/<id> and PR updated.
 
 ### Next Steps
 - Wait for reviewers to re-review the PR
-- `/feature-submit <id> --respond` — read next round of feedback
-- `/feature-ship <id>` — merge PR and ship (if reviews are satisfactory)
+- `/feature-review-plan <id> --respond` or `/feature-review-impl <id> --respond` — read next round of feedback
+- `/feature-implement <id>` — start coding (if plan review is complete)
+- `/feature-ship <id>` — merge PR and ship (if implementation reviews are satisfactory)
 ```

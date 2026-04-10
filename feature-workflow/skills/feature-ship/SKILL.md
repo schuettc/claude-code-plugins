@@ -47,7 +47,7 @@ If no specific feature ID was provided above, you will help the user select from
    git checkout feature/<id>
    ```
 
-If there's no PR, warn the user — they may want to run `/feature-submit` first, or proceed with a local merge.
+If there's no PR, warn the user — they may want to run `/feature-review-impl` first, or proceed with a local merge.
 
 ---
 
@@ -157,7 +157,7 @@ The feature is now in dev. Dashboard updated.
 | Error | Resolution |
 |-------|------------|
 | Feature not in-progress | Direct user to correct command or status |
-| No PR exists | Suggest `/feature-submit` first, or offer local merge |
+| No PR exists | Suggest `/feature-review-impl` first, or offer local merge |
 | Not on feature branch | Switch to `feature/<id>` |
 | Already completed | Feature has shipped.md — nothing to do |
 
