@@ -29,6 +29,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           prompt: ${{ steps.prompt.outputs.value }}
           gemini_api_key: ${{ secrets.GOOGLE_API_KEY }}
@@ -57,6 +60,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           prompt: ${{ steps.prompt.outputs.value }}
           gemini_api_key: ${{ secrets.GOOGLE_API_KEY }}
