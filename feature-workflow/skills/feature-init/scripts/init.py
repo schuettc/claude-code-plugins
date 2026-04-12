@@ -4,17 +4,26 @@
 Usage:
     python3 init.py [project-root] [--prefix PREFIX] [--target TARGET]
                                    [--reviewer REVIEWER] [--api-key KEY]
+    python3 init.py [project-root] --update
 
-Creates:
+Creates (init mode):
     docs/features/
     docs/features/DASHBOARD.md (initial template)
     .feature-workflow.yml (branch configuration + reviewer setting)
     .github/workflows/feature-review.yml (if reviewer configured)
     .github/review-prompt-plan.md (if reviewer configured)
     .github/review-prompt-impl.md (if reviewer configured)
+
+Refreshes (update mode):
+    .github/workflows/feature-review.yml (from current plugin templates)
+    .github/review-prompt-plan.md
+    .github/review-prompt-impl.md
+    Re-applies bot approval repo setting.
+    Does not touch .feature-workflow.yml, API secret, or docs/features/.
 """
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -146,6 +155,59 @@ def enable_bot_approvals() -> None:
         pass
 
 
+def read_reviewer_from_config(config_path: Path) -> str | None:
+    if not config_path.exists():
+        return None
+    match = re.search(r'^reviewer:\s*"?([^"\n]+)"?', config_path.read_text(), re.MULTILINE)
+    return match.group(1).strip() if match else None
+
+
+def update_mode(project_root: Path) -> int:
+    """Refresh CI files from current plugin templates without touching config or secrets."""
+    config_path = project_root / ".feature-workflow.yml"
+    reviewer = read_reviewer_from_config(config_path)
+
+    if reviewer is None:
+        print("ERROR: No .feature-workflow.yml found. Run /feature-init first.")
+        return 1
+    if reviewer == "none":
+        print("Reviewer is 'none' — nothing to update.")
+        print("To add a reviewer, re-run /feature-init without --update.")
+        return 0
+
+    template_dir = find_template_dir()
+    workflows_dir = project_root / ".github" / "workflows"
+    github_dir = project_root / ".github"
+    workflows_dir.mkdir(parents=True, exist_ok=True)
+
+    workflow_src = template_dir / f"feature-review-{reviewer}.yml"
+    if not workflow_src.exists():
+        print(f"ERROR: Workflow template not found: {workflow_src}")
+        return 1
+
+    shutil.copy2(workflow_src, workflows_dir / "feature-review.yml")
+    print(f"Refreshed .github/workflows/feature-review.yml ({reviewer})")
+
+    for prompt_name in ["review-prompt-plan.md", "review-prompt-impl.md"]:
+        prompt_src = template_dir / prompt_name
+        if prompt_src.exists():
+            shutil.copy2(prompt_src, github_dir / prompt_name)
+            print(f"Refreshed .github/{prompt_name}")
+        else:
+            print(f"WARNING: Prompt template not found: {prompt_src}")
+
+    enable_bot_approvals()
+
+    print("")
+    print("Update complete. Commit and push the refreshed files:")
+    print("  git add .github/")
+    print("  git commit -m 'chore: refresh feature-review workflow + prompts'")
+    print("  git push")
+    print("")
+    print("Note: API key secret and .feature-workflow.yml were not touched.")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("project_root", nargs="?", default=".")
@@ -153,9 +215,18 @@ def main() -> int:
     parser.add_argument("--target", default="dev")
     parser.add_argument("--reviewer", default="none", choices=["gemini", "codex", "none"])
     parser.add_argument("--api-key", default=None)
+    parser.add_argument(
+        "--update", action="store_true",
+        help="Refresh CI workflow and review prompts from current plugin templates "
+             "without changing config or re-uploading API key.",
+    )
     args = parser.parse_args()
 
     project_root = Path(args.project_root).resolve()
+
+    if args.update:
+        return update_mode(project_root)
+
     features_dir = project_root / "docs" / "features"
     config_path = project_root / ".feature-workflow.yml"
 
