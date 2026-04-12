@@ -133,9 +133,49 @@ This PR now includes the implementation. Previous plan review comments are prese
 - [What reviewers should focus on]"
    ```
 
-## Step 5: Display Next Steps and STOP
+## Step 5: Swap Review Labels (if CI reviewer configured)
+
+Read `.feature-workflow.yml` and check the `reviewer:` setting.
+
+**If reviewer is `gemini` or `codex`:**
+
+Remove the plan-review label (if present) and add impl-review:
+
+```bash
+gh pr edit <pr-number> --remove-label plan-review --add-label impl-review
+```
+
+This automatically triggers the GitHub Actions workflow to run the implementation review.
+
+**If reviewer is `none`:** Skip this step.
+
+## Step 6: Display Next Steps and STOP
 
 Display the following to the user, then **STOP**. Do NOT launch any code review agents, do NOT run any review skills, do NOT analyze the code further. Your job is done.
+
+**If CI reviewer is configured:**
+
+```
+## Implementation Submitted for Review
+
+PR: <pr-url>
+Branch: feature/<id>
+Status: Draft
+Phase: Implementation Review
+Label: impl-review (added — CI review will start automatically)
+
+### What happens next:
+The external reviewer will analyze the implementation and post findings directly on the PR.
+Watch the PR for comments.
+
+### When reviews are complete:
+Run `/feature-review-impl <id> --respond` to read feedback and iterate.
+
+### If reviews are satisfactory:
+Run `/feature-ship <id>` to merge and complete the feature.
+```
+
+**If no CI reviewer (reviewer: none):**
 
 ```
 ## Implementation Ready for Review
@@ -156,4 +196,4 @@ Run `/feature-review-impl <id> --respond` to read feedback and iterate.
 Run `/feature-ship <id>` to merge and complete the feature.
 ```
 
-**IMPORTANT: After displaying the above, your turn is COMPLETE. Do not take any further action. The user will trigger external reviewers in separate terminals.**
+**IMPORTANT: After displaying the above, your turn is COMPLETE. Do not take any further action.**

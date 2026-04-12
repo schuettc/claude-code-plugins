@@ -118,9 +118,47 @@ gh pr create --draft --title "plan(<id>): [feature name]" --base dev --body "<PR
    gh pr comment <pr-number> --body "## Plan Update\n\n### Changes Made\n- [summary of plan changes]\n\n### Feedback Addressed\n- [which review items were fixed]"
    ```
 
-## Step 5: Display Next Steps and STOP
+## Step 5: Add Review Label (if CI reviewer configured)
+
+Read `.feature-workflow.yml` and check the `reviewer:` setting.
+
+**If reviewer is `gemini` or `codex`:**
+
+```bash
+gh pr edit <pr-number> --add-label plan-review
+```
+
+This automatically triggers the GitHub Actions workflow to run the external review.
+
+**If reviewer is `none`:** Skip this step.
+
+## Step 6: Display Next Steps and STOP
 
 Display the following to the user, then **STOP**. Do NOT launch any code review agents, do NOT run any review skills, do NOT analyze the plan further. Your job is done.
+
+**If CI reviewer is configured:**
+
+```
+## Plan Submitted for Review
+
+PR: <pr-url>
+Branch: feature/<id>
+Status: Draft
+Phase: Plan Review
+Label: plan-review (added — CI review will start automatically)
+
+### What happens next:
+The external reviewer will analyze the plan and post findings directly on the PR.
+Watch the PR for comments.
+
+### When reviews are complete:
+Run `/feature-review-plan <id> --respond` to read feedback and iterate.
+
+### When plan is approved:
+Run `/feature-implement <id>` to start coding.
+```
+
+**If no CI reviewer (reviewer: none):**
 
 ```
 ## Plan Ready for Review
@@ -141,4 +179,4 @@ Run `/feature-review-plan <id> --respond` to read feedback and iterate.
 Run `/feature-implement <id>` to start coding.
 ```
 
-**IMPORTANT: After displaying the above, your turn is COMPLETE. Do not take any further action. The user will trigger external reviewers in separate terminals.**
+**IMPORTANT: After displaying the above, your turn is COMPLETE. Do not take any further action.**
