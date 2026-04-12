@@ -197,3 +197,20 @@ This is a legitimate finding. "The deployment section is unclear" is not.
 - Does this plan quietly expand scope beyond `idea.md`? Quote the out-of-scope bullet.
 - What security boundary does this plan cross without addressing? Name the endpoint or data flow and the missing authorization rule.
 - Which acceptance criterion is unmeasurable as written? Quote it and propose a measurable replacement.
+
+## CRITICAL: You Must Post the Review
+
+**Your task is NOT complete until you have executed the `gh pr review` command.** Do not just analyze the plan and output text. You MUST run one of these shell commands to post your review directly to the PR:
+
+```bash
+# For PASS verdict:
+gh pr review $PR_NUMBER --approve --body "your review body here"
+
+# For CONDITIONAL PASS verdict:
+gh pr review $PR_NUMBER --comment --body "your review body here"
+
+# For FAIL verdict:
+gh pr review $PR_NUMBER --request-changes --body "your review body here"
+```
+
+If you do not execute `gh pr review`, your review is lost and the workflow fails. This is the most important step.

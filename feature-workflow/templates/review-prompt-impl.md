@@ -197,3 +197,20 @@ This is a legitimate finding. "The queue implementation looks concerning" is not
 - What failure mode exists that isn't covered? Describe the exact input that triggers it.
 - Is there any claim of completion in the PR description that isn't backed by code or tests? Quote the claim and name the missing artifact.
 - Does this implementation quietly expand scope beyond the stated goal? Cite the out-of-scope file.
+
+## CRITICAL: You Must Post the Review
+
+**Your task is NOT complete until you have executed the `gh pr review` command.** Do not just analyze the code and output text. You MUST run one of these shell commands to post your review directly to the PR:
+
+```bash
+# For PASS verdict:
+gh pr review $PR_NUMBER --approve --body "your review body here"
+
+# For CONDITIONAL PASS verdict:
+gh pr review $PR_NUMBER --comment --body "your review body here"
+
+# For FAIL verdict:
+gh pr review $PR_NUMBER --request-changes --body "your review body here"
+```
+
+If you do not execute `gh pr review`, your review is lost and the workflow fails. This is the most important step.
