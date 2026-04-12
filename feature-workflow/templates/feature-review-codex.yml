@@ -1,0 +1,38 @@
+name: Feature Review (Codex)
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+jobs:
+  plan-review:
+    if: contains(github.event.pull_request.labels.*.name, 'plan-review')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: openai/codex-action@v1
+        with:
+          prompt-file: .github/review-prompt-plan.md
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+
+  impl-review:
+    if: contains(github.event.pull_request.labels.*.name, 'impl-review')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: openai/codex-action@v1
+        with:
+          prompt-file: .github/review-prompt-impl.md
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}

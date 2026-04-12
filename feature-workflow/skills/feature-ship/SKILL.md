@@ -122,12 +122,16 @@ git push
 
 ## Phase 4: Merge PR
 
-1. If the PR is still in draft, mark it ready:
+1. Remove review labels (prevents stale CI re-reviews during merge):
+   ```bash
+   gh pr edit <pr-number> --remove-label plan-review --remove-label impl-review 2>/dev/null || true
+   ```
+2. If the PR is still in draft, mark it ready:
    ```bash
    gh pr ready <pr-number>
    ```
-2. Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
-3. Merge the PR and delete the remote branch:
+3. Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
+4. Merge the PR and delete the remote branch:
    ```bash
    gh pr merge <pr-number> --merge --delete-branch
    ```

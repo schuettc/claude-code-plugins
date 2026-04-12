@@ -124,7 +124,24 @@ Ready for another look."
 
 ## Step 8: Next Steps
 
-Present options to the user:
+Read `.feature-workflow.yml` and check the `reviewer:` setting to determine the messaging.
+
+**If CI reviewer is configured (reviewer is `gemini` or `codex`):**
+
+```
+## Review Response Complete
+
+Changes pushed to feature/<id> and PR updated.
+The reviewer will re-run automatically on the updated PR.
+
+### Next Steps
+- Watch the PR for updated review comments
+- `/feature-review-plan <id> --respond` or `/feature-review-impl <id> --respond` — read next round of feedback
+- `/feature-implement <id>` — start coding (if plan review is complete)
+- `/feature-ship <id>` — merge PR and ship (if implementation reviews are satisfactory)
+```
+
+**If no CI reviewer (reviewer: none):**
 
 ```
 ## Review Response Complete
@@ -132,7 +149,7 @@ Present options to the user:
 Changes pushed to feature/<id> and PR updated.
 
 ### Next Steps
-- Wait for reviewers to re-review the PR
+- Trigger reviewers again to get a second pass
 - `/feature-review-plan <id> --respond` or `/feature-review-impl <id> --respond` — read next round of feedback
 - `/feature-implement <id>` — start coding (if plan review is complete)
 - `/feature-ship <id>` — merge PR and ship (if implementation reviews are satisfactory)

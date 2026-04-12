@@ -1,0 +1,69 @@
+name: Feature Review (Gemini)
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  plan-review:
+    if: contains(github.event.pull_request.labels.*.name, 'plan-review')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load review prompt
+        id: prompt
+        run: |
+          {
+            echo 'value<<PROMPT_EOF'
+            cat .github/review-prompt-plan.md
+            echo ''
+            echo "Review PR #${{ github.event.pull_request.number }} in this repo."
+            echo "The PR branch is ${{ github.head_ref }} targeting ${{ github.base_ref }}."
+            echo 'PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: google-github-actions/run-gemini-cli@v0
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          prompt: ${{ steps.prompt.outputs.value }}
+          gemini_api_key: ${{ secrets.GOOGLE_API_KEY }}
+
+  impl-review:
+    if: contains(github.event.pull_request.labels.*.name, 'impl-review')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load review prompt
+        id: prompt
+        run: |
+          {
+            echo 'value<<PROMPT_EOF'
+            cat .github/review-prompt-impl.md
+            echo ''
+            echo "Review PR #${{ github.event.pull_request.number }} in this repo."
+            echo "The PR branch is ${{ github.head_ref }} targeting ${{ github.base_ref }}."
+            echo 'PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: google-github-actions/run-gemini-cli@v0
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          prompt: ${{ steps.prompt.outputs.value }}
+          gemini_api_key: ${{ secrets.GOOGLE_API_KEY }}
