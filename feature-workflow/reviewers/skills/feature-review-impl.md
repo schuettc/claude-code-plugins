@@ -210,3 +210,5 @@ gh pr review $PR_NUMBER --request-changes --body "your review body here"
 ```
 
 If you do not execute `gh pr review`, your review is lost and the workflow fails. This is the most important step.
+
+**IMPORTANT: You DO have permission to approve.** You are running as `github-actions[bot]` with `pull-requests: write` permission. The `--approve` flag works even on draft PRs. Do NOT downgrade to `--comment` because you think you lack permission — you have full permission. Use `--approve` for PASS, `--request-changes` for FAIL, and `--comment` only for CONDITIONAL PASS.

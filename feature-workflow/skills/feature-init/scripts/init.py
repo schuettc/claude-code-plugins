@@ -106,6 +106,44 @@ def setup_reviewer(project_root: Path, reviewer: str, api_key: str | None, templ
         except FileNotFoundError:
             print(f"\nWARNING: gh CLI not found. Install it and run:")
             print(f"  echo '<key>' | gh secret set {secret_name}")
+            return
+
+    enable_bot_approvals()
+
+
+def enable_bot_approvals() -> None:
+    """Enable github-actions[bot] to approve pull requests.
+
+    Without this, `gh pr review --approve` from a workflow silently downgrades
+    to a comment-only review. This is a repo-level Actions setting.
+    """
+    try:
+        repo = subprocess.run(
+            ["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"],
+            capture_output=True, text=True
+        )
+        if repo.returncode != 0 or not repo.stdout.strip():
+            print("WARNING: Could not detect current GitHub repo — skipping bot-approval setting.")
+            print("  Manually enable: Settings → Actions → General → 'Allow GitHub Actions to approve pull requests'")
+            return
+
+        name_with_owner = repo.stdout.strip()
+        result = subprocess.run(
+            [
+                "gh", "api", "-X", "PUT",
+                f"repos/{name_with_owner}/actions/permissions/workflow",
+                "-f", "default_workflow_permissions=write",
+                "-F", "can_approve_pull_request_reviews=true",
+            ],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            print("Enabled GitHub Actions bot PR approvals (repo setting)")
+        else:
+            print(f"WARNING: Could not enable bot approvals: {result.stderr.strip()}")
+            print("  Manually enable: Settings → Actions → General → 'Allow GitHub Actions to approve pull requests'")
+    except FileNotFoundError:
+        pass
 
 
 def main() -> int:
