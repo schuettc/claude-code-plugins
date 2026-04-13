@@ -22,6 +22,7 @@ Then install any plugin:
 |--------|-------------|---------|
 | [feature-workflow](./feature-workflow) | Feature lifecycle with directory-based tracking, event-driven hooks, and optional automated PR reviews via Gemini/Codex in GitHub Actions | 9.2.0 |
 | [website-deployment](./website-deployment) | Guided workflow to deploy Node.js/Express apps to AWS serverless (S3 + CloudFront + Lambda + API Gateway + CDK). Analyzes your app, scaffolds infra, and deploys with step-by-step explanations | 1.0.0 |
+| [sprint-planner](./sprint-planner) | Sprint planning and team coordination for small teams (2-6 devs). Triage backlogs by deadline, assign work with self-service specs, audit specs for completeness, and generate team communication. Pairs with feature-workflow | 0.1.0 |
 
 ## Plugin: feature-workflow
 
@@ -72,6 +73,28 @@ Deploy a local Node.js / Express / Vite web app to AWS serverless infrastructure
 ```
 
 See [website-deployment/README.md](./website-deployment/README.md) for prerequisites, usage, and teardown instructions.
+
+## Plugin: sprint-planner
+
+Sprint planning and team coordination for small teams (2-6 devs) with mixed experience levels preparing for demos, releases, or time-boxed sprints. Turns a messy backlog into an actionable sprint plan with assignments that developers can work from independently.
+
+**Skills:**
+- `/sprint-triage` — clean up the backlog; close stale items, verify PR status, categorize by deadline
+- `/sprint-plan` — create a weekly sprint plan; triage backlog, assign owners, identify critical path
+- `/sprint-audit-specs` — audit feature specs for completeness so devs can work independently
+- `/sprint-assign` — generate a shareable team assignment message for Slack/email
+- `/sprint-retro` — end-of-sprint review; planned vs. actual, lessons learned
+
+**Pairs with feature-workflow:** reads `docs/features/DASHBOARD.md` and feature idea files. Use `/feature-capture` to add items, `/feature-plan` to start work, `/feature-ship` to close them.
+
+**Prerequisites:** Git repository with feature tracking (e.g., `docs/features/DASHBOARD.md` from feature-workflow), GitHub CLI (`gh`) for PR status checks.
+
+**Install:**
+```bash
+/plugin install sprint-planner@schuettc-claude-code-plugins
+```
+
+See [sprint-planner/README.md](./sprint-planner/README.md) for the full workflow and design principles.
 
 ## Cloning This Repo? Start Here
 

@@ -13,9 +13,9 @@ This skill is for someone who just cloned or is browsing the `claude-code-plugin
 
 Start by explaining what this repo is, in ~4 sentences:
 
-> This repo is a **Claude Code plugin marketplace**. The main plugin here is `feature-workflow` — it turns "capture idea → plan → implement → review → ship" into a sequence of user-invocable commands in Claude Code, with features stored as directories under `docs/features/<id>/` and status determined by which files exist (`idea.md`, `plan.md`, `shipped.md`). There's an auto-generated `DASHBOARD.md` and optional automated PR reviews via Gemini or Codex running in GitHub Actions.
+> This repo is a **Claude Code plugin marketplace** with three plugins: `feature-workflow` (the main one — feature lifecycle from idea to ship), `sprint-planner` (sprint coordination for small teams, pairs with feature-workflow), and `website-deployment` (guided AWS serverless deployment). `feature-workflow` turns "capture idea → plan → implement → review → ship" into a sequence of user-invocable commands, with features stored as directories under `docs/features/<id>/` and status determined by which files exist (`idea.md`, `plan.md`, `shipped.md`). There's an auto-generated `DASHBOARD.md` and optional automated PR reviews via Gemini or Codex running in GitHub Actions.
 >
-> **You don't run this repo directly.** You install the plugin from it into Claude Code, then run `/feature-init` inside your *own* project to set it up there.
+> **You don't run this repo directly.** You install a plugin from it into Claude Code, then run the plugin's commands inside your *own* project. This walkthrough focuses on `feature-workflow`; ask if you want to explore the others instead.
 
 Ask what the user's goal is:
 
