@@ -49,6 +49,8 @@ VERDICT: PASS
 
 ## Implementation Review
 
+### Verdict: PASS
+
 ### Critical Findings
 - [Blocking issues — ordered by severity, with file:line references]
 
@@ -88,6 +90,8 @@ VERDICT: PASS
 - Use the underscore form `CONDITIONAL_PASS`, not `CONDITIONAL PASS`.
 - No leading whitespace. No markdown. No quotes. No preamble before the verdict line.
 - The verdict line is followed by one blank line, then the review body starting with `## Implementation Review`.
+- The markdown body **must also** contain a visible `### Verdict: PASS`, `### Verdict: CONDITIONAL PASS`, or `### Verdict: FAIL` heading (space-separated form for display) directly under `## Implementation Review`. This is what human readers see on the PR. The `VERDICT:` prefix line is for the workflow parser and gets stripped before posting.
+- The machine prefix and the display heading must agree. If they disagree, the workflow trusts the prefix.
 
 ### Verdict meanings
 
@@ -119,6 +123,9 @@ You are not a linter, a style guide, or a junior reviewer trying to prove you re
 - Extracting helpers for the sake of extracting helpers
 - Defensive checks for conditions that cannot happen given the caller contract
 - Anything that amounts to "this works, but here's how I'd do it"
+- **No-op "findings"** — if your finding concludes "no change required", "just confirming consistency", "the code already handles this", or "this is acceptable as-is", **delete the finding entirely**. A finding exists to request a change. If you are not requesting a change, you are writing commentary, not a finding.
+- **Hedged hypotheticals** — "if a user somehow…", "in the edge case where someone might…", "theoretically this could…". If you cannot name a realistic input, state, or sequence that triggers the failure, it is not a finding.
+- **Defensive additions for conditions that cannot happen** given the caller contract. Trust the types and the contract.
 
 **The nit test:** if the author could reasonably reply "I disagree, and I'm not changing it" and the code would still be fine — it was a nit. Do not post it.
 
@@ -167,6 +174,8 @@ Inline comments must still contain all five — they can be terser, but Location
 - Findings with no file reference when the code is visible in the diff
 - Findings that restate what the code does without identifying a problem
 - "LGTM but..." followed by non-specific concerns — either it's a finding with structure or it's not a finding
+- "No change required, just confirming X" / "just noting that Y is handled correctly" — these are not findings. Delete them.
+- "For completeness, you could also…" / "it might be worth considering…" — if it's not required, it's noise.
 
 ### When you cannot be fully specific
 

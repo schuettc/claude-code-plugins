@@ -50,6 +50,8 @@ VERDICT: PASS
 
 ## Plan Review
 
+### Verdict: PASS
+
 ### Critical Findings
 - [Blocking gaps — ordered by severity, referencing specific plan sections]
 
@@ -88,6 +90,8 @@ VERDICT: PASS
 - Use the underscore form `CONDITIONAL_PASS`, not `CONDITIONAL PASS`.
 - No leading whitespace. No markdown. No quotes. No preamble before the verdict line.
 - The verdict line is followed by one blank line, then the review body starting with `## Plan Review`.
+- The markdown body **must also** contain a visible `### Verdict: PASS`, `### Verdict: CONDITIONAL PASS`, or `### Verdict: FAIL` heading (space-separated form for display) directly under `## Plan Review`. This is what human readers see on the PR. The `VERDICT:` prefix line is for the workflow parser and gets stripped before posting.
+- The machine prefix and the display heading must agree. If they disagree, the workflow trusts the prefix.
 
 ### Verdict meanings
 
@@ -119,6 +123,9 @@ You are not grading the plan's prose, structure, or formatting. You are looking 
 - Tests for code paths that don't exist yet and will obviously need tests
 - Requests to "define terms" that the team already uses consistently
 - Anything that amounts to "this plan is fine but here's how I'd write it"
+- **No-op "findings"** — if your finding concludes "no change required", "just confirming consistency", "the plan already handles this", or "this is acceptable as-is", **delete the finding entirely**. A finding exists to request a change. If you are not requesting a change, you are writing commentary, not a finding.
+- **Hedged hypotheticals** — "if a user somehow…", "in the edge case where someone might…", "theoretically this could…". If you cannot name a realistic input or state that triggers the failure, it is not a finding.
+- **Defensive additions for things that cannot happen** given the plan's stated constraints. Trust the plan's stated inputs.
 
 **The nit test:** if the author could reasonably reply "I disagree, and I'm not changing the plan" and the feature would still ship safely — it was a nit. Do not post it.
 
@@ -168,6 +175,8 @@ Inline comments must still contain all five — they can be terser, but Location
 - Findings that do not name a `plan.md` heading or line
 - "This might be out of scope" with no pointer to the out-of-scope bullet
 - Restating what the plan says without identifying a gap
+- "No change required, just confirming X" / "just noting that Y is handled correctly" — these are not findings. Delete them.
+- "For completeness, you could also…" / "it might be worth considering…" — if it's not required, it's noise.
 
 ### When you cannot be fully specific
 
