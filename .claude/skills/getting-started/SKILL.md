@@ -1,19 +1,67 @@
 ---
 name: getting-started
-description: Interactive onboarding for the feature-workflow plugin. Use when the user just installed the plugin, asks "how do I use this", "where do I start", "walk me through it", or wants a demo. Detects current project state, explains concepts tailored to that state, and optionally guides a live end-to-end walkthrough of a demo feature.
+description: Interactive onboarding for someone who just cloned the claude-code-plugins repo and wants to install the feature-workflow plugin into their own project. Use when the user asks "how do I use this", "where do I start", "walk me through it", wants a demo, or is evaluating the repo. Explains what this repo is, helps install the plugin from this marketplace, then guides a live end-to-end walkthrough.
 allowed-tools: Read, Write, Bash, Glob, Grep, Edit
 user-invocable: true
 ---
 
-# Getting Started with feature-workflow
+# Getting Started
 
-Help a new user understand and start using the feature-workflow plugin. This skill is intentionally conversational — meet the user where they are, don't dump the whole manual on them.
+This skill is for someone who just cloned or is browsing the `claude-code-plugins` repo and wants to understand what it is, install the `feature-workflow` plugin, and try it end-to-end. Be a friendly pair programmer — meet the user where they are, don't dump the whole manual on them.
 
-## Step 1: Detect Project State
+## Step 0: Orient the User
 
-Run these checks in parallel to figure out where the user is in the setup journey:
+Start by explaining what this repo is, in ~4 sentences:
+
+> This repo is a **Claude Code plugin marketplace**. The main plugin here is `feature-workflow` — it turns "capture idea → plan → implement → review → ship" into a sequence of user-invocable commands in Claude Code, with features stored as directories under `docs/features/<id>/` and status determined by which files exist (`idea.md`, `plan.md`, `shipped.md`). There's an auto-generated `DASHBOARD.md` and optional automated PR reviews via Gemini or Codex running in GitHub Actions.
+>
+> **You don't run this repo directly.** You install the plugin from it into Claude Code, then run `/feature-init` inside your *own* project to set it up there.
+
+Ask what the user's goal is:
+
+1. **"I want to install this into my own project"** → Step 1 (install) → Step 2 (pick a target project) → Step 3 (run init) → Step 4 (walkthrough)
+2. **"I'm just evaluating — can you show me how it works?"** → offer to demo against a throwaway directory so they see the lifecycle without committing to anything
+3. **"I already installed it, help me use it"** → skip to Step 2
+
+## Step 1: Install the Plugin from This Marketplace
+
+Confirm which path the user wants before doing anything:
+
+### Path A — Install from GitHub (recommended for real use)
+
+```
+/plugin marketplace add schuettc/claude-code-plugins
+/plugin install feature-workflow@schuettc-claude-code-plugins
+```
+
+These are slash commands inside Claude Code, not shell commands.
+
+### Path B — Development mode (testing local changes)
 
 ```bash
+# From this cloned repo, point Claude Code at the plugin directory:
+claude --plugin-dir ./feature-workflow
+```
+
+Use Path B only if the user wants to modify the plugin itself. For using it in their own project, Path A is correct.
+
+**After installing**, confirm the plugin is loaded: `/plugin list` should show `feature-workflow`.
+
+## Step 2: Pick the Target Project
+
+The plugin is installed into Claude Code globally, but `/feature-init` configures a **specific project**. Ask:
+
+> **Where do you want to use this?**
+> - A new empty project?
+> - An existing project you're actively working on?
+> - A throwaway directory, just to try it out?
+
+Then `cd` into that project with the user and run the checks below. **Do not run init inside the marketplace repo itself** — it's meant to be installed *from*, not *into*.
+
+Run these in parallel to figure out where the target project is in its setup journey:
+
+```bash
+pwd
 test -f .feature-workflow.yml && echo "initialized" || echo "fresh"
 test -d docs/features && ls docs/features 2>/dev/null | grep -v DASHBOARD.md | head -5
 test -f .github/workflows/feature-review.yml && echo "ci-configured" || echo "no-ci"
@@ -21,16 +69,18 @@ git rev-parse --is-inside-work-tree 2>/dev/null
 gh auth status 2>/dev/null && echo "gh-authenticated" || echo "gh-not-authenticated"
 ```
 
-Classify the user into one of these states:
+Classify the target project:
 
 | State | Indicator | Branch to |
 |---|---|---|
-| **Fresh** | No `.feature-workflow.yml`, no `docs/features/` | Step 2 (concepts) → Step 3 (run init) → Step 4 (walkthrough) |
-| **Initialized, empty** | `.feature-workflow.yml` exists, `docs/features/` has only DASHBOARD.md | Step 2 (quick concept recap) → Step 4 (walkthrough) |
+| **Fresh** | No `.feature-workflow.yml`, no `docs/features/` | Step 3 (concepts + run init) → Step 4 (walkthrough) |
+| **Initialized, empty** | `.feature-workflow.yml` exists, `docs/features/` has only DASHBOARD.md | Step 4 (walkthrough) |
 | **In use** | `docs/features/` has real features | Step 5 (quick reference) |
-| **Not a git repo** | `git rev-parse` fails | Warn: init a git repo first (`git init`), then re-run |
+| **Not a git repo** | `git rev-parse` fails | Warn: `git init` first, then re-run |
 
-## Step 2: Explain the Core Concepts (only if Fresh or user asks)
+## Step 3: Explain Concepts and Run `/feature-init` (Fresh users)
+
+### Core Concepts (only if Fresh or user asks)
 
 Keep this to ~6 bullets. If the user says they already know, skip to Step 3.
 
@@ -57,7 +107,7 @@ Keep this to ~6 bullets. If the user says they already know, skip to Step 3.
 
 Ask: **"Make sense? Want me to explain any piece in more depth, or should we set up your project?"**
 
-## Step 3: Run `/feature-init` Together (Fresh users)
+### Run `/feature-init` Together
 
 Before invoking `/feature-init`, walk through the decisions the user will make so they aren't caught off-guard:
 

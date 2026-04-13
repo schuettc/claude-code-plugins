@@ -42,15 +42,22 @@ Structured feature development from idea to production, with draft-PR review gat
 - `/feature-audit <id>` — evidence-based runtime verification
 - `/feature-troubleshoot` — structured debugging for shipped features
 
-**Onboarding:**
-- `/getting-started` — after installing the plugin, run this for an interactive walkthrough: it checks your current state, explains the concepts, and can guide you through a live demo feature end-to-end.
-
 **Install:**
 ```bash
 /plugin install feature-workflow@schuettc-claude-code-plugins
 ```
 
 See [feature-workflow/README.md](./feature-workflow/README.md) for full documentation.
+
+## Cloning This Repo? Start Here
+
+If you cloned this repo and want Claude to walk you through installing and using `feature-workflow` in your own project, open Claude Code in this repo and run:
+
+```
+/getting-started
+```
+
+It's a local skill defined in [.claude/skills/getting-started/SKILL.md](./.claude/skills/getting-started/SKILL.md) — not shipped with the plugin. It orients you to what this repo is, helps you install the plugin from this marketplace, and can drive a live end-to-end demo feature (capture → plan → review → implement → review → ship) against a project of your choice so you see the whole lifecycle before touching real work.
 
 ## Development Mode
 
