@@ -7,10 +7,11 @@
 #   GEMINI_SUMMARY — the raw LLM response (may also come from a different reviewer;
 #                    the var name is historical)
 #
-# The LLM response must begin with:
+# The LLM response must contain a line of the form:
 #   VERDICT: PASS | CONDITIONAL_PASS | FAIL
-# followed by a blank line and the markdown body. An optional inline comments
-# block may appear anywhere in the body:
+# anywhere in the output. Any preamble before that line is discarded; the
+# clean body posted to the PR is everything *after* the verdict line. An
+# optional inline comments block may appear anywhere in the body:
 #   <!-- INLINE_COMMENTS_JSON -->
 #   [ {"path": "...", "line": N, "body": "..."}, ... ]
 #   <!-- END_INLINE_COMMENTS_JSON -->
@@ -31,8 +32,9 @@ fi
 SUMMARY_FILE="$(mktemp)"
 printf '%s' "$GEMINI_SUMMARY" > "$SUMMARY_FILE"
 
-# Extract verdict from the first non-empty line.
-VERDICT_LINE="$(awk 'NF {print; exit}' "$SUMMARY_FILE" || true)"
+# Find the verdict line anywhere in the output (LLMs often emit a reasoning
+# preamble before the structured review). Take the first match.
+VERDICT_LINE="$(grep -m1 -E '^VERDICT: (PASS|CONDITIONAL_PASS|FAIL)$' "$SUMMARY_FILE" || true)"
 VERDICT=""
 case "$VERDICT_LINE" in
   "VERDICT: PASS")             VERDICT="PASS" ;;
@@ -41,19 +43,28 @@ case "$VERDICT_LINE" in
 esac
 
 # Extract the inline comments JSON block (if present) and strip it from the
-# main body so the body posted as the top-level review is clean.
+# main body so the body posted as the top-level review is clean. When a
+# verdict was found, also drop everything up to and including the verdict
+# line so any reasoning preamble doesn't leak into the posted review.
 BODY_FILE="$(mktemp)"
 INLINE_JSON_FILE="$(mktemp)"
-awk '
-  BEGIN { inblock = 0 }
+awk -v verdict="$VERDICT_LINE" '
+  BEGIN { inblock = 0; past_verdict = (verdict == "") ? 1 : 0 }
   /<!-- INLINE_COMMENTS_JSON -->/ { inblock = 1; next }
   /<!-- END_INLINE_COMMENTS_JSON -->/ { inblock = 0; next }
-  { if (inblock) print > "'"$INLINE_JSON_FILE"'"; else print > "'"$BODY_FILE"'" }
+  {
+    if (inblock) { print > "'"$INLINE_JSON_FILE"'"; next }
+    if (!past_verdict) {
+      if ($0 == verdict) { past_verdict = 1 }
+      next
+    }
+    print > "'"$BODY_FILE"'"
+  }
 ' "$SUMMARY_FILE"
 
-# Strip the verdict line from the body (it was only for parsing).
-if [[ -n "$VERDICT" ]]; then
-  tail -n +2 "$BODY_FILE" | sed '/./,$!d' > "${BODY_FILE}.tmp"
+# Trim leading blank lines from the body.
+if [[ -n "$VERDICT" && -s "$BODY_FILE" ]]; then
+  sed '/./,$!d' "$BODY_FILE" > "${BODY_FILE}.tmp"
   mv "${BODY_FILE}.tmp" "$BODY_FILE"
 fi
 

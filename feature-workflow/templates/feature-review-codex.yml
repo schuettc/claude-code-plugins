@@ -9,7 +9,7 @@ env:
 
 jobs:
   plan-review:
-    if: contains(github.event.pull_request.labels.*.name, 'plan-review')
+    if: contains(github.event.pull_request.labels.*.name, 'plan-review') && !contains(github.event.pull_request.labels.*.name, 'impl-review')
     runs-on: ubuntu-latest
     permissions:
       contents: read
