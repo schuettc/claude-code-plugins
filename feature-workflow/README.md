@@ -1,13 +1,24 @@
 # Feature Workflow Plugin
 
-**Version:** 9.0.0
+**Version:** 9.2.0
 
 A Claude Code plugin for feature lifecycle management using a directory-based architecture with event-driven hooks. Capture feature ideas, plan implementations, and ship features through a review-gated pipeline — optionally with automated PR reviews from an external AI (Gemini or Codex) via GitHub Actions.
 
-## What's New in 9.0
+## What's New
 
-- **Automated PR Reviews** — draft PRs can be auto-reviewed by Gemini or Codex via GitHub Actions. See [Automated PR Reviews](#automated-pr-reviews) below.
-- **`/feature-init --update`** — refresh the generated CI workflow + review prompts in an existing project without re-running full init or re-uploading your API key.
+### 9.2 — Inline thread replies + tighter prompt filters
+- **Inline responses on resolved findings** — `/feature-review-plan <id> --respond` and `/feature-review-impl <id> --respond` now fetch review threads via GraphQL, reply inline on each finding with `Resolved in <sha>: <one-line>`, and resolve the thread via the `resolveReviewThread` mutation. Disagreed findings get an inline reply explaining the reasoning but stay open.
+- **Visible `### Verdict:` heading** — review prompts now require a display verdict heading in the markdown body, so the posted review shows PASS / CONDITIONAL PASS / FAIL prominently (independent of the machine-readable prefix that the workflow strips).
+- **No-op finding filter** — prompts explicitly reject "no change required, just confirming" commentary, hedged hypotheticals ("if a user somehow…"), and defensive additions for impossible conditions. Observed noise in early Gemini rounds drops significantly.
+
+### 9.1 — Workflow-side review posting
+- **Reviewer no longer runs `gh` commands** — Gemini/Codex output structured text (verdict line, markdown body, inline-comments JSON block between sentinels) and the workflow itself parses and posts via `gh pr review` and `gh api pulls/N/comments`.
+- **Line-anchored inline comments** — reviewers emit a JSON array between `<!-- INLINE_COMMENTS_JSON -->` sentinels; `post-review.sh` loops through them and posts each as a line-anchored review comment on the diff.
+- **New `templates/post-review.sh`** installed into `.github/scripts/` by `/feature-init` and `/feature-init --update`.
+
+### 9.0 — Automated PR reviews
+- **Gemini + Codex in GitHub Actions** — draft PRs auto-reviewed by an external AI. See [Automated PR Reviews](#automated-pr-reviews) below.
+- **`/feature-init --update`** — refresh the generated CI workflow + review prompts + `post-review.sh` in an existing project without re-running full init or re-uploading your API key.
 - **Bot approval setup** — `feature-init` automatically enables the repo-level "Allow GitHub Actions to approve pull requests" setting so PASS verdicts actually land as approvals.
 - **Label-driven review lifecycle** — submit skills add `plan-review` / `impl-review` labels that trigger the workflow; ship removes them.
 
@@ -77,80 +88,49 @@ docs/features/
 
 ## Commands
 
-### `/feature-capture`
+All commands below are user-invocable skills. Type `/<name>` in Claude Code to trigger them.
 
-Interactive workflow for adding features to the backlog.
+### Setup
 
-**Usage:**
-```
-/feature-capture
-```
+#### `/feature-init`
+One-time setup for a new project. Creates `docs/features/`, `.feature-workflow.yml`, and — if you choose an external reviewer — generates the GitHub Actions workflow, review prompts, and `post-review.sh` under `.github/`, uploads your API key as a repo secret, and enables bot PR approvals.
 
-**What it does:**
-1. Asks questions to capture the feature:
-   - Item type (Feature, Enhancement, Tech Debt, Bug Fix)
-   - Feature name
-   - Problem statement
-   - Priority (P0, P1, P2)
-   - Effort estimate (Small, Medium, Large)
-   - Impact level (Low, Medium, High)
-   - Affected areas (optional)
+Flags:
+- `--update` — refresh the CI workflow + review prompts + `post-review.sh` from the current plugin templates without touching `.feature-workflow.yml`, your API secret, or `docs/features/`. Use this after a plugin upgrade.
 
-2. Creates `docs/features/[id]/idea.md` with frontmatter metadata
+### Lifecycle
 
-3. Hook automatically regenerates DASHBOARD.md
+#### `/feature-capture`
+Interactive capture for a new feature idea. Asks for type (Feature / Enhancement / Tech Debt / Bug Fix), name, problem statement, priority, effort, impact, and affected areas. Writes `docs/features/<id>/idea.md` — the hook regenerates DASHBOARD.md.
 
-### `/feature-plan [feature-id]`
+#### `/feature-plan [id]`
+Produces a structured `plan.md` for a backlog feature. Runs requirements analysis, system design, and implementation breakdown using the specialized planning agents. Writing `plan.md` moves the feature to In Progress and sets the terminal statusline.
 
-Start implementing a feature from the backlog with comprehensive planning.
+#### `/feature-review-plan [id]`
+Pushes `idea.md` + `plan.md` to a feature branch, opens a draft PR targeted at your base branch, and adds the `plan-review` label. If a CI reviewer is configured, the workflow runs automatically and posts findings on the PR. If not, you trigger a reviewer manually (see [CLI fallback](#cli-fallback)).
 
-**Usage:**
-```
-/feature-plan dark-mode-toggle
-```
+Flags:
+- `--respond` — fetch open review threads, classify each finding, implement fixes, reply inline on each thread with `Resolved in <sha>: <one-line>`, and resolve the thread via GraphQL. Disagreed findings get an inline reply but stay open.
 
-Or without an ID to see available items:
-```
-/feature-plan
-```
+#### `/feature-implement [id]`
+Implements an approved plan. Tracks progress in `plan.md`'s progress log and keeps scope guarded by the `guarding-scope` skill.
 
-**What it does:**
-1. **Feature Selection** - Choose from DASHBOARD.md backlog or validate provided ID
-2. **Requirements Analysis** - Deep dive with project-manager agent
-3. **System Design** - Adaptive architecture planning based on feature type
-4. **Implementation Plan** - Creates structured plan with actionable steps
-5. **Write plan.md** - Creates the plan file, triggering status change
-6. **Kickoff Summary** - Creates todos and provides next steps
+#### `/feature-review-impl [id]`
+Pushes the implementation to the same feature branch, swaps `plan-review` → `impl-review`, and triggers the impl review. Same `--respond` flow as `/feature-review-plan --respond`.
 
-Writing `plan.md` triggers the hook to:
-- Set terminal statusline to feature ID
-- Regenerate DASHBOARD.md (feature moves to In Progress)
+#### `/feature-ship [id]`
+Final quality gates before merge. Runs the security-reviewer and qa-engineer agents, executes tests/type checks/build, removes review labels, merges the PR, and writes `shipped.md` — the hook moves the feature to Completed and clears the statusline.
 
-### `/feature-ship [feature-id]`
+### Diagnostics
 
-Complete a feature with quality gates.
+#### `/feature-status`
+Quick snapshot of the dashboard — what's in progress, what's in the backlog, what shipped recently. Read-only.
 
-**Usage:**
-```
-/feature-ship dark-mode-toggle
-```
+#### `/feature-audit [id]`
+Evidence-based runtime verification for a completed or in-progress feature. Injects observational logs, captures execution data, and analyzes runtime behavior to confirm the feature actually does what the plan said it would. Uses the `runtime-auditor` agent.
 
-Or without an ID to see in-progress items:
-```
-/feature-ship
-```
-
-**What it does:**
-1. **Pre-flight Check** - Verify feature is in-progress
-2. **Security Review** - Run security-reviewer agent (BLOCKS on Critical/High)
-3. **QA Validation** - Run qa-engineer agent
-4. **Final Verification** - Run tests, type checks, build
-5. **Write shipped.md** - Creates completion notes, triggering status change
-6. **Summary** - Display completion report
-
-Writing `shipped.md` triggers the hook to:
-- Clear terminal statusline
-- Regenerate DASHBOARD.md (feature moves to Completed)
+#### `/feature-troubleshoot`
+Structured problem-definition → hypothesis → investigation → resolution → verification flow for bugs found in a shipped feature. Good for "this isn't working and I don't know why" situations.
 
 ## Automated PR Reviews
 
