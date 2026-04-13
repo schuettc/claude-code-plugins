@@ -21,6 +21,7 @@ Then install any plugin:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | [feature-workflow](./feature-workflow) | Feature lifecycle with directory-based tracking, event-driven hooks, and optional automated PR reviews via Gemini/Codex in GitHub Actions | 9.2.0 |
+| [website-deployment](./website-deployment) | Guided workflow to deploy Node.js/Express apps to AWS serverless (S3 + CloudFront + Lambda + API Gateway + CDK). Analyzes your app, scaffolds infra, and deploys with step-by-step explanations | 1.0.0 |
 
 ## Plugin: feature-workflow
 
@@ -48,6 +49,29 @@ Structured feature development from idea to production, with draft-PR review gat
 ```
 
 See [feature-workflow/README.md](./feature-workflow/README.md) for full documentation.
+
+## Plugin: website-deployment
+
+Deploy a local Node.js / Express / Vite web app to AWS serverless infrastructure, guided step-by-step. Claude analyzes your app, explains what needs to happen, scaffolds the infrastructure, and walks you through each decision.
+
+**What it handles:**
+- Static frontend hosting via S3 + CloudFront
+- Server-side routes converted to Lambda functions behind API Gateway
+- DynamoDB for data
+- Cognito for authentication
+- Infrastructure as code via AWS CDK
+- Cost awareness — most dev-traffic deployments fit in the free tier
+
+**Bundled MCP servers** (start automatically): AWS Documentation for live docs lookups, and Playwright for end-to-end browser testing of the deployed app.
+
+**Prerequisites:** Node.js 18+, AWS CLI v2 with credentials, Python + `uvx` (for the AWS docs MCP server).
+
+**Install:**
+```bash
+/plugin install website-deployment@schuettc-claude-code-plugins
+```
+
+See [website-deployment/README.md](./website-deployment/README.md) for prerequisites, usage, and teardown instructions.
 
 ## Cloning This Repo? Start Here
 

@@ -1,0 +1,11 @@
+{
+  "name": "website-deployment",
+  "version": "1.0.0",
+  "description": "Guided workflow to deploy Node.js/Express apps to AWS serverless architecture. Analyzes your app, scaffolds infrastructure, and deploys with CDK — all with step-by-step explanations for beginners.",
+  "author": {
+    "name": "Court Schuett"
+  },
+  "repository": "https://github.com/schuettc/website-deployment-plugin",
+  "license": "MIT",
+  "keywords": ["aws", "deployment", "serverless", "express", "cdk", "lambda", "react", "vite"]
+}
