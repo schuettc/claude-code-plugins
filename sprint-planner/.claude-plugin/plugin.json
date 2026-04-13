@@ -1,0 +1,9 @@
+{
+  "name": "sprint-planner",
+  "version": "0.1.0",
+  "description": "Sprint planning and team coordination. Triage backlogs by deadline, assign work with self-service specs, audit feature specs for completeness, and generate team communication. Designed for small teams (2-6 devs) with mixed experience levels preparing for demos or releases.",
+  "author": {
+    "name": "Court Schuett"
+  },
+  "skills": "./skills/"
+}
