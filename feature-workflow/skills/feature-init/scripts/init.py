@@ -90,6 +90,17 @@ def setup_reviewer(project_root: Path, reviewer: str, api_key: str | None, templ
         else:
             print(f"WARNING: Prompt template not found: {prompt_src}")
 
+    scripts_dir = github_dir / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    script_src = template_dir / "post-review.sh"
+    if script_src.exists():
+        script_dst = scripts_dir / "post-review.sh"
+        shutil.copy2(script_src, script_dst)
+        script_dst.chmod(0o755)
+        print("Created .github/scripts/post-review.sh")
+    else:
+        print(f"WARNING: Script template not found: {script_src}")
+
     if api_key:
         secret_name = "GOOGLE_API_KEY" if reviewer == "gemini" else "OPENAI_API_KEY"
         try:
@@ -195,6 +206,17 @@ def update_mode(project_root: Path) -> int:
             print(f"Refreshed .github/{prompt_name}")
         else:
             print(f"WARNING: Prompt template not found: {prompt_src}")
+
+    scripts_dir = github_dir / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    script_src = template_dir / "post-review.sh"
+    if script_src.exists():
+        script_dst = scripts_dir / "post-review.sh"
+        shutil.copy2(script_src, script_dst)
+        script_dst.chmod(0o755)
+        print("Refreshed .github/scripts/post-review.sh")
+    else:
+        print(f"WARNING: Script template not found: {script_src}")
 
     enable_bot_approvals()
 
