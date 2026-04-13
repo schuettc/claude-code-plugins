@@ -15,6 +15,12 @@
       "source": "./website-deployment",
       "description": "Guided workflow to deploy Node.js/Express apps to AWS serverless architecture. Analyzes your app, scaffolds infrastructure, and deploys with CDK — all with step-by-step explanations for beginners.",
       "version": "1.0.0"
+    },
+    {
+      "name": "sprint-planner",
+      "source": "./sprint-planner",
+      "description": "Sprint planning and team coordination. Triage backlogs by deadline, assign work with self-service specs, audit feature specs for completeness, and generate team communication. Designed for small teams with mixed experience levels.",
+      "version": "0.1.0"
     }
   ]
 }
