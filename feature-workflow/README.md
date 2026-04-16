@@ -1,25 +1,26 @@
 # Feature Workflow Plugin
 
-**Version:** 9.2.0
+**Version:** 9.2.3
 
 A Claude Code plugin for feature lifecycle management using a directory-based architecture with event-driven hooks. Capture feature ideas, plan implementations, and ship features through a review-gated pipeline — optionally with automated PR reviews from an external AI (Gemini or Codex) via GitHub Actions.
 
 ## What's New
 
+### 9.2.3 — Comment-only CI reviews
+- **Simplified CI posting** — `post-review.sh` now posts reviewer output as a plain `gh pr comment` instead of parsing a VERDICT prefix to map to `--approve`/`--request-changes`. The VERDICT/inline-comments JSON protocol was too fragile — Gemini intermittently truncated before the VERDICT line, and inline comments frequently failed with HTTP 422 when the reviewer cited lines outside the diff. Reviews are advisory anyway.
+- **Human-readable verdict** — review prompts still include a `### Verdict: PASS / CONDITIONAL PASS / FAIL` heading in the markdown body for humans to scan. No machine parsing required.
+
 ### 9.2 — Inline thread replies + tighter prompt filters
 - **Inline responses on resolved findings** — `/feature-review-plan <id> --respond` and `/feature-review-impl <id> --respond` now fetch review threads via GraphQL, reply inline on each finding with `Resolved in <sha>: <one-line>`, and resolve the thread via the `resolveReviewThread` mutation. Disagreed findings get an inline reply explaining the reasoning but stay open.
-- **Visible `### Verdict:` heading** — review prompts now require a display verdict heading in the markdown body, so the posted review shows PASS / CONDITIONAL PASS / FAIL prominently (independent of the machine-readable prefix that the workflow strips).
 - **No-op finding filter** — prompts explicitly reject "no change required, just confirming" commentary, hedged hypotheticals ("if a user somehow…"), and defensive additions for impossible conditions. Observed noise in early Gemini rounds drops significantly.
 
 ### 9.1 — Workflow-side review posting
-- **Reviewer no longer runs `gh` commands** — Gemini/Codex output structured text (verdict line, markdown body, inline-comments JSON block between sentinels) and the workflow itself parses and posts via `gh pr review` and `gh api pulls/N/comments`.
-- **Line-anchored inline comments** — reviewers emit a JSON array between `<!-- INLINE_COMMENTS_JSON -->` sentinels; `post-review.sh` loops through them and posts each as a line-anchored review comment on the diff.
+- **Reviewer no longer runs `gh` commands** — Gemini/Codex output is captured by the workflow and posted via `post-review.sh`.
 - **New `templates/post-review.sh`** installed into `.github/scripts/` by `/feature-init` and `/feature-init --update`.
 
 ### 9.0 — Automated PR reviews
 - **Gemini + Codex in GitHub Actions** — draft PRs auto-reviewed by an external AI. See [Automated PR Reviews](#automated-pr-reviews) below.
 - **`/feature-init --update`** — refresh the generated CI workflow + review prompts + `post-review.sh` in an existing project without re-running full init or re-uploading your API key.
-- **Bot approval setup** — `feature-init` automatically enables the repo-level "Allow GitHub Actions to approve pull requests" setting so PASS verdicts actually land as approvals.
 - **Label-driven review lifecycle** — submit skills add `plan-review` / `impl-review` labels that trigger the workflow; ship removes them.
 
 ## Requirements
@@ -93,7 +94,7 @@ All commands below are user-invocable skills. Type `/<name>` in Claude Code to t
 ### Setup
 
 #### `/feature-init`
-One-time setup for a new project. Creates `docs/features/`, `.feature-workflow.yml`, and — if you choose an external reviewer — generates the GitHub Actions workflow, review prompts, and `post-review.sh` under `.github/`, uploads your API key as a repo secret, and enables bot PR approvals.
+One-time setup for a new project. Creates `docs/features/`, `.feature-workflow.yml`, and — if you choose an external reviewer — generates the GitHub Actions workflow, review prompts, and `post-review.sh` under `.github/`, and uploads your API key as a repo secret.
 
 Flags:
 - `--update` — refresh the CI workflow + review prompts + `post-review.sh` from the current plugin templates without touching `.feature-workflow.yml`, your API secret, or `docs/features/`. Use this after a plugin upgrade.
@@ -134,7 +135,7 @@ Structured problem-definition → hypothesis → investigation → resolution �
 
 ## Automated PR Reviews
 
-Every feature can be reviewed twice — once at the plan stage, once at the implementation stage — by an external AI reviewer (Gemini or Codex) running in GitHub Actions. Reviews post comments and requested changes directly on the draft PR, and on a PASS verdict the bot approves the PR automatically.
+Every feature can be reviewed twice — once at the plan stage, once at the implementation stage — by an external AI reviewer (Gemini or Codex) running in GitHub Actions. Reviews are posted as PR comments with a human-readable verdict (PASS / CONDITIONAL PASS / FAIL) that the author reads and acts on.
 
 ### Setup (one command)
 
@@ -147,8 +148,7 @@ When prompted, choose `gemini` or `codex` as the reviewer and paste the correspo
 1. Writes `.github/workflows/feature-review.yml` from the plugin's template for your chosen reviewer.
 2. Writes `.github/review-prompt-plan.md` and `.github/review-prompt-impl.md` — the reviewer's instructions.
 3. Uploads your API key as a repo secret (`GOOGLE_API_KEY` or `OPENAI_API_KEY`) via `gh secret set` — never stored on disk.
-4. Enables the repo-level **"Allow GitHub Actions to approve pull requests"** setting via the GitHub API. Without this, `gh pr review --approve` silently downgrades to a comment-only review.
-5. Records `reviewer: gemini|codex` in `.feature-workflow.yml`.
+4. Records `reviewer: gemini|codex` in `.feature-workflow.yml`.
 
 Commit and push `.github/` to your default branch. The workflow must exist on the default branch before Actions will trigger.
 
@@ -157,7 +157,7 @@ Commit and push `.github/` to your default branch. The workflow must exist on th
 ```
 /feature-review-plan submit  →  creates draft PR, adds "plan-review" label
                              →  GitHub Actions runs plan reviewer
-                             →  comments posted inline, PASS = approval, FAIL = changes requested
+                             →  review posted as PR comment with verdict
 /feature-review-plan respond →  push fixes → "synchronize" re-triggers review automatically
 /feature-review-impl submit  →  removes "plan-review", adds "impl-review" → same loop for impl
 /feature-ship                →  removes review labels → merges PR
@@ -186,8 +186,6 @@ This refreshes only:
 - `.github/workflows/feature-review.yml`
 - `.github/review-prompt-plan.md`
 - `.github/review-prompt-impl.md`
-- Re-applies the bot-approval repo setting (idempotent)
-
 It does **not** touch `.feature-workflow.yml`, your uploaded API secret, or `docs/features/`. Commit and push the refreshed files to your default branch.
 
 > **Why this is needed:** the workflow and prompt files are copied into each user's repo at init time — they're not live references. A plugin upgrade cannot edit files inside consumer repos automatically, so `--update` is the explicit opt-in to re-copy them.
@@ -197,7 +195,7 @@ It does **not** touch `.feature-workflow.yml`, your uploaded API secret, or `doc
 | Layer | File | Source of truth | Update mechanism |
 |---|---|---|---|
 | Plugin | `feature-workflow/templates/feature-review-{gemini,codex}.yml` | This repo | Normal plugin update |
-| Plugin | `feature-workflow/templates/review-prompt-{plan,impl}.md` | Generated from `reviewers/skills/*.md` | Normal plugin update |
+| Plugin | `feature-workflow/templates/review-prompt-{plan,impl}.md` | This repo | Normal plugin update |
 | Plugin | `feature-workflow/reviewers/skills/feature-review-{plan,impl}.md` | This repo (authoritative) | Edit directly |
 | CLI reviewer repos | `gemini-reviewer/*/SKILL.md`, `codex-reviewer/skills/*/SKILL.md` | Mirrored from `reviewers/skills/` | Run `feature-workflow/reviewers/sync.sh` then commit/push those repos |
 | User project | `.github/workflows/feature-review.yml` | Copied from plugin templates | `/feature-init --update` |
