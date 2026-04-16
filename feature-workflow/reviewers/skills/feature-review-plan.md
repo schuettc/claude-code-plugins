@@ -121,6 +121,35 @@ You are not grading the plan's prose, structure, or formatting. You are looking 
 - Tests for code paths that don't exist yet and will obviously need tests
 - Requests to "define terms" that the team already uses consistently
 - Anything that amounts to "this plan is fine but here's how I'd write it"
+- **Implementation details that belong in code review** — see "Plan Review vs. Code Review" below
+
+### Plan Review vs. Code Review (CRITICAL — read before marking anything Blocking)
+
+A **plan review** validates the *what* and *why* — correct components, correct surfaces, correct algorithm, correct data flow. A **code review** validates the *how* — prop signatures, CSS layout, variable naming, null checks, type narrowing.
+
+**These are implementation details. They are NOT blocking plan findings:**
+
+- Function signatures, prop types, or return type shapes (e.g., "return `Set<number>` vs `Map<string, Set<number>>`")
+- CSS/layout concerns (e.g., "this flex container will misalign the grid")
+- Component naming conflicts that are trivially resolved during coding
+- How to thread state through the component tree (e.g., "pass as prop vs use context hook")
+- Null/undefined guard placement (e.g., "add a fallback when data is null")
+- Internal API design of helper functions (parameter order, overloads, generics)
+
+A competent developer will resolve these during implementation. If you flag them, they belong in **Recommendations** as **Should-fix** at most — never **Blocking** in Critical Findings.
+
+**The plan-level test for Blocking:** Would this gap cause the developer to build the **wrong thing**, target the **wrong component**, use the **wrong algorithm**, or miss an **entire surface**? If yes, it's blocking. If the developer would simply make a local coding decision to resolve it, it's not blocking — it's an implementation detail.
+
+**Examples of plan-level blocking findings:**
+- "The plan targets ContextualView but the live viewer uses ViewerStatusSlot" — wrong component
+- "The plan assumes an `indexPosition` field that doesn't exist on ShopTransaction" — wrong data model
+- "The plan omits the Decisions tab entirely" — missing surface
+
+**Examples of implementation details (NOT blocking):**
+- "The return type should be `{ cards: Set<number>, relics: Set<number> }` instead of `Set<number>`" — type shape
+- "The centered flex wrapper will misalign the grid" — CSS layout
+- "`ExpandedBody` doesn't receive `runStatus` as a prop" — state threading
+- "The local `ShopView` name will conflict with the extracted one" — naming
 
 **The nit test:** if the author could reasonably reply "I disagree, and I'm not changing the plan" and the feature would still ship safely — it was a nit. Do not post it.
 
