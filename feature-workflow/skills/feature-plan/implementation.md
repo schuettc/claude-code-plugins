@@ -114,7 +114,7 @@ External review requested for the **plan** phase.
 ## Stage Changes
 
 ```bash
-git add docs/features/[id]/ docs/features/DASHBOARD.md
+git add docs/features/[id]/
 ```
 
 **Output**: Feature transitioned to in-progress, statusline set, review requested

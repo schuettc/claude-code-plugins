@@ -166,6 +166,78 @@ def enable_bot_approvals() -> None:
         pass
 
 
+def setup_dashboard_autoresolve(project_root: Path, template_dir: Path) -> None:
+    """Set up DASHBOARD.md merge conflict auto-resolution.
+
+    Copies dashboard-regen.py and dashboard-regen.yml into .github/,
+    appends the .gitattributes merge driver entry, and configures the
+    local git merge driver automatically.
+    """
+    github_dir = project_root / ".github"
+    scripts_dir = github_dir / "scripts"
+    workflows_dir = github_dir / "workflows"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    workflows_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy dashboard-regen.py
+    regen_src = template_dir / "dashboard-regen.py"
+    if regen_src.exists():
+        regen_dst = scripts_dir / "dashboard-regen.py"
+        shutil.copy2(regen_src, regen_dst)
+        regen_dst.chmod(0o755)
+        print("Created .github/scripts/dashboard-regen.py")
+    else:
+        print(f"WARNING: Template not found: {regen_src}")
+        return
+
+    # Copy dashboard-regen.yml workflow
+    workflow_src = template_dir / "dashboard-regen.yml"
+    if workflow_src.exists():
+        shutil.copy2(workflow_src, workflows_dir / "dashboard-regen.yml")
+        print("Created .github/workflows/dashboard-regen.yml")
+    else:
+        print(f"WARNING: Template not found: {workflow_src}")
+
+    # Append .gitattributes entry (skip if already present)
+    gitattributes_path = project_root / ".gitattributes"
+    marker = "merge=regenerate-dashboard"
+    existing = gitattributes_path.read_text() if gitattributes_path.exists() else ""
+
+    if marker not in existing:
+        fragment_src = template_dir / "gitattributes-fragment.txt"
+        if fragment_src.exists():
+            fragment = fragment_src.read_text()
+        else:
+            fragment = (
+                "\n# Auto-resolve DASHBOARD.md merge conflicts by regenerating from feature files\n"
+                "docs/features/DASHBOARD.md merge=regenerate-dashboard\n"
+            )
+        # Ensure we start on a new line
+        if existing and not existing.endswith("\n"):
+            fragment = "\n" + fragment
+        with open(gitattributes_path, "a") as f:
+            f.write(fragment)
+        print("Added merge driver entry to .gitattributes")
+    else:
+        print(".gitattributes already has merge driver entry — skipped")
+
+    # Configure local git merge driver
+    driver_cmd = "python3 .github/scripts/dashboard-regen.py --merge-driver %A"
+    try:
+        subprocess.run(
+            ["git", "config", "merge.regenerate-dashboard.name", "Regenerate DASHBOARD.md"],
+            capture_output=True, text=True, cwd=project_root
+        )
+        subprocess.run(
+            ["git", "config", "merge.regenerate-dashboard.driver", driver_cmd],
+            capture_output=True, text=True, cwd=project_root
+        )
+        print("Configured git merge driver 'regenerate-dashboard' for DASHBOARD.md")
+    except FileNotFoundError:
+        print("WARNING: git not found — manually run:")
+        print(f'  git config merge.regenerate-dashboard.driver "{driver_cmd}"')
+
+
 def read_reviewer_from_config(config_path: Path) -> str | None:
     if not config_path.exists():
         return None
@@ -220,13 +292,17 @@ def update_mode(project_root: Path) -> int:
 
     enable_bot_approvals()
 
+    # Always set up dashboard auto-resolve on update
+    setup_dashboard_autoresolve(project_root, template_dir)
+
     print("")
     print("Update complete. Commit and push the refreshed files:")
-    print("  git add .github/")
-    print("  git commit -m 'chore: refresh feature-review workflow + prompts'")
+    print("  git add .github/ .gitattributes")
+    print("  git commit -m 'chore: refresh feature-review workflow + prompts + dashboard auto-resolve'")
     print("  git push")
     print("")
     print("Note: API key secret and .feature-workflow.yml were not touched.")
+    print("Other developers should run `/feature-init --update` to configure their local merge driver.")
     return 0
 
 
@@ -274,9 +350,13 @@ def main() -> int:
 
     config_path.write_text(config_content)
 
+    template_dir = find_template_dir()
+
     if args.reviewer != "none":
-        template_dir = find_template_dir()
         setup_reviewer(project_root, args.reviewer, args.api_key, template_dir)
+
+    # Set up dashboard auto-resolve for all projects
+    setup_dashboard_autoresolve(project_root, template_dir)
 
     print("")
     print("Feature workflow initialized!")

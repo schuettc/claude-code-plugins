@@ -1,0 +1,30 @@
+name: Regenerate Dashboard
+
+on:
+  push:
+    branches: [main, dev]
+    paths: ['docs/features/**']
+
+permissions:
+  contents: write
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Regenerate DASHBOARD.md
+        run: python3 .github/scripts/dashboard-regen.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docs/features/DASHBOARD.md
+          git diff --cached --quiet || git commit -m 'docs: regenerate dashboard [skip ci]'
+          git push

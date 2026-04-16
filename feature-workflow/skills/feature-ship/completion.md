@@ -150,7 +150,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/clear-context.sh
 After writing shipped.md (and confirming the hook updated DASHBOARD.md):
 
 ```bash
-git add docs/features/[id]/ docs/features/DASHBOARD.md
+git add docs/features/[id]/
 git commit -m "Ship: [feature-name]"
 ```
 

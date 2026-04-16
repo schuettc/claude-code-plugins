@@ -7,7 +7,7 @@ Would you like to stage this change with git?
 
 If yes, run:
 ```bash
-git add docs/features/[id]/idea.md docs/features/DASHBOARD.md
+git add docs/features/[id]/idea.md
 ```
 
 This stages the new idea.md and the regenerated DASHBOARD.md.

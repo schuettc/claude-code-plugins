@@ -111,12 +111,7 @@ git push
 python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root>
 ```
 
-If the dashboard was regenerated, commit and push that too:
-```bash
-git add docs/features/DASHBOARD.md
-git commit -m "docs: regenerate dashboard"
-git push
-```
+DASHBOARD.md is auto-resolved on merge via CI — no need to commit it from feature branches.
 
 ---
 
