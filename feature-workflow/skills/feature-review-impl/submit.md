@@ -21,11 +21,14 @@ gh pr list --head feature/<id> --json number,url,state --jq '.[0]'
 2. Continue on the existing branch
 
 **If no feature branch exists (plan review was skipped):**
-1. Ensure you're on `dev` and up to date:
+1. Ensure you're on the target branch, synced with remote, and local commits are pushed:
    ```bash
-   git checkout dev && git pull
+   git checkout dev && git pull && git push
    ```
-2. Create and switch to the feature branch from `dev`:
+   The `git push` is critical — if local has unpushed commits, the remote base
+   branch will be stale and GitHub Actions `labeled` triggers may silently fail
+   because the workflow file on the remote base doesn't match expectations.
+2. Create and switch to the feature branch from the target branch:
    ```bash
    git checkout -b feature/<id>
    ```
