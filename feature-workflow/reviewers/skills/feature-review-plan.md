@@ -122,6 +122,9 @@ You are not grading the plan's prose, structure, or formatting. You are looking 
 - Tests for code paths that don't exist yet and will obviously need tests
 - Requests to "define terms" that the team already uses consistently
 - Anything that amounts to "this plan is fine but here's how I'd write it"
+- **No-op "findings"** — if your finding concludes "no change required", "just confirming consistency", "the plan already handles this", or "this is acceptable as-is", **delete the finding entirely**. A finding exists to request a change. If you are not requesting a change, you are writing commentary, not a finding.
+- **Hedged hypotheticals** — "if a user somehow…", "in the edge case where someone might…", "theoretically this could…". If you cannot name a realistic input or state that triggers the failure, it is not a finding.
+- **Defensive additions for things that cannot happen** given the plan's stated constraints. Trust the plan's stated inputs.
 - **Implementation details that belong in code review** — see "Plan Review vs. Code Review" below
 
 ### Plan Review vs. Code Review (CRITICAL — read before marking anything Blocking)
@@ -200,6 +203,8 @@ Inline comments must still contain all five — they can be terser, but Location
 - Findings that do not name a `plan.md` heading or line
 - "This might be out of scope" with no pointer to the out-of-scope bullet
 - Restating what the plan says without identifying a gap
+- "No change required, just confirming X" / "just noting that Y is handled correctly" — these are not findings. Delete them.
+- "For completeness, you could also…" / "it might be worth considering…" — if it's not required, it's noise.
 
 ### When you cannot be fully specific
 
