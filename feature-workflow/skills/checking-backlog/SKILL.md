@@ -1,7 +1,7 @@
 ---
 name: checking-backlog
 description: Check project backlog when discussing feature ideas or priorities. Use when user mentions adding features, asks what's planned, discusses priorities, or proposes new functionality. Silently reads DASHBOARD.md to show relevant items and suggest /feature-capture for untracked ideas.
-allowed-tools: Read, Glob
+allowed-tools: Read, Glob, Bash
 ---
 
 # Backlog Awareness
@@ -20,9 +20,13 @@ Invoke this skill when the user:
 
 ### Step 1: Load Dashboard
 
-Read `docs/features/DASHBOARD.md` to see all features by status.
+Scan the feature directories to generate a live dashboard:
 
-If it doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root> --stdout
+```
+
+If the script fails or `docs/features/` doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
 
 ### Step 2: Search for Matches
 

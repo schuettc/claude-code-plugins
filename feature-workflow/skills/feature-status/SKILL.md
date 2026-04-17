@@ -1,7 +1,7 @@
 ---
 name: feature-status
 description: Display project status and backlog overview. Use when user asks about current status, what's in progress, what to work on next, or wants a summary of the backlog. Read-only skill that formats DASHBOARD.md into a clear dashboard view.
-allowed-tools: Read
+allowed-tools: Read, Bash
 user-invocable: true
 ---
 
@@ -29,9 +29,13 @@ Invoke this skill when the user asks:
 
 ### Step 1: Load Dashboard
 
-Read `docs/features/DASHBOARD.md` - this is the auto-generated dashboard that shows all features organized by status.
+Scan the feature directories to generate a live dashboard:
 
-If it doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root> --stdout
+```
+
+If the script fails or `docs/features/` doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
 
 ### Step 1.5: Apply Category Filter
 

@@ -10,11 +10,15 @@ You are executing the **IMPLEMENT FEATURE** workflow - a comprehensive feature k
 
 ## First Step (Do This Now)
 
-**Read the file at path: `docs/features/DASHBOARD.md`**
+**Scan the feature directories to generate a live dashboard:**
 
-This file contains the backlog. If it doesn't exist, check if `docs/features/` directory exists - if not, the project hasn't been set up for feature tracking yet.
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root> --stdout
+```
 
-> **Note**: To start a feature, create `docs/features/[id]/plan.md`. The PostToolUse hook automatically updates DASHBOARD.md - do NOT edit DASHBOARD.md directly.
+This scans `docs/features/*/` to show all features by status. If it fails or `docs/features/` doesn't exist, the project hasn't been set up for feature tracking yet.
+
+> **Note**: To start a feature, create `docs/features/[id]/plan.md`. The PostToolUse hook automatically updates the local DASHBOARD.md - do NOT edit it directly.
 
 ## Contents
 
@@ -91,7 +95,7 @@ This command orchestrates a 6-phase workflow:
 
 **See**: [selection.md](selection.md)
 
-- Read DASHBOARD.md and find/select feature from Backlog section
+- Run `run_dashboard.py --stdout` and find/select feature from Backlog section
 - Read the feature's `idea.md` for full details
 - Verify feature is in backlog status (no plan.md exists yet)
 - Handle already-in-progress features with user options

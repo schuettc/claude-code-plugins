@@ -1,2 +1,0 @@
-# Auto-resolve DASHBOARD.md merge conflicts by regenerating from feature files
-docs/features/DASHBOARD.md merge=regenerate-dashboard

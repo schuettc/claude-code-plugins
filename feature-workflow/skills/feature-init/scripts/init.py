@@ -166,99 +166,37 @@ def enable_bot_approvals() -> None:
         pass
 
 
-def setup_dashboard_autoresolve(project_root: Path, template_dir: Path) -> None:
-    """Set up DASHBOARD.md merge conflict auto-resolution.
+def setup_dashboard_gitignore(project_root: Path) -> None:
+    """Add DASHBOARD.md to .gitignore and untrack it if currently tracked.
 
-    Copies dashboard-regen.py and dashboard-regen.yml into .github/,
-    appends the .gitattributes merge driver entry, and configures the
-    local git merge driver automatically.
+    DASHBOARD.md is 100% derived from feature directories. Skills scan
+    directories directly via run_dashboard.py --stdout, so the file
+    doesn't need to be committed. The PostToolUse hook still regenerates
+    it locally for convenience.
     """
-    github_dir = project_root / ".github"
-    scripts_dir = github_dir / "scripts"
-    workflows_dir = github_dir / "workflows"
-    scripts_dir.mkdir(parents=True, exist_ok=True)
-    workflows_dir.mkdir(parents=True, exist_ok=True)
-
-    # Copy dashboard-regen.py
-    regen_src = template_dir / "dashboard-regen.py"
-    if regen_src.exists():
-        regen_dst = scripts_dir / "dashboard-regen.py"
-        shutil.copy2(regen_src, regen_dst)
-        regen_dst.chmod(0o755)
-        print("Created .github/scripts/dashboard-regen.py")
-    else:
-        print(f"WARNING: Template not found: {regen_src}")
-        return
-
-    # Copy dashboard-regen.yml workflow
-    workflow_src = template_dir / "dashboard-regen.yml"
-    if workflow_src.exists():
-        shutil.copy2(workflow_src, workflows_dir / "dashboard-regen.yml")
-        print("Created .github/workflows/dashboard-regen.yml")
-    else:
-        print(f"WARNING: Template not found: {workflow_src}")
-
-    # Append .gitattributes entry (skip if already present)
-    gitattributes_path = project_root / ".gitattributes"
-    marker = "merge=regenerate-dashboard"
-    existing = gitattributes_path.read_text() if gitattributes_path.exists() else ""
+    gitignore_path = project_root / ".gitignore"
+    marker = "docs/features/DASHBOARD.md"
+    existing = gitignore_path.read_text() if gitignore_path.exists() else ""
 
     if marker not in existing:
-        fragment_src = template_dir / "gitattributes-fragment.txt"
-        if fragment_src.exists():
-            fragment = fragment_src.read_text()
-        else:
-            fragment = (
-                "\n# Auto-resolve DASHBOARD.md merge conflicts by regenerating from feature files\n"
-                "docs/features/DASHBOARD.md merge=regenerate-dashboard\n"
-            )
-        # Ensure we start on a new line
+        entry = "\n# Auto-generated locally by hooks — not committed\ndocs/features/DASHBOARD.md\n"
         if existing and not existing.endswith("\n"):
-            fragment = "\n" + fragment
-        with open(gitattributes_path, "a") as f:
-            f.write(fragment)
-        print("Added merge driver entry to .gitattributes")
+            entry = "\n" + entry
+        with open(gitignore_path, "a") as f:
+            f.write(entry)
+        print("Added DASHBOARD.md to .gitignore")
     else:
-        print(".gitattributes already has merge driver entry — skipped")
+        print(".gitignore already has DASHBOARD.md — skipped")
 
-    # Configure local git merge driver
-    driver_cmd = "python3 .github/scripts/dashboard-regen.py --merge-driver %A"
+    # Untrack if currently tracked
     try:
         subprocess.run(
-            ["git", "config", "merge.regenerate-dashboard.name", "Regenerate DASHBOARD.md"],
+            ["git", "rm", "--cached", "docs/features/DASHBOARD.md"],
             capture_output=True, text=True, cwd=project_root
         )
-        subprocess.run(
-            ["git", "config", "merge.regenerate-dashboard.driver", driver_cmd],
-            capture_output=True, text=True, cwd=project_root
-        )
-        print("Configured git merge driver 'regenerate-dashboard' for DASHBOARD.md")
+        print("Untracked docs/features/DASHBOARD.md (now gitignored)")
     except FileNotFoundError:
-        print("WARNING: git not found — manually run:")
-        print(f'  git config merge.regenerate-dashboard.driver "{driver_cmd}"')
-
-    # Install post-merge hook to regenerate after merge completes
-    hook_src = template_dir / "post-merge-dashboard.sh"
-    if hook_src.exists():
-        hooks_dir = project_root / ".git" / "hooks"
-        hooks_dir.mkdir(parents=True, exist_ok=True)
-        post_merge = hooks_dir / "post-merge"
-
-        if post_merge.exists():
-            existing_hook = post_merge.read_text()
-            marker = "dashboard-regen.py"
-            if marker not in existing_hook:
-                # Append to existing post-merge hook
-                with open(post_merge, "a") as f:
-                    f.write("\n# --- dashboard regeneration (added by feature-init) ---\n")
-                    f.write(hook_src.read_text())
-                print("Appended dashboard regeneration to existing .git/hooks/post-merge")
-            else:
-                print(".git/hooks/post-merge already has dashboard regeneration — skipped")
-        else:
-            shutil.copy2(hook_src, post_merge)
-            post_merge.chmod(0o755)
-            print("Installed .git/hooks/post-merge (dashboard regeneration)")
+        pass
 
 
 def read_reviewer_from_config(config_path: Path) -> str | None:
@@ -316,16 +254,16 @@ def update_mode(project_root: Path) -> int:
     enable_bot_approvals()
 
     # Always set up dashboard auto-resolve on update
-    setup_dashboard_autoresolve(project_root, template_dir)
+    setup_dashboard_gitignore(project_root)
 
     print("")
     print("Update complete. Commit and push the refreshed files:")
-    print("  git add .github/ .gitattributes")
-    print("  git commit -m 'chore: refresh feature-review workflow + prompts + dashboard auto-resolve'")
+    print("  git add .github/ .gitignore")
+    print("  git commit -m 'chore: refresh CI files + gitignore DASHBOARD.md'")
     print("  git push")
     print("")
     print("Note: API key secret and .feature-workflow.yml were not touched.")
-    print("Other developers should run `/feature-init --update` to configure their local merge driver.")
+    print("DASHBOARD.md is now gitignored — skills scan feature directories directly.")
     return 0
 
 
@@ -379,7 +317,7 @@ def main() -> int:
         setup_reviewer(project_root, args.reviewer, args.api_key, template_dir)
 
     # Set up dashboard auto-resolve for all projects
-    setup_dashboard_autoresolve(project_root, template_dir)
+    setup_dashboard_gitignore(project_root)
 
     print("")
     print("Feature workflow initialized!")
