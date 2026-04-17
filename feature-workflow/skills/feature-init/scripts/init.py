@@ -237,6 +237,29 @@ def setup_dashboard_autoresolve(project_root: Path, template_dir: Path) -> None:
         print("WARNING: git not found — manually run:")
         print(f'  git config merge.regenerate-dashboard.driver "{driver_cmd}"')
 
+    # Install post-merge hook to regenerate after merge completes
+    hook_src = template_dir / "post-merge-dashboard.sh"
+    if hook_src.exists():
+        hooks_dir = project_root / ".git" / "hooks"
+        hooks_dir.mkdir(parents=True, exist_ok=True)
+        post_merge = hooks_dir / "post-merge"
+
+        if post_merge.exists():
+            existing_hook = post_merge.read_text()
+            marker = "dashboard-regen.py"
+            if marker not in existing_hook:
+                # Append to existing post-merge hook
+                with open(post_merge, "a") as f:
+                    f.write("\n# --- dashboard regeneration (added by feature-init) ---\n")
+                    f.write(hook_src.read_text())
+                print("Appended dashboard regeneration to existing .git/hooks/post-merge")
+            else:
+                print(".git/hooks/post-merge already has dashboard regeneration — skipped")
+        else:
+            shutil.copy2(hook_src, post_merge)
+            post_merge.chmod(0o755)
+            print("Installed .git/hooks/post-merge (dashboard regeneration)")
+
 
 def read_reviewer_from_config(config_path: Path) -> str | None:
     if not config_path.exists():

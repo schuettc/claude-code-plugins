@@ -285,12 +285,15 @@ def _build_content(
 
 def main() -> int:
     if len(sys.argv) >= 3 and sys.argv[1] == "--merge-driver":
-        # Merge driver mode: regenerate and write to %A (ancestor path)
-        ancestor = Path(sys.argv[2])
-        # Walk up from ancestor to find project root (parent of docs/)
-        # ancestor is typically docs/features/DASHBOARD.md
-        project_root = ancestor.resolve().parent.parent.parent
-        generate_dashboard(project_root, output_path=ancestor)
+        # Merge driver mode.  Git calls the driver *during* the merge,
+        # before all files from the other branch are in the working tree.
+        # We can't regenerate accurately here, so we just keep "ours" (%A)
+        # and exit 0 so git records a clean merge.  The post-merge hook
+        # (installed by /feature-init) regenerates from the final tree.
+        #
+        # %A = "ours" version — leave it as-is.  Returning 0 tells git
+        # the driver handled the conflict.  The file content in %A
+        # becomes the merge result.
         return 0
 
     # Plain regenerator mode
