@@ -63,7 +63,7 @@ If no arguments, ask the user:
 ### Init mode
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/feature-init/scripts/init.py" "$(pwd)" \
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/feature-init/scripts/init.py" . \
   --prefix "<prefix>" \
   --target "<target>" \
   --reviewer "<reviewer>" \
@@ -83,7 +83,7 @@ The script creates:
 ### Update mode
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/feature-init/scripts/init.py" "$(pwd)" --update
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/feature-init/scripts/init.py" . --update
 ```
 
 The script reads the existing reviewer from `.feature-workflow.yml` and refreshes only:
