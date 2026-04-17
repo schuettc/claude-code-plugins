@@ -82,10 +82,11 @@ Review body format:
 **Inline comments**: For specific code issues, post inline comments on the relevant lines:
 
 ```bash
+COMMIT_SHA=$(gh pr view $PR_NUMBER --json headRefOid --jq '.headRefOid')
 gh api repos/{owner}/{repo}/pulls/$PR_NUMBER/comments \
   --method POST \
   --field body="[your comment — reference the specific concern and suggest the fix]" \
-  --field commit_id="$(gh pr view $PR_NUMBER --json headRefOid --jq '.headRefOid')" \
+  --field commit_id="$COMMIT_SHA" \
   --field path="[file path]" \
   --field line=[line number]
 ```

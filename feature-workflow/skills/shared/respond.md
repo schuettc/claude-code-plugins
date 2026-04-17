@@ -162,7 +162,7 @@ If a reviewer reopens the thread later (e.g., the next re-review decides the fix
 After all inline replies and resolutions, post a single top-level comment summarizing the round. This gives the reviewer (human or bot) a high-level view for the next pass:
 
 ```bash
-gh pr comment PR_NUMBER --body "$(cat <<'EOF'
+gh pr comment PR_NUMBER --body-file - <<'EOF'
 ## Review Response (round N)
 
 Addressed in <commit-sha>:
@@ -181,7 +181,6 @@ Addressed in <commit-sha>:
 
 Ready for another look.
 EOF
-)"
 ```
 
 Only include sections that have entries. If every finding is resolved, skip the Disagreed/Deferred sections entirely.

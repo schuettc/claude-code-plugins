@@ -121,7 +121,8 @@ Any follow-up items, known limitations, or context for future maintainers...
 Before writing shipped.md, collect the list of files changed for this feature. Run:
 
 ```bash
-git diff --name-only $(git log --all --grep="[feature-id]" --format=%H | tail -1)^..HEAD -- . ':!docs/features/'
+PLAN_COMMIT=$(git log --all --grep="[feature-id]" --format=%H | tail -1)
+git diff --name-only "$PLAN_COMMIT^..HEAD" -- . ':!docs/features/'
 ```
 
 If that doesn't capture all changes, use the commit range from when `plan.md` was created to now:
