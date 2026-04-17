@@ -215,7 +215,15 @@ def update_mode(project_root: Path) -> int:
         print("ERROR: No .feature-workflow.yml found. Run /feature-init first.")
         return 1
     if reviewer == "none":
-        print("Reviewer is 'none' — nothing to update.")
+        print("Reviewer is 'none' — skipping CI workflow refresh.")
+        setup_dashboard_gitignore(project_root)
+        print("")
+        print("Update complete. Commit the .gitignore change:")
+        print("  git add .gitignore")
+        print("  git commit -m 'chore: gitignore DASHBOARD.md (feature-workflow v9.4.0)'")
+        print("  git push")
+        print("")
+        print("DASHBOARD.md is now gitignored — skills scan feature directories directly.")
         print("To add a reviewer, re-run /feature-init without --update.")
         return 0
 
