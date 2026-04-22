@@ -39,7 +39,7 @@ If no specific feature ID was provided above, you will help the user select from
 |-------|------|---------|
 | 1 | Pre-flight | Verify feature is in-progress and has a PR |
 | 2 | Write shipped.md | Create completion record on the feature branch |
-| 3 | Commit and Push | Add shipped.md to the feature branch |
+| 3 | Prepare PR | Remove review labels + commit and push shipped.md |
 | 4 | Merge PR | Mark PR ready, merge into dev, clean up branches |
 | 5 | Update Dashboard | Regenerate dashboard and clear statusline |
 
@@ -96,15 +96,29 @@ Populate this from the plan.md, commit messages, and git diff.
 
 ---
 
-## Phase 3: Commit and Push
+## Phase 3: Prepare PR (labels first, then commit + push)
 
-Commit shipped.md to the feature branch and push:
+**Order matters here.** The review workflow (`feature-review.yml`)
+triggers on `pull_request: types: [labeled, synchronize]`. If review
+labels (`plan-review`, `impl-review`) are still on the PR when the
+shipped.md push fires a `synchronize` event, the workflow runs a
+pointless extra review on a docs-only commit, spending API quota and
+posting irrelevant review comments on a PR that's about to merge.
 
-```bash
-git add docs/features/<id>/shipped.md
-git commit -m "docs(<id>): mark feature as shipped"
-git push
-```
+Remove the labels **before** pushing shipped.md:
+
+1. Remove review labels (must be first — prevents the
+   push-triggered re-review):
+   ```bash
+   gh pr edit <pr-number> --remove-label plan-review --remove-label impl-review 2>/dev/null || true
+   ```
+
+2. Commit shipped.md to the feature branch and push:
+   ```bash
+   git add docs/features/<id>/shipped.md
+   git commit -m "docs(<id>): mark feature as shipped"
+   git push
+   ```
 
 **After writing shipped.md, regenerate the dashboard** by running:
 ```bash
@@ -117,16 +131,12 @@ DASHBOARD.md is auto-resolved on merge via CI — no need to commit it from feat
 
 ## Phase 4: Merge PR
 
-1. Remove review labels (prevents stale CI re-reviews during merge):
-   ```bash
-   gh pr edit <pr-number> --remove-label plan-review --remove-label impl-review 2>/dev/null || true
-   ```
-2. If the PR is still in draft, mark it ready:
+1. If the PR is still in draft, mark it ready:
    ```bash
    gh pr ready <pr-number>
    ```
-3. Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
-4. Merge the PR and delete the remote branch:
+2. Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
+3. Merge the PR and delete the remote branch:
    ```bash
    gh pr merge <pr-number> --merge --delete-branch
    ```
