@@ -13,7 +13,8 @@ git branch --show-current
 Check if a PR already exists for this feature:
 
 ```bash
-gh pr list --head feature/<id> --json number,url,state --jq '.[0]'
+gh api "repos/{owner}/{repo}/pulls?state=open&per_page=100" \
+  --jq '[.[] | select(.head.ref == "feature/<id>")] | .[0] | {number, url: .html_url, state}'
 ```
 
 **If feature branch already exists (expected — created during plan review):**

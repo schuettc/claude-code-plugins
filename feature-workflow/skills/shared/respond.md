@@ -5,10 +5,13 @@ Read PR review feedback from external reviewers, validate findings, implement fi
 ## Step 1: Find the PR
 
 ```bash
-gh pr list --head feature/<id> --json number,url --jq '.[0]'
+gh api "repos/{owner}/{repo}/pulls?state=open&per_page=100" \
+  --jq '[.[] | select(.head.ref == "feature/<id>")] | .[0] | {number, url: .html_url}'
 ```
 
-Capture `owner/repo` from `gh repo view --json nameWithOwner -q .nameWithOwner` — you'll need it in every subsequent call.
+> **Why REST here:** `gh pr list --json` uses GraphQL. REST has a much larger request budget. Below in Step 2 we still use GraphQL — but only because review-thread IDs (needed for resolution) are not exposed by REST.
+
+Capture `owner/repo` from `gh api "repos/{owner}/{repo}" --jq '.full_name'` — you'll need it in every subsequent call.
 
 If no PR exists, suggest running `/feature-review-plan <id>` or `/feature-review-impl <id>` first.
 
