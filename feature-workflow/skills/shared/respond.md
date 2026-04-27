@@ -103,12 +103,38 @@ Ask: **"Which findings should we address? Any you want to push back on or mark a
 
 ## Step 5: Classify Each Finding
 
-| Classification | Action |
-|---|---|
-| **Agree** | Implement fix → reply inline with what changed → resolve thread |
-| **Disagree** | Reply inline with reasoning → leave thread open (reviewer can respond) |
-| **Already addressed** | Reply inline pointing to the existing code/test/plan-section → resolve thread |
-| **Deferred** | Reply inline explaining why it's deferred and where it's tracked → resolve thread |
+| Classification | When to use | Action |
+|---|---|---|
+| **Agree** | Finding is correct and within the feature's stated scope | Implement fix → reply inline with what changed → resolve thread |
+| **Disagree** | Finding is wrong, or asks for something the code already guarantees | Reply inline with reasoning → leave thread open (reviewer can respond) |
+| **Already addressed** | Code/plan already handles this; the reviewer missed it | Reply inline pointing to the existing code/test/plan-section → resolve thread |
+| **Defer to backlog** | Finding is valid but expands scope beyond this feature's `idea.md` | Capture a new backlog item via `/feature-capture` → reply inline with the new feature ID → resolve thread |
+| **Deferred (other)** | Valid but blocked on external work, or owner needs to weigh in later | Reply inline explaining why it's deferred and where it's tracked → resolve thread |
+
+### "Defer to backlog" — when reviewers push for scope expansion
+
+The autopilot loop (and any review cycle in general) can get stuck when reviewers repeatedly request changes that would turn one feature into three. **Don't silently expand the current feature** — capture the suggestion as a new backlog item and keep the current feature focused.
+
+Use **Defer to backlog** when:
+- The finding is real and worth fixing, **but**
+- It's not in this feature's `idea.md` problem statement / scope, **and**
+- Implementing it would meaningfully grow the diff or delay merging this feature
+
+Do **not** use it as an escape hatch. If the finding is truly required for this feature to be correct (security bug, data-loss risk, plan drift), classify as **Agree** and fix it. Defer-to-backlog is for *adjacent good ideas*, not for skipping required work.
+
+**The capture step:**
+
+1. Run `/feature-capture` (or write the new `docs/features/<new-id>/idea.md` directly with frontmatter — see `feature-capture` skill for format).
+2. The new `idea.md` should reference the source: include a `## Origin` section noting the source feature ID and the specific finding text.
+3. Commit and push the new `idea.md` along with any other review-response changes.
+
+**The reply body** (one of these patterns):
+
+> Captured as backlog item `docs/features/<new-id>/idea.md` (commit `<sha>`). Out of scope for this feature — the original `idea.md` is scoped to <one-line scope>, and adding <suggested change> would expand the diff materially. Will be picked up in a follow-up.
+
+Resolve the thread after replying. The reviewer can re-open if they think it should block this PR.
+
+**When the reviewer pushes back on the deferral:** treat the next round like any other — if their argument is "this is actually required for the feature's stated goal," reclassify as Agree and fix it. If they still think it belongs in this PR but it doesn't, leave the thread open as a Disagree and surface to the user.
 
 ## Step 6: Implement Changes
 
@@ -179,7 +205,10 @@ Addressed in <commit-sha>:
 **Disagreed (thread left open)**
 - [Finding summary] — [1-line reasoning]
 
-**Deferred**
+**Deferred to backlog**
+- [Finding summary] — captured as `<new-feature-id>` (`<sha>`)
+
+**Deferred (other)**
 - [Finding summary] — [where it's tracked]
 
 Ready for another look.
