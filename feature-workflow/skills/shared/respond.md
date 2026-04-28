@@ -9,15 +9,28 @@ gh api "repos/{owner}/{repo}/pulls?state=open&per_page=100" \
   --jq '[.[] | select(.head.ref == "feature/<id>")] | .[0] | {number, url: .html_url}'
 ```
 
-> **Why REST here:** `gh pr list --json` uses GraphQL. REST has a much larger request budget. Below in Step 2 we still use GraphQL — but only because review-thread IDs (needed for resolution) are not exposed by REST.
+> **Why REST here:** `gh pr list --json` uses GraphQL. REST has a much larger request budget. We use REST everywhere we can; the only exceptions in this skill are (a) Step 2b's minimal review-threads query (`thread.id` is not exposed by REST) and (b) Step 8's `resolveReviewThread` mutation (no REST equivalent). See "REST-first policy" at the bottom of this file.
 
 Capture `owner/repo` from `gh api "repos/{owner}/{repo}" --jq '.full_name'` — you'll need it in every subsequent call.
 
 If no PR exists, suggest running `/feature-review-plan <id>` or `/feature-review-impl <id>` first.
 
-## Step 2: Collect Review Feedback (with thread IDs)
+## Step 2: Collect Review Feedback
 
-Use GraphQL to fetch review threads. Unlike the REST endpoint, GraphQL returns the **thread ID** which is required to resolve the thread later.
+Two calls — REST for the bulk data (cheap), one minimal GraphQL call for the thread IDs needed to resolve threads in Step 8.
+
+### 2a. Top-level reviews (REST)
+
+```bash
+gh api "repos/{owner}/{repo}/pulls/$PR_NUMBER/reviews" --paginate \
+  --jq '[.[] | {author: .user.login, state, body, submitted_at}]'
+```
+
+This gives you the review bodies (Critical Findings, Recommendations sections) without spending GraphQL points.
+
+### 2b. Review threads (minimal GraphQL — required for thread IDs)
+
+GraphQL is the only way to get `thread.id` (needed for the `resolveReviewThread` mutation in Step 8) and `isResolved`. Keep this query as small as possible — only the first comment in each thread, no review bodies (we got those from REST above):
 
 ```bash
 gh api graphql -f query='
@@ -31,7 +44,7 @@ query($owner: String!, $repo: String!, $pr: Int!) {
           isOutdated
           path
           line
-          comments(first: 20) {
+          comments(first: 1) {
             nodes {
               databaseId
               body
@@ -40,25 +53,19 @@ query($owner: String!, $repo: String!, $pr: Int!) {
           }
         }
       }
-      reviews(first: 50) {
-        nodes {
-          author { login }
-          state
-          body
-          submittedAt
-        }
-      }
     }
   }
 }' -F owner=OWNER -F repo=REPO -F pr=PR_NUMBER
 ```
 
+This costs roughly 1 point per thread (vs. ~20 with `comments(first: 20)` and the now-removed `reviews(first: 50)` block). For a typical PR with <50 threads, well under 100 points.
+
 Store the response. You need:
 - `reviewThreads.nodes[].id` — GraphQL thread ID (for resolving)
 - `reviewThreads.nodes[].comments.nodes[0].databaseId` — REST comment ID of the first (top) comment in the thread (for replying)
 - `reviewThreads.nodes[].path` + `.line` + `.comments.nodes[0].body` — to match against findings
-- `reviews.nodes[]` — top-level review bodies (Critical Findings, Recommendations sections)
 - `isResolved` — skip threads that are already resolved; you don't need to re-respond
+- (Top-level review bodies come from Step 2a above.)
 
 If no reviews or unresolved threads exist:
 **"No open review feedback on the PR. Reviewers may not have run yet, or all threads are already resolved."**
@@ -257,3 +264,27 @@ Changes pushed to feature/<id>. Inline threads resolved where fixes landed.
 - **Resolving a thread you disagree with** — don't. Leave disagreed threads open so the reviewer can respond or escalate.
 - **Reply body too long** — inline replies should be 1-3 sentences. Push detail into the commit message.
 - **Skipping already-resolved threads** — Step 2 returns `isResolved` so you can filter. Don't re-reply to resolved threads; it's noise.
+
+## REST-first policy
+
+GitHub has two API tiers with very different rate limits:
+
+- **REST** — 5000 *requests* per hour. Each call costs 1.
+- **GraphQL** — 5000 *points* per hour. A single complex query can cost 50–200 points; nested connections (`first: N` with sub-fields) compound quickly.
+
+**Rule:** prefer REST for every PR/repo lookup unless GraphQL gives you a field REST cannot (currently: `thread.id`, `isResolved`, and the `resolveReviewThread` mutation). When you must use GraphQL, keep `first:` values as small as possible and don't fetch fields you can get from REST in the same call.
+
+When adding new commands to feature-workflow skills:
+
+| What you want | Use |
+|---|---|
+| PR metadata (title, body, draft state, head SHA) | `gh api repos/{owner}/{repo}/pulls/$PR` (REST) |
+| List PRs by branch | `gh api "repos/{owner}/{repo}/pulls?state=open" --jq '.[] \| select(.head.ref==...)'` (REST) |
+| PR diff | `gh api repos/{owner}/{repo}/pulls/$PR -H "Accept: application/vnd.github.diff"` (REST) |
+| Top-level reviews | `gh api repos/{owner}/{repo}/pulls/$PR/reviews` (REST) |
+| Inline comments (without thread structure) | `gh api repos/{owner}/{repo}/pulls/$PR/comments` (REST) |
+| Review threads with `thread.id` and `isResolved` | Minimal GraphQL — only fields REST cannot give you |
+| Resolve a review thread | GraphQL `resolveReviewThread` mutation (no REST equivalent) |
+| Open a PR / mark ready / merge | `gh pr create` / `ready` / `merge` (one-shot, low frequency — leave on the gh defaults) |
+
+Avoid `gh pr view --json` and `gh pr list --json` — both go through GraphQL even when the data is trivially available via REST.
