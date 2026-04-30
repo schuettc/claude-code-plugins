@@ -8,7 +8,7 @@
       "name": "feature-workflow",
       "source": "./feature-workflow",
       "description": "Feature lifecycle management with external review gates. Capture ideas, plan, review plans and implementations via draft PRs (with optional automated review by Gemini or Codex on GitHub Actions), and ship. Directory-based features with status determined by file presence and an auto-generated DASHBOARD.md.",
-      "version": "9.5.1"
+      "version": "9.5.2"
     },
     {
       "name": "website-deployment",

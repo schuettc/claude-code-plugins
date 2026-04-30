@@ -62,10 +62,30 @@ Creates the feature branch, opens a draft PR, and applies the `plan-review` labe
 Blocks on `gh pr checks --watch` and classifies the verdict. Exit semantics:
 
 - **0 — PASS / CONDITIONAL PASS**: auto-advance to Step 3 (implement). **Do NOT chase Should-fix items after a clean pass** — recommendations can be filed as follow-up backlog items if material (see "Defer to backlog" in `respond.md`).
-- **1 — FAIL**: pause. Print the verdict line and Critical Findings section from stdout. Ask whether to run `/feature-workflow:feature-review-plan <id> --respond` (address feedback and re-push) or override ("ship anyway — I disagree with finding X"). **Do not auto-respond.** FAIL needs human judgment.
+- **1 — FAIL**: **auto-respond.** The whole point of autopilot is to drive through review cycles without manual intervention. Invoke `/feature-workflow:feature-review-plan <id> --respond` immediately, push the changes, and loop back to wait-for-review. See "FAIL handling" below for the retry cap and escalation rules.
 - **2 — workflow failure / timeout / no review comment**: pause. Diagnose with `gh run list --branch feature/<id>` and `gh run view <run-id>`. Common causes: missing `GEMINI_API_KEY` / `OPENAI_API_KEY` secret, transient reviewer error, required check failing unrelated to the review. Once fixed, re-trigger by removing and re-adding the `plan-review` label.
 
-**If the reviewer comes back FAIL and you go through `--respond`,** loop back to wait-for-review until exit 0 or until the user calls a halt. Don't set a hard cap; the user can interrupt.
+### FAIL handling — auto-respond loop
+
+Autopilot's job is to drive review cycles, including FAIL → respond → re-review. Default cap: **2 consecutive FAILs on the same phase before pausing for the user.**
+
+```
+FAIL #1 → run --respond → push → re-poll
+FAIL #2 → run --respond → push → re-poll
+FAIL #3 → STOP. Surface findings to user, ask for direction.
+```
+
+The cap exists because if the reviewer rejects the same plan/implementation twice after revisions, the issue is probably one of:
+- A genuine design tradeoff the user needs to weigh in on
+- A reviewer-implementer disagreement that needs human arbitration
+- Scope creep the autopilot can't resolve via defer-to-backlog
+
+When invoking `--respond` autonomously, the autopilot should:
+- Use the **Defer to backlog** classification freely for findings that expand scope past the current `idea.md` — this is the autopilot's main escape valve. See `respond.md` for the classification matrix.
+- Use **Disagree** sparingly. Autopilot disagreement should be reserved for findings that contradict the plan's stated constraints or ask for code that already exists. When unsure, prefer Agree (fix it) or Defer (capture for later).
+- After 2 FAILs, stop and print: the verdict line, Summary, Critical Findings, and a one-line note on which classifications were tried each round. Ask the user: continue with `--respond` (override the cap), override the verdict ("ship anyway — I disagree with finding X"), or halt.
+
+The cap is per-phase. Plan review and impl review have independent counters; a clean impl review after 2 plan-review FAILs is fine.
 
 ### 3. Implement
 
@@ -94,7 +114,7 @@ Pushes the implementation to the existing feature branch and swaps the label fro
 "${CLAUDE_PLUGIN_ROOT}/skills/feature-autopilot/scripts/wait-for-review.sh" <PR#> impl
 ```
 
-Exit semantics identical to Step 2 — 0 auto-advances to Step 5, 1 pauses for `--respond`, 2 diagnoses CI.
+Exit semantics identical to Step 2 — 0 auto-advances to Step 5, 1 triggers the auto-respond loop (cap 2 FAILs before pausing — see "FAIL handling" above), 2 diagnoses CI.
 
 ### 5. Pre-ship checklist
 
@@ -120,22 +140,20 @@ After merge, the dashboard moves the feature from In Progress → Completed auto
 ## Loop diagram
 
 ```
-            ┌─────── precondition check ───────┐
-            ▼                                  │
-        plan ──────► review-plan ─────► implement ──────► review-impl ──────► pre-ship ──────► ship
-                       │  ▲                                  │  ▲
-                       │  │ wait-for-review                  │  │ wait-for-review
-                       │  │   exit 0  → advance              │  │   exit 0  → advance
-                       │  │   exit 1  → respond ─┐           │  │   exit 1  → respond ─┐
-                       │  │   exit 2  → diagnose │           │  │   exit 2  → diagnose │
-                       │  └──────────────────────┘           │  └──────────────────────┘
-                       └─ if user halts: stop                └─ if user halts: stop
+plan ─► review-plan ─► implement ─► review-impl ─► pre-ship ─► ship
+              │ ▲                       │ ▲
+              │ │ wait-for-review       │ │ wait-for-review
+              │ │   0  → advance        │ │   0  → advance
+              │ │   1  → auto-respond ──┤ │   1  → auto-respond ──┐
+              │ │       (cap 2/phase)   │ │       (cap 2/phase)   │
+              │ │   2  → diagnose ──────┤ │   2  → diagnose ──────┤
+              │ └────────  3rd FAIL: pause for user  ─────────────┘
 ```
 
 ## Auto-advance rules at review gates
 
 - **Exit 0 (PASS / CONDITIONAL PASS)** — advance immediately. Don't chase Should-fix nits after a clean pass; material recommendations can become **backlog items via the "Defer to backlog" classification in `respond.md`** (see Step 5/8 of the respond flow).
-- **Exit 1 (FAIL)** — stop. Print the Verdict line, the Summary, and the Critical Findings sections from the review body. Ask the user to choose between `--respond` (iterate) and override ("ship anyway, I disagree with finding X"). Do not auto-respond.
+- **Exit 1 (FAIL)** — **auto-respond.** Run `--respond` for the current phase, classify findings (Agree / Disagree / Already addressed / Defer to backlog / Deferred), push, and re-poll. Cap at 2 consecutive FAILs per phase before pausing for human input — see "FAIL handling" in Step 2 above.
 - **Exit 2 (workflow failure / timeout / no comment)** — stop. Diagnose CI with `gh run list --branch feature/<id>` and `gh run view <run-id>`. Once fixed, re-trigger the review by removing and re-adding the label.
 
 Also stop and ask if:

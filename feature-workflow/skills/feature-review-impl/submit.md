@@ -108,13 +108,15 @@ Show the draft to the user and ask:
 
 Incorporate the user's edits into the final version.
 
-#### 4d: Create the Draft PR
+#### 4d: Create the PR (non-draft)
 
 The PR should target `dev`:
 
 ```bash
-gh pr create --draft --title "feat(<id>): [feature name]" --base dev --body "<PR body>"
+gh pr create --title "feat(<id>): [feature name]" --base dev --body "<PR body>"
 ```
+
+> **Why non-draft:** review gating is driven by the `plan-review` / `impl-review` labels, not by draft state. Opening as draft forces a `gh pr ready` (GraphQL-only mutation) at ship time, which has hit secondary rate limits during multi-feature sweeps. The label is the gate.
 
 ### If PR already exists — update it:
 

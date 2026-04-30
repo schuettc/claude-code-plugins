@@ -132,15 +132,22 @@ DASHBOARD.md is auto-resolved on merge via CI — no need to commit it from feat
 
 ## Phase 4: Merge PR
 
-1. If the PR is still in draft, mark it ready:
+PRs are opened as non-draft (since v9.5.2), so no draft → ready conversion is needed. Merge directly via REST.
+
+1. Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
+2. **If you encounter a draft PR (legacy / opened externally):** convert with `gh pr ready <pr-number>` once. This is a GraphQL mutation, used at most once per stuck PR. Don't retry on rate-limit failure — wait for the GraphQL window to reset (`gh api rate_limit --jq '.resources.graphql.reset'`).
+3. Merge the PR via REST and delete the branch:
    ```bash
-   gh pr ready <pr-number>
+   gh api "repos/{owner}/{repo}/pulls/<pr-number>/merge" \
+     --method PUT \
+     --field merge_method=merge
+
+   # Delete the remote branch (REST):
+   gh api "repos/{owner}/{repo}/git/refs/heads/feature/<id>" --method DELETE
    ```
-2. Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
-3. Merge the PR and delete the remote branch:
-   ```bash
-   gh pr merge <pr-number> --merge --delete-branch
-   ```
+
+   > **Why REST merge:** `gh pr merge` uses GraphQL `mergePullRequest`. The REST endpoint `PUT /pulls/{n}/merge` is functionally equivalent, doesn't count against the GraphQL points budget, and isn't subject to the secondary mutation rate limit. The 405 "still a draft" failure mode no longer applies because we never open as draft.
+
 4. Switch to dev, pull, and delete the local feature branch:
    ```bash
    git checkout dev && git pull && git branch -d feature/<id>
