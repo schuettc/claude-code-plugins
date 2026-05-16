@@ -21,6 +21,7 @@ This skill **does not replace** `feature-plan`, `feature-implement`, `feature-re
 - The plan needs design discussion → use `/feature-plan` directly first, then optionally autopilot from review onward
 - The user is iterating on a single phase (e.g. just responding to review feedback) → use the per-phase skill directly
 - No `idea.md` exists → run `/feature-capture` first
+- The user wants a different review path than what's configured — edit the `review:` field in the feature's `idea.md` frontmatter (`external` / `internal` / `skip`) BEFORE running autopilot.
 
 ## Preconditions
 
@@ -181,10 +182,21 @@ This keeps each feature focused and prevents the autopilot from getting stuck in
 
 ## Reviewer-mode adaptations
 
-| `.feature-workflow.yml` reviewer | Step 2 (plan review) | Step 4 (impl review) |
-|---|---|---|
-| `gemini` | Active — wait-for-review polls | Active — wait-for-review polls |
-| `codex` | Active — wait-for-review polls | Active — wait-for-review polls |
-| `none` | Skipped — go straight to Step 3 | Skipped — go straight to Step 5 |
+The autopilot's behavior at each review gate is driven by the **effective** review mode for the feature being processed:
 
-When `reviewer: none`, autopilot becomes plan → implement → pre-ship → ship with no external gating. Useful for solo work where the user trusts their own judgment, but the audit trail (PR + merge commit) is still preserved.
+| Effective mode | Step 2 (plan review) | Step 4 (impl review) |
+|---|---|---|
+| `external_gemini` / `external_codex` | Active — apply label, wait-for-review polls CI | Active — same |
+| `external_default` (feature says external, project says none) | **Error** — surface to user; can't dispatch without a configured reviewer | Same — error |
+| `internal` | Dispatch internal-review subagent → post comment → wait-for-review polls comments | Same — post impl-review comment, same poll |
+| `skip` | Skip review gate entirely; advance to implement | Skip; advance to ship |
+
+The effective mode is computed per-feature using:
+- Project default from `.feature-workflow.yml` (`reviewer:` setting)
+- Per-feature override from `idea.md` frontmatter (`review:` field)
+
+See `feature-workflow/skills/shared/lib/effective_review.py` for precedence rules.
+
+**Important:** `wait-for-review.sh` works identically across external and internal modes. Internal-review comments use the same `## Plan Review` / `## Implementation Review` headers and `### Verdict:` line that the external CI reviewer posts. No special flag is needed.
+
+For `internal` mode, the autopilot's FAIL → respond loop also works unchanged: the respond flow reads PR comments, classifies findings, replies, and pushes — exactly as for external review. The subagent re-runs on the next round because the orchestrator detects the new commits and dispatches it again.
