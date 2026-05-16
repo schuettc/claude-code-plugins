@@ -192,8 +192,8 @@ started: 2026-04-05
 
 
 @pytest.fixture
-def feature_superseded(temp_project: Path) -> Path:
-    """Create a superseded feature."""
+def feature_replaced(temp_project: Path) -> Path:
+    """Create a replaced feature (tombstoned because new feature supersedes it)."""
     feature_dir = temp_project / "docs" / "features" / "old-feature"
     feature_dir.mkdir()
     (feature_dir / "idea.md").write_text("""---
@@ -203,8 +203,8 @@ type: Feature
 priority: P2
 effort: Small
 impact: Low
-state: superseded
-supersededBy: new-feature
+state: replaced
+replacedBy: new-feature
 created: 2026-03-01
 ---
 

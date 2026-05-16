@@ -27,9 +27,9 @@ created: [YYYY-MM-DD]
 assignee: [name OR list of names]
 
 # State (optional, default active)
-state: [active|paused|superseded|abandoned]
+state: [active|paused|replaced|abandoned]
 pausedReason: "..."         # if paused
-supersededBy: <feature-id>  # if superseded
+replacedBy: <feature-id>  # if replaced
 abandonedReason: "..."      # if abandoned
 
 # Relations (optional)
@@ -72,9 +72,9 @@ All metadata goes in YAML frontmatter between `---` markers:
 | created | Yes | Date in YYYY-MM-DD format |
 | dependsOn | No | Array of feature IDs this feature depends on: `[id1, id2]` |
 | assignee | No | Single name or list |
-| state | No | active (default) / paused / superseded / abandoned |
+| state | No | active (default) / paused / replaced / abandoned |
 | pausedReason | If state=paused | What we're waiting on |
-| supersededBy | If state=superseded | The replacing feature's ID |
+| replacedBy | If state=replaced | The replacing feature's ID |
 | abandonedReason | If state=abandoned | Why we dropped it |
 | epic | No | Parent epic ID |
 | children | No | List of child IDs (Epic features only) |

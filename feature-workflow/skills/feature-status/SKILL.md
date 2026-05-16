@@ -25,7 +25,7 @@ Invoke this skill when the user asks:
 - `cat:<category>` — filter all tables to that category (case-insensitive)
 - `state:<state>` — filter to features with that state (e.g., `state:paused`)
 - `assignee:<name>` — filter to features owned by that name
-- `--archive` — include superseded and abandoned features
+- `--archive` — include replaced and abandoned features
 - A feature ID — show details for that specific feature
 
 Filters can stack: `state:active assignee:court` shows court's active features.
@@ -51,7 +51,7 @@ Parse `$ARGUMENTS` for filter tokens before rendering:
 - `cat:<value>` — keep only rows whose Category column matches (case-insensitive). Display header: **"Filtered by category: [value]"**
 - `state:<value>` — keep only rows whose State/Status column matches (case-insensitive). Display header: **"Filtered by state: [value]"**
 - `assignee:<value>` — keep only rows whose Assignee column matches (case-insensitive). Display header: **"Filtered by assignee: [value]"**
-- `--archive` — include the Archive section (superseded/abandoned features) in the output; omit it by default
+- `--archive` — include the Archive section (replaced/abandoned features) in the output; omit it by default
 - Multiple filter tokens stack (AND logic); apply all before rendering.
 
 ### Step 2: Parse Dashboard Sections

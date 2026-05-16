@@ -97,11 +97,11 @@ that are likely to conflict?
 Is this feature actively pursuable now, or do we need to mark it differently?
 - Active (default)
 - Paused (work known, but blocked on something external)
-- Superseded (replaced by another feature)
+- Replaced (another feature replaces it)
 - Abandoned (decided not to pursue)
 
 If Paused: ask "What are we waiting on?" → pausedReason
-If Superseded: ask "Which feature replaces this?" → supersededBy
+If Replaced: ask "Which feature replaces this?" → replacedBy
 If Abandoned: ask "Why dropped?" → abandonedReason
 ```
 

@@ -22,6 +22,39 @@ from models import FeatureStatus, FeatureState, FeatureContext
 from deps import detect_cycles, find_unknown_refs
 
 
+# Known frontmatter keys on idea.md. Anything else is flagged as an unknown-key
+# warning so users catch typos like `supersedes:` vs `replaces:`.
+KNOWN_IDEA_KEYS: frozenset[str] = frozenset({
+    "id", "name", "type", "priority", "effort", "impact", "category", "created",
+    "dependsOn", "blockedBy", "relatedTo", "parallelSafe",
+    "assignee",
+    "epic", "children",
+    "state", "pausedReason", "replacedBy", "abandonedReason", "replaces",
+    "review",
+})
+
+
+def find_unknown_keys(features_dir: Path) -> list[tuple[str, str]]:
+    """Walk idea.md files and report frontmatter keys outside the known schema.
+
+    Returns a list of (feature_id, unknown_key) tuples.
+    """
+    if not features_dir.is_dir():
+        return []
+    unknown: list[tuple[str, str]] = []
+    for feature_dir in sorted(features_dir.iterdir()):
+        if not feature_dir.is_dir():
+            continue
+        idea = feature_dir / "idea.md"
+        if not idea.exists():
+            continue
+        fm = parse_frontmatter(idea)
+        for key in fm.keys():
+            if key not in KNOWN_IDEA_KEYS:
+                unknown.append((feature_dir.name, key))
+    return unknown
+
+
 def partition_features(features: list[FeatureContext]) -> dict[str, list[FeatureContext]]:
     """Split a feature list into dashboard buckets.
 
@@ -132,17 +165,17 @@ def _render_paused(items: list[FeatureContext]) -> list[str]:
 def _render_archive(items: list[FeatureContext], by_id: dict[str, FeatureContext]) -> list[str]:
     if not items:
         return []
-    superseded = [c for c in items if c.state == FeatureState.SUPERSEDED]
+    replaced = [c for c in items if c.state == FeatureState.REPLACED]
     abandoned = [c for c in items if c.state == FeatureState.ABANDONED]
     lines = ["## Archive", ""]
     lines.append("<details>")
-    lines.append(f"<summary>{len(superseded)} superseded, {len(abandoned)} abandoned</summary>")
+    lines.append(f"<summary>{len(replaced)} replaced, {len(abandoned)} abandoned</summary>")
     lines.append("")
     lines.append("| ID | Name | State | Reason / Replaced By |")
     lines.append("|----|------|-------|----------------------|")
     for ctx in items:
-        if ctx.state == FeatureState.SUPERSEDED:
-            detail = f"→ {ctx.superseded_by}" if ctx.superseded_by else ""
+        if ctx.state == FeatureState.REPLACED:
+            detail = f"→ {ctx.replaced_by}" if ctx.replaced_by else ""
         else:
             detail = ctx.abandoned_reason
         lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.state.value} | {detail} |")
@@ -152,10 +185,11 @@ def _render_archive(items: list[FeatureContext], by_id: dict[str, FeatureContext
     return lines
 
 
-def _render_warnings(by_id: dict[str, FeatureContext]) -> list[str]:
+def _render_warnings(by_id: dict[str, FeatureContext], features_dir: Path) -> list[str]:
     cycles = detect_cycles(by_id)
     unknown = find_unknown_refs(by_id)
-    if not cycles and not unknown:
+    unknown_keys = find_unknown_keys(features_dir)
+    if not cycles and not unknown and not unknown_keys:
         return []
     lines = ["## Validation Warnings", ""]
     for cycle in cycles:
@@ -163,6 +197,8 @@ def _render_warnings(by_id: dict[str, FeatureContext]) -> list[str]:
     for fid, field_name, ref in unknown:
         label = "Unknown dependency" if field_name == "dependsOn" else f"Unknown {field_name} reference"
         lines.append(f"- ⚠️ {label}: `{fid}` → `{ref}`")
+    for fid, key in unknown_keys:
+        lines.append(f"- ⚠️ Unknown frontmatter key in `{fid}/idea.md`: `{key}:` (typo or unsupported field)")
     lines.append("")
     return lines
 
@@ -218,7 +254,7 @@ def generate_dashboard_content(project_root: Path) -> str:
     lines += _render_epics(parts["epics"], by_id)
     lines += _render_completed(parts["completed"])
     lines += _render_archive(parts["archive"], by_id)
-    lines += _render_warnings(by_id)
+    lines += _render_warnings(by_id, features_dir)
     return "\n".join(lines) + "\n"
 
 

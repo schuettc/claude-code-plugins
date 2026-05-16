@@ -54,8 +54,8 @@ type: Feature
 priority: P0
 effort: Small
 impact: Low
-state: superseded
-supersededBy: alpha
+state: replaced
+replacedBy: alpha
 created: 2026-01-01
 ---
 # Gamma""")
@@ -81,7 +81,7 @@ class TestSearchFeatures:
     def test_no_filters_excludes_archive(self, search_corpus: Path):
         results = search_features(search_corpus, filters={})
         ids = sorted(r.feature_id for r in results)
-        assert ids == ["alpha", "beta", "delta"]  # gamma (superseded) excluded
+        assert ids == ["alpha", "beta", "delta"]  # gamma (replaced) excluded
 
     def test_archive_flag_includes_tombstones(self, search_corpus: Path):
         results = search_features(search_corpus, filters={"archive": True})

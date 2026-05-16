@@ -27,7 +27,7 @@ class FeatureState(Enum):
 
     ACTIVE = "active"
     PAUSED = "paused"
-    SUPERSEDED = "superseded"
+    REPLACED = "replaced"
     ABANDONED = "abandoned"
 
     @classmethod
@@ -47,7 +47,7 @@ class FeatureState(Enum):
 
     def is_tombstone(self) -> bool:
         """Tombstones are excluded from active backlog views."""
-        return self in (FeatureState.SUPERSEDED, FeatureState.ABANDONED)
+        return self in (FeatureState.REPLACED, FeatureState.ABANDONED)
 
 
 @dataclass
@@ -82,8 +82,12 @@ class FeatureContext:
     # State overlay (idea.md frontmatter)
     state: FeatureState = FeatureState.ACTIVE
     paused_reason: str = ""
-    superseded_by: str = ""
+    replaced_by: str = ""
     abandoned_reason: str = ""
+
+    # Forward-direction replacement (idea.md frontmatter): "this feature replaces these"
+    # Writing `replaces: [a, b]` triggers the hook to mark a/b as state=replaced and replaced_by=<self>.
+    replaces: list[str] = field(default_factory=list)
 
     # From plan.md frontmatter
     started: Optional[date] = None
@@ -96,7 +100,7 @@ class FeatureContext:
         return self.state == FeatureState.ACTIVE
 
     def is_tombstone(self) -> bool:
-        """Tombstones (superseded/abandoned) belong in the archive."""
+        """Tombstones (replaced/abandoned) belong in the archive."""
         return self.state.is_tombstone()
 
     def is_paused(self) -> bool:
@@ -207,8 +211,17 @@ class FeatureContext:
         # Parse state and companion fields
         state = FeatureState.parse(idea_fm.get("state"))
         paused_reason = str(idea_fm.get("pausedReason", "") or "")
-        superseded_by = str(idea_fm.get("supersededBy", "") or "")
+        replaced_by = str(idea_fm.get("replacedBy", "") or "")
         abandoned_reason = str(idea_fm.get("abandonedReason", "") or "")
+
+        # Parse forward-direction `replaces:` (this feature replaces these)
+        replaces_raw = idea_fm.get("replaces", [])
+        if isinstance(replaces_raw, str):
+            replaces = [replaces_raw] if replaces_raw else []
+        elif isinstance(replaces_raw, list):
+            replaces = [str(r).strip() for r in replaces_raw if str(r).strip()]
+        else:
+            replaces = []
 
         return cls(
             feature_id=feature_dir.name,
@@ -233,8 +246,9 @@ class FeatureContext:
             review=review,
             state=state,
             paused_reason=paused_reason,
-            superseded_by=superseded_by,
+            replaced_by=replaced_by,
             abandoned_reason=abandoned_reason,
+            replaces=replaces,
         )
 
 

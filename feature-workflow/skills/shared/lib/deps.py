@@ -60,7 +60,7 @@ def compute_blocked_by(feature_id: str, features: dict[str, FeatureContext]) -> 
     - B.depends_on contains feature_id, AND
     - feature_id is not completed (still active backlog/in-progress, paused, or tombstoned)
 
-    Note: tombstoned features (superseded/abandoned) STILL block by design — they aren't shipped.
+    Note: tombstoned features (replaced/abandoned) STILL block by design — they aren't shipped.
     Use /feature-state to surface the dependent and update its dependsOn.
     """
     ctx = features.get(feature_id)
@@ -79,7 +79,7 @@ def find_unknown_refs(features: dict[str, FeatureContext]) -> list[tuple[str, st
     """Find references to feature IDs that don't exist in the corpus.
 
     Returns list of (referring_feature_id, field_name, missing_ref) tuples.
-    Fields checked: dependsOn, relatedTo, epic, children, supersededBy.
+    Fields checked: dependsOn, relatedTo, epic, children, replacedBy, replaces.
     """
     known = set(features.keys())
     missing: list[tuple[str, str, str]] = []
@@ -95,6 +95,9 @@ def find_unknown_refs(features: dict[str, FeatureContext]) -> list[tuple[str, st
         for ref in ctx.children:
             if ref not in known:
                 missing.append((fid, "children", ref))
-        if ctx.superseded_by and ctx.superseded_by not in known:
-            missing.append((fid, "supersededBy", ctx.superseded_by))
+        if ctx.replaced_by and ctx.replaced_by not in known:
+            missing.append((fid, "replacedBy", ctx.replaced_by))
+        for ref in ctx.replaces:
+            if ref not in known:
+                missing.append((fid, "replaces", ref))
     return missing

@@ -298,32 +298,53 @@ name: Feature A
         ctx = FeatureContext.from_directory(feature_in_backlog)
         assert ctx.state == FeatureState.ACTIVE
         assert ctx.paused_reason == ""
-        assert ctx.superseded_by == ""
+        assert ctx.replaced_by == ""
         assert ctx.abandoned_reason == ""
+        assert ctx.replaces == []
+
+    def test_replaces_field(self, tmp_path: Path):
+        """The forward-direction `replaces:` field parses as a list."""
+        feature_dir = tmp_path / "docs" / "features" / "new-thing"
+        feature_dir.mkdir(parents=True)
+        (feature_dir / "idea.md").write_text("""---
+id: new-thing
+name: New Thing
+type: Feature
+priority: P1
+effort: Small
+impact: Medium
+replaces: [old-a, old-b]
+created: 2026-05-15
+---
+
+# New Thing
+""")
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx.replaces == ["old-a", "old-b"]
 
     def test_state_paused(self, feature_paused: Path):
         ctx = FeatureContext.from_directory(feature_paused)
         assert ctx.state == FeatureState.PAUSED
         assert ctx.paused_reason == "Waiting on vendor API access"
 
-    def test_state_superseded(self, feature_superseded: Path):
-        ctx = FeatureContext.from_directory(feature_superseded)
-        assert ctx.state == FeatureState.SUPERSEDED
-        assert ctx.superseded_by == "new-feature"
+    def test_state_replaced(self, feature_replaced: Path):
+        ctx = FeatureContext.from_directory(feature_replaced)
+        assert ctx.state == FeatureState.REPLACED
+        assert ctx.replaced_by == "new-feature"
 
     def test_state_abandoned(self, feature_abandoned: Path):
         ctx = FeatureContext.from_directory(feature_abandoned)
         assert ctx.state == FeatureState.ABANDONED
         assert ctx.abandoned_reason == "Out of scope for this quarter"
 
-    def test_is_active(self, feature_in_backlog: Path, feature_paused: Path, feature_superseded: Path):
+    def test_is_active(self, feature_in_backlog: Path, feature_paused: Path, feature_replaced: Path):
         assert FeatureContext.from_directory(feature_in_backlog).is_active() is True
         assert FeatureContext.from_directory(feature_paused).is_active() is False
-        assert FeatureContext.from_directory(feature_superseded).is_active() is False
+        assert FeatureContext.from_directory(feature_replaced).is_active() is False
 
-    def test_is_tombstone(self, feature_in_backlog: Path, feature_superseded: Path, feature_abandoned: Path):
+    def test_is_tombstone(self, feature_in_backlog: Path, feature_replaced: Path, feature_abandoned: Path):
         assert FeatureContext.from_directory(feature_in_backlog).is_tombstone() is False
-        assert FeatureContext.from_directory(feature_superseded).is_tombstone() is True
+        assert FeatureContext.from_directory(feature_replaced).is_tombstone() is True
         assert FeatureContext.from_directory(feature_abandoned).is_tombstone() is True
 
     def test_is_paused(self, feature_in_backlog: Path, feature_paused: Path):
@@ -391,7 +412,7 @@ class TestFeatureState:
     def test_state_values(self):
         assert FeatureState.ACTIVE.value == "active"
         assert FeatureState.PAUSED.value == "paused"
-        assert FeatureState.SUPERSEDED.value == "superseded"
+        assert FeatureState.REPLACED.value == "replaced"
         assert FeatureState.ABANDONED.value == "abandoned"
 
     def test_default_is_active(self):
@@ -412,7 +433,7 @@ class TestFeatureState:
         assert "garbled" in captured.err
 
     def test_is_tombstone(self):
-        assert FeatureState.SUPERSEDED.is_tombstone() is True
+        assert FeatureState.REPLACED.is_tombstone() is True
         assert FeatureState.ABANDONED.is_tombstone() is True
         assert FeatureState.PAUSED.is_tombstone() is False
         assert FeatureState.ACTIVE.is_tombstone() is False

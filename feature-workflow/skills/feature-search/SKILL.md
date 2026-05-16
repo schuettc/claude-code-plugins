@@ -14,14 +14,14 @@ You are executing the **SEARCH FEATURES** workflow — querying the backlog by f
 `$ARGUMENTS` is a series of flags. Pass them through to the search script.
 
 Supported filters:
-- `--state <active|paused|superseded|abandoned>`
+- `--state <active|paused|replaced|abandoned>`
 - `--assignee <name>`
 - `--priority <P0|P1|P2>`
 - `--type <Feature|Enhancement|Bug Fix|Tech Debt|Epic>`
 - `--category <name>`
 - `--epic <id>` (children of an epic)
 - `--depends-on <id>` (features that depend on the given ID)
-- `--archive` (include superseded + abandoned)
+- `--archive` (include replaced + abandoned)
 - `--format text|json` (default text)
 
 If no filters: show all active features (excludes archive by default).
