@@ -179,6 +179,22 @@ Find features across all filters:
 /feature-search --archive                   # include superseded + abandoned
 ```
 
+## Per-Feature Review Override
+
+By default, every feature uses the project-wide `reviewer:` setting from `.feature-workflow.yml`. For one-off needs, individual features can override this in their `idea.md` frontmatter:
+
+```yaml
+review: external   # use the project's configured CI reviewer
+review: internal   # run an in-session review subagent and post the result as a PR comment
+review: skip       # no review at all (rare; doc fixes, typo corrections)
+```
+
+Precedence: per-feature `review:` wins if set; otherwise the project default applies; if both are absent, the feature ships without review.
+
+**Internal review** dispatches a same-session subagent with the same prompt the external CI reviewers use (`templates/review-prompt-{plan,impl}.md`), and posts the verdict as a normal PR comment. The autopilot, respond flow, and verdict classifier work identically across external and internal — the only difference is who runs the prompt.
+
+**Skip** is for changes where review would be ceremonial — pure typo fixes, README tweaks, etc. Use sparingly; the audit trail is real value.
+
 ## Automated PR Reviews
 
 Every feature can be reviewed twice — once at the plan stage, once at the implementation stage — by an external AI reviewer (Gemini or Codex) running in GitHub Actions. Reviews are posted as PR comments with a human-readable verdict (PASS / CONDITIONAL PASS / FAIL) that the author reads and acts on.
