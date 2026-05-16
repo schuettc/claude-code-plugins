@@ -293,6 +293,43 @@ name: Feature A
         unmet = dep_ctx.has_unmet_dependencies(all_features)
         assert unmet == []
 
+    def test_state_active_by_default(self, feature_in_backlog: Path):
+        """Features without explicit state default to active."""
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.state == FeatureState.ACTIVE
+        assert ctx.paused_reason == ""
+        assert ctx.superseded_by == ""
+        assert ctx.abandoned_reason == ""
+
+    def test_state_paused(self, feature_paused: Path):
+        ctx = FeatureContext.from_directory(feature_paused)
+        assert ctx.state == FeatureState.PAUSED
+        assert ctx.paused_reason == "Waiting on vendor API access"
+
+    def test_state_superseded(self, feature_superseded: Path):
+        ctx = FeatureContext.from_directory(feature_superseded)
+        assert ctx.state == FeatureState.SUPERSEDED
+        assert ctx.superseded_by == "new-feature"
+
+    def test_state_abandoned(self, feature_abandoned: Path):
+        ctx = FeatureContext.from_directory(feature_abandoned)
+        assert ctx.state == FeatureState.ABANDONED
+        assert ctx.abandoned_reason == "Out of scope for this quarter"
+
+    def test_is_active(self, feature_in_backlog: Path, feature_paused: Path, feature_superseded: Path):
+        assert FeatureContext.from_directory(feature_in_backlog).is_active() is True
+        assert FeatureContext.from_directory(feature_paused).is_active() is False
+        assert FeatureContext.from_directory(feature_superseded).is_active() is False
+
+    def test_is_tombstone(self, feature_in_backlog: Path, feature_superseded: Path, feature_abandoned: Path):
+        assert FeatureContext.from_directory(feature_in_backlog).is_tombstone() is False
+        assert FeatureContext.from_directory(feature_superseded).is_tombstone() is True
+        assert FeatureContext.from_directory(feature_abandoned).is_tombstone() is True
+
+    def test_is_paused(self, feature_in_backlog: Path, feature_paused: Path):
+        assert FeatureContext.from_directory(feature_in_backlog).is_paused() is False
+        assert FeatureContext.from_directory(feature_paused).is_paused() is True
+
 
 class TestFeatureState:
     """Tests for FeatureState enum."""

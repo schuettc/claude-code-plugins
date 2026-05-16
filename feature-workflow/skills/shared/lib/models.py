@@ -63,11 +63,29 @@ class FeatureContext:
     depends_on: list[str] = field(default_factory=list)
     blocked_by: list[str] = field(default_factory=list)
 
+    # State overlay (idea.md frontmatter)
+    state: FeatureState = FeatureState.ACTIVE
+    paused_reason: str = ""
+    superseded_by: str = ""
+    abandoned_reason: str = ""
+
     # From plan.md frontmatter
     started: Optional[date] = None
 
     # From shipped.md frontmatter
     shipped: Optional[date] = None
+
+    def is_active(self) -> bool:
+        """Active = state==ACTIVE. Used to decide active backlog membership."""
+        return self.state == FeatureState.ACTIVE
+
+    def is_tombstone(self) -> bool:
+        """Tombstones (superseded/abandoned) belong in the archive."""
+        return self.state.is_tombstone()
+
+    def is_paused(self) -> bool:
+        """Paused = state==PAUSED. Surfaces in the dashboard Paused section."""
+        return self.state == FeatureState.PAUSED
 
     def has_unmet_dependencies(self, all_features: dict[str, "FeatureContext"]) -> list[str]:
         """Return list of dependency IDs that are not yet completed."""
@@ -127,6 +145,12 @@ class FeatureContext:
         if isinstance(blocked_by, str):
             blocked_by = [blocked_by] if blocked_by else []
 
+        # Parse state and companion fields
+        state = FeatureState.parse(idea_fm.get("state"))
+        paused_reason = str(idea_fm.get("pausedReason", "") or "")
+        superseded_by = str(idea_fm.get("supersededBy", "") or "")
+        abandoned_reason = str(idea_fm.get("abandonedReason", "") or "")
+
         return cls(
             feature_id=feature_dir.name,
             feature_dir=feature_dir,
@@ -142,6 +166,10 @@ class FeatureContext:
             shipped=shipped,
             depends_on=depends_on,
             blocked_by=blocked_by,
+            state=state,
+            paused_reason=paused_reason,
+            superseded_by=superseded_by,
+            abandoned_reason=abandoned_reason,
         )
 
 

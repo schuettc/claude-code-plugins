@@ -158,3 +158,80 @@ Feature shipped.
 """)
 
     return temp_project
+
+
+@pytest.fixture
+def feature_paused(temp_project: Path) -> Path:
+    """Create a paused feature (idea.md + plan.md, state=paused)."""
+    feature_dir = temp_project / "docs" / "features" / "paused-feature"
+    feature_dir.mkdir()
+    (feature_dir / "idea.md").write_text("""---
+id: paused-feature
+name: Paused Feature
+type: Feature
+priority: P1
+effort: Medium
+impact: Medium
+state: paused
+pausedReason: Waiting on vendor API access
+created: 2026-04-01
+---
+
+# Paused Feature
+Stalled while we wait on external dependency.
+""")
+    (feature_dir / "plan.md").write_text("""---
+started: 2026-04-05
+---
+
+# Plan
+- [x] Step 1
+- [ ] Step 2 (blocked on vendor)
+""")
+    return feature_dir
+
+
+@pytest.fixture
+def feature_superseded(temp_project: Path) -> Path:
+    """Create a superseded feature."""
+    feature_dir = temp_project / "docs" / "features" / "old-feature"
+    feature_dir.mkdir()
+    (feature_dir / "idea.md").write_text("""---
+id: old-feature
+name: Old Feature
+type: Feature
+priority: P2
+effort: Small
+impact: Low
+state: superseded
+supersededBy: new-feature
+created: 2026-03-01
+---
+
+# Old Feature
+Replaced by new-feature.
+""")
+    return feature_dir
+
+
+@pytest.fixture
+def feature_abandoned(temp_project: Path) -> Path:
+    """Create an abandoned feature."""
+    feature_dir = temp_project / "docs" / "features" / "dropped-feature"
+    feature_dir.mkdir()
+    (feature_dir / "idea.md").write_text("""---
+id: dropped-feature
+name: Dropped Feature
+type: Feature
+priority: P2
+effort: Medium
+impact: Low
+state: abandoned
+abandonedReason: Out of scope for this quarter
+created: 2026-03-15
+---
+
+# Dropped Feature
+Not pursuing.
+""")
+    return feature_dir
