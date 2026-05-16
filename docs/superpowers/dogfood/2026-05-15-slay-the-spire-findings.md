@@ -199,7 +199,33 @@ parallelSafe: false
 
 | # | Severity | Area | Description | Repro |
 |---|---|---|---|---|
-| | | | | |
+| 1 | **Important** | Schema gap — `supersedes:` | User wrote `supersedes: [user-facing-run-delete, run-export-csv-and-discoverability]` on an Epic's idea.md, expressing "this epic replaces those captures." Schema only defines `supersededBy:` (singular, reverse-direction) and `children:` (epic→members). `supersedes:` is silently ignored — no validation warning, no dashboard surface. The Epics rollup shows `Children: 0` because the user didn't write `children:`. Both ergonomic mismatches are real: (a) forward-direction supersession is a natural mental model and we don't support it, (b) the `type: Epic` schema needs `children:` but the slash-command flow (capture/manual edit) never enforces or hints at it. | Epic `run-data-self-service` in slay-the-spire; see `git log --all -- docs/features/run-data-self-service/idea.md` |
+| 2 | **Minor** | Epic-as-multi-step-feature vs Epic-with-children | The user is treating Epic as "one big feature with phases A/B/C/D/E/F inline in the idea.md," not as an umbrella over multiple child features. Both mental models are valid; Plan 3 needs to pick one. The current schema (children:) supports umbrella-over-features, but real users may want both. Possible resolution: keep `children:` for true umbrella-style, but also allow Epic features to have their own plan.md with multi-phase work (which is what autopilot already supports). | (observation, not a bug) |
+| 3 | **Minor** | Plan 1 still leaves `Children: 0` for Epic | When `type: Epic` is set but `children:` is absent, the Epics rollup table shows `Children: 0` which is technically correct but misleading. A reader scanning the dashboard might think "this epic is empty / broken." Either (a) require `children:` for Epic type (validation warning if absent), or (b) hide the row entirely until children are populated. | DASHBOARD.md "Epics" section after committing run-data-self-service idea.md |
+
+## What worked end-to-end (observed during autopilot run)
+
+Feature workflow scenario: epic `run-data-self-service` (P1), reviewer: gemini (external CI).
+
+| Stage | What happened | Verdict |
+|---|---|---|
+| Plugin update | `/plugin update feature-workflow` swapped cache from 9.5.2 → 9.7.1 cleanly | ✅ |
+| Dashboard regen on update | First idea.md write triggered hook, regenerated DASHBOARD.md with all new sections (Epics rollup present, Paused/Archive/Validation Warnings correctly omitted because empty) | ✅ |
+| Epic detection | `type: Epic` was recognized — feature shows in BOTH Backlog row (dual-bucket via partition_features) AND Epics rollup | ✅ |
+| Precondition check in autopilot | Detected dirty tree (DASHBOARD + new captures), surfaced cleanly to user, offered exact commit message | ✅ |
+| feature-plan with new schema | Wrote a 129-line plan with real ground-truth code references (`file:line` callouts). `started:` frontmatter populated | ✅ |
+| feature-review-plan with v9.7.1 effective-mode branching | Computed `effective_mode = external_gemini` (no per-feature override), applied `plan-review` label, opened draft PR #113 | ✅ |
+| Real CI fires | GitHub Actions `plan-review` job started; `impl-review` correctly skipped (label-gated) | ✅ |
+| /feature-search against real backlog (196 features) | All filters (state, priority, type, epic, depends-on, archive) returned correct results. `--type Epic` returned the one Epic. `--epic run-data-self-service` returned nothing (confirms finding #1: no children written) | ✅ |
+| Dashboard scale | 196 active features, 168 shipped, single Epic — no errors, sub-second regen | ✅ |
+
+## Open questions Plan 3 must answer
+
+Based on what slay-the-spire actually did:
+
+1. **Should Epic features have a plan.md at all?** The user wrote a single multi-phase plan.md on the Epic itself, NOT a dispatch DAG over child features. If Plan 3 keeps the "Epic dispatch = parallel waves over children" model, we need to either (a) reject Epics with their own plan.md, or (b) treat the Epic's plan.md as the dispatch plan (which would conflict with the freeform multi-phase plan the user wrote).
+2. **What's the right move when a user writes `supersedes:` (forward) or `children:` is missing?** Capture-time validation (warn before committing idea.md) is the obvious answer.
+3. **For multi-phase work bundled into one feature** (which is what the user did here): is autopilot's existing per-step checkbox flow good enough, or do we need an explicit "phased feature" type?
 
 ---
 
