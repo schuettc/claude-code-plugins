@@ -20,8 +20,38 @@ Parse the arguments for:
 
 | Arguments | Mode | Skill File |
 |-----------|------|------------|
-| `<id>` | Submit plan for review | [submit.md](submit.md) |
-| `<id> --respond` | Respond to feedback | [../shared/respond.md](../shared/respond.md) |
+| `<id>` (effective: external) | Submit plan for external CI review | [submit.md](submit.md) |
+| `<id>` (effective: internal) | Submit plan for internal review | [submit.md](submit.md) (branches internally) |
+| `<id>` (effective: skip) | Refuse — review opted out | (stop, surface to user) |
+| `<id> --respond` | Respond to feedback (works for any mode) | [../shared/respond.md](../shared/respond.md) |
+
+## Step 0: Determine Effective Review Mode
+
+Before routing, compute the effective review mode for this feature:
+
+1. Read `.feature-workflow.yml` for `reviewer:` (defaults to none if absent).
+2. Read `docs/features/<id>/idea.md` frontmatter for `review:`.
+3. Compute the mode using `feature-workflow/skills/shared/lib/effective_review.py`:
+
+```bash
+python3 -c "
+import sys
+sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}/skills/shared/lib')
+from effective_review import resolve_review
+# parse project_reviewer from .feature-workflow.yml
+# parse feature_review from idea.md frontmatter
+mode = resolve_review(feature_review='<value>', project_reviewer='<value>')
+print(mode.value)
+"
+```
+
+Or simpler: read both values yourself and apply the precedence rule (feature override wins, else project default, else skip).
+
+| Mode | Behavior |
+|---|---|
+| `external_gemini` / `external_codex` / `external_default` | Original flow — open PR, apply `plan-review` label, let CI run |
+| `internal` | Open PR, then dispatch the internal-review subagent (see `../shared/internal-review.md`) |
+| `skip` | Don't run any review; just open the PR if not present, and surface to the user that they've opted out of review |
 
 ## Step 1: Load Feature Context
 
