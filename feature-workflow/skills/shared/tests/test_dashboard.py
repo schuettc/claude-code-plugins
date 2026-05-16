@@ -215,8 +215,8 @@ class TestPartitionFeatures:
         assert parts["paused"] == [f]
         assert parts["in_progress"] == []
 
-    def test_superseded_and_abandoned_go_to_archive(self):
-        sup = _ctx("sup", state=FeatureState.SUPERSEDED)
+    def test_replaced_and_abandoned_go_to_archive(self):
+        sup = _ctx("sup", state=FeatureState.REPLACED)
         ab = _ctx("ab", state=FeatureState.ABANDONED)
         parts = partition_features([sup, ab])
         assert {f.feature_id for f in parts["archive"]} == {"sup", "ab"}
@@ -263,14 +263,14 @@ class TestRenderArchive:
     def test_empty(self):
         assert _render_archive([], {}) == []
 
-    def test_superseded_and_abandoned(self):
+    def test_replaced_and_abandoned(self):
         sup = FeatureContext(
             feature_id="old",
             feature_dir=Path("/fake/old"),
             status=FeatureStatus.BACKLOG,
             name="Old",
-            state=FeatureState.SUPERSEDED,
-            superseded_by="new",
+            state=FeatureState.REPLACED,
+            replaced_by="new",
         )
         ab = FeatureContext(
             feature_id="dropped",
@@ -283,7 +283,7 @@ class TestRenderArchive:
         out = "\n".join(_render_archive([sup, ab], {"old": sup, "dropped": ab}))
         assert "## Archive" in out
         assert "<details>" in out
-        assert "1 superseded, 1 abandoned" in out
+        assert "1 replaced, 1 abandoned" in out
         assert "new" in out
         assert "Out of scope" in out
 
@@ -481,8 +481,8 @@ type: Feature
 priority: P2
 effort: Small
 impact: Low
-state: superseded
-supersededBy: ba
+state: replaced
+replacedBy: ba
 created: 2026-01-01
 ---
 # X
