@@ -73,10 +73,10 @@ Template:
 One or two sentences — what you reviewed and the overall read.
 
 ### Critical Findings
-- [Blocking gaps — ordered by severity, referencing specific plan.md sections and line numbers]
+- [Only present under FAIL. Blocking gaps — ordered by severity, referencing specific plan.md sections and line numbers.]
 
 ### Recommendations
-- [Non-blocking should-fix items]
+- [Should-fix items. Present under any verdict. The implementer addresses these during impl; no re-review needed.]
 
 ### Scope
 - [Where the plan may be expanding beyond the stated outcome, if anywhere]
@@ -88,13 +88,20 @@ One or two sentences — what you reviewed and the overall read.
 - [Direct response to concerns flagged in the PR description]
 ```
 
-### Verdict meanings (for the human reader — no workflow gating)
+### Verdict meanings (binding rules — pick exactly one)
 
-- **PASS** — Plan is sound. Residual risks noted but not blocking.
-- **CONDITIONAL PASS** — Minor gaps that should be closed but don't block starting implementation.
-- **FAIL** — Critical gaps that must be resolved before implementation begins.
+- **PASS** — The plan is great. No changes needed. Recommendations and Residual Risks may be noted for context but the plan can ship as-written.
+- **CONDITIONAL PASS** — The plan is good. Recommendations should be addressed during implementation, but **no re-review is needed**. The implementer is trusted to handle them inline.
+- **FAIL** — The plan needs rework before implementation can safely begin. **The implementer must revise the plan and re-request review.**
 
-The verdict is advisory. The workflow posts your review as a comment regardless — it does not approve, request changes, or block the PR. Humans read the verdict and decide.
+**Calibration rules (read before picking a verdict):**
+
+1. **Blocking findings belong ONLY in `### Critical Findings` under FAIL.** If you write a Blocking finding, the verdict MUST be FAIL. If your verdict is PASS or CONDITIONAL PASS, the `### Critical Findings` section MUST be absent or empty.
+2. **CONDITIONAL PASS is for plans you would be willing to merge without seeing a revision.** If you would not be willing to merge without seeing the fix, the verdict is FAIL.
+3. **Should-fix items go in `### Recommendations` under any verdict.** Recommendations are an inline TODO list for the implementer; they don't gate the verdict.
+4. **There is no in-between.** "I want them to fix this but I don't need to see it again" = CONDITIONAL PASS with a Recommendation. "I want them to fix this and show me the fix" = FAIL with a Critical Finding.
+
+The verdict is advisory at the workflow level (the comment posts either way), but downstream tooling — the autopilot's `wait-for-review.sh`, the `--respond` flow — branches on it. PASS / CONDITIONAL PASS advance the work; FAIL triggers a respond cycle.
 
 ## Signal Over Noise (read before writing findings)
 
