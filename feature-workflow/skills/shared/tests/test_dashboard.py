@@ -374,12 +374,16 @@ from run_dashboard import _render_warnings
 
 
 class TestRenderWarnings:
+    """A fake features_dir is passed where the on-disk frontmatter-key scan isn't relevant."""
+
+    FAKE_DIR = Path("/nonexistent")
+
     def test_no_warnings_no_section(self):
         a = FeatureContext(
             feature_id="a", feature_dir=Path("/fake/a"),
             status=FeatureStatus.BACKLOG, name="A",
         )
-        assert _render_warnings({"a": a}) == []
+        assert _render_warnings({"a": a}, self.FAKE_DIR) == []
 
     def test_cycle_warning(self):
         a = FeatureContext(
@@ -392,7 +396,7 @@ class TestRenderWarnings:
             status=FeatureStatus.BACKLOG, name="B",
             depends_on=["a"],
         )
-        out = "\n".join(_render_warnings({"a": a, "b": b}))
+        out = "\n".join(_render_warnings({"a": a, "b": b}, self.FAKE_DIR))
         assert "Validation Warnings" in out
         assert "Cycle detected" in out
         assert "a" in out and "b" in out
@@ -403,9 +407,28 @@ class TestRenderWarnings:
             status=FeatureStatus.BACKLOG, name="A",
             depends_on=["missing"],
         )
-        out = "\n".join(_render_warnings({"a": a}))
+        out = "\n".join(_render_warnings({"a": a}, self.FAKE_DIR))
         assert "Unknown dependency" in out
         assert "missing" in out
+
+    def test_unknown_frontmatter_key_warning(self, tmp_path: Path):
+        """A real features_dir with an idea.md containing an unknown key triggers a warning."""
+        features_dir = tmp_path / "docs" / "features"
+        bad = features_dir / "bad"
+        bad.mkdir(parents=True)
+        (bad / "idea.md").write_text("""---
+id: bad
+name: Bad
+type: Feature
+supersedes: [old-thing]
+created: 2026-05-15
+---
+# Bad
+""")
+        out = "\n".join(_render_warnings({}, features_dir))
+        assert "Unknown frontmatter key" in out
+        assert "supersedes" in out
+        assert "bad" in out
 
 
 from run_dashboard import generate_dashboard_content
