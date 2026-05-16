@@ -133,6 +133,52 @@ Evidence-based runtime verification for a completed or in-progress feature. Inje
 #### `/feature-troubleshoot`
 Structured problem-definition → hypothesis → investigation → resolution → verification flow for bugs found in a shipped feature. Good for "this isn't working and I don't know why" situations.
 
+## Feature States and Relations
+
+Beyond the file-presence lifecycle (`idea.md` → `plan.md` → `shipped.md`), features carry an orthogonal **state** field in `idea.md` frontmatter:
+
+| State | Meaning | Shown in |
+|---|---|---|
+| `active` (default) | Normal lifecycle | Backlog / In Progress / Completed |
+| `paused` | Work started, blocked on something external | Paused section |
+| `superseded` | Replaced by another feature | Archive (collapsed) |
+| `abandoned` | Decided not to pursue | Archive (collapsed) |
+
+Manage states with `/feature-state`:
+
+```
+/feature-state <id> paused --reason "Waiting on vendor"
+/feature-state <id> superseded --superseded-by <new-id>
+/feature-state <id> abandoned --reason "Out of scope"
+/feature-state <id> active                            # resume
+```
+
+### Assignee
+
+Add `assignee:` to `idea.md` frontmatter to track ownership. Single (`assignee: court`) or multiple (`assignee: [court, alex]`).
+
+### Stronger Dependency Markers
+
+| Field | Meaning |
+|---|---|
+| `dependsOn: [a, b]` | Hard blockers — must be completed before this can start |
+| `relatedTo: [c, d]` | Soft links — informational only |
+| `parallelSafe: true/false` | Can this run alongside siblings? Default `true` |
+
+The dashboard computes `blockedBy` dynamically from the graph; you no longer need to maintain it manually. Cycles and unknown references show up as Validation Warnings on the dashboard.
+
+### Search
+
+Find features across all filters:
+
+```
+/feature-search --state paused
+/feature-search --assignee court
+/feature-search --epic auth-overhaul        # Epic concept in v9.7 (Plan 3)
+/feature-search --depends-on user-roles
+/feature-search --archive                   # include superseded + abandoned
+```
+
 ## Automated PR Reviews
 
 Every feature can be reviewed twice — once at the plan stage, once at the implementation stage — by an external AI reviewer (Gemini or Codex) running in GitHub Actions. Reviews are posted as PR comments with a human-readable verdict (PASS / CONDITIONAL PASS / FAIL) that the author reads and acts on.
