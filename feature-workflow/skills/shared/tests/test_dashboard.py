@@ -229,3 +229,29 @@ class TestPartitionFeatures:
         assert parts["epics"] == [epic]
         # Epics also still appear in their lifecycle bucket for completeness
         assert parts["backlog"] == [epic]
+
+
+from run_dashboard import _render_paused
+
+
+class TestRenderPaused:
+    def test_empty(self):
+        lines = _render_paused([])
+        assert lines == []  # omit section entirely when empty
+
+    def test_single_paused(self):
+        ctx = FeatureContext(
+            feature_id="stuck",
+            feature_dir=Path("/fake/stuck"),
+            status=FeatureStatus.IN_PROGRESS,
+            name="Stuck Feature",
+            state=FeatureState.PAUSED,
+            paused_reason="Waiting on vendor",
+            assignees=["court"],
+        )
+        out = "\n".join(_render_paused([ctx]))
+        assert "## Paused" in out
+        assert "stuck" in out
+        assert "Waiting on vendor" in out
+        assert "court" in out
+        assert "In Progress" in out  # original lifecycle shown

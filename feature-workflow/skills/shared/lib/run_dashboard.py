@@ -107,9 +107,25 @@ def _render_completed(items: list[FeatureContext]) -> list[str]:
     return lines
 
 
-# Stubs — filled in by later tasks
 def _render_paused(items: list[FeatureContext]) -> list[str]:
-    return []
+    if not items:
+        return []
+    lifecycle_label = {
+        FeatureStatus.BACKLOG: "Backlog",
+        FeatureStatus.IN_PROGRESS: "In Progress",
+        FeatureStatus.COMPLETED: "Completed",
+    }
+    lines = ["## Paused", ""]
+    lines.append("| ID | Name | Lifecycle | Waiting On | Assignee |")
+    lines.append("|----|------|-----------|------------|----------|")
+    for ctx in items:
+        assignee = ", ".join(ctx.assignees)
+        lines.append(
+            f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | "
+            f"{lifecycle_label.get(ctx.status, '')} | {ctx.paused_reason} | {assignee} |"
+        )
+    lines.append("")
+    return lines
 
 
 def _render_archive(items: list[FeatureContext], by_id: dict[str, FeatureContext]) -> list[str]:
