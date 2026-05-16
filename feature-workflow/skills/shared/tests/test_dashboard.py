@@ -407,3 +407,120 @@ class TestRenderWarnings:
         out = "\n".join(_render_warnings({"a": a}))
         assert "Unknown dependency" in out
         assert "missing" in out
+
+
+from run_dashboard import generate_dashboard_content
+
+
+class TestGenerateDashboardE2E:
+    def test_full_mix(self, tmp_path: Path):
+        """Generate a dashboard with every section populated and verify structure."""
+        features_dir = tmp_path / "docs" / "features"
+        features_dir.mkdir(parents=True)
+
+        # Backlog active
+        (features_dir / "ba").mkdir()
+        (features_dir / "ba" / "idea.md").write_text("""---
+id: ba
+name: Backlog Active
+type: Feature
+priority: P1
+effort: Small
+impact: Low
+created: 2026-01-01
+---
+# X
+""")
+
+        # In progress active
+        (features_dir / "ip").mkdir()
+        (features_dir / "ip" / "idea.md").write_text("""---
+id: ip
+name: In Progress
+type: Feature
+priority: P0
+effort: Medium
+impact: High
+assignee: court
+created: 2026-01-01
+---
+# X
+""")
+        (features_dir / "ip" / "plan.md").write_text("""---
+started: 2026-02-01
+---
+# Plan
+""")
+
+        # Paused
+        (features_dir / "ps").mkdir()
+        (features_dir / "ps" / "idea.md").write_text("""---
+id: ps
+name: Paused
+type: Feature
+priority: P2
+effort: Small
+impact: Low
+state: paused
+pausedReason: Waiting on X
+created: 2026-01-01
+---
+# X
+""")
+        (features_dir / "ps" / "plan.md").write_text("""---
+started: 2026-02-01
+---
+# Plan
+""")
+
+        # Superseded
+        (features_dir / "sp").mkdir()
+        (features_dir / "sp" / "idea.md").write_text("""---
+id: sp
+name: Superseded
+type: Feature
+priority: P2
+effort: Small
+impact: Low
+state: superseded
+supersededBy: ba
+created: 2026-01-01
+---
+# X
+""")
+
+        # Epic
+        (features_dir / "ep").mkdir()
+        (features_dir / "ep" / "idea.md").write_text("""---
+id: ep
+name: Epic
+type: Epic
+priority: P0
+effort: Large
+impact: High
+children: [ba, ip]
+created: 2026-01-01
+---
+# X
+""")
+
+        content = generate_dashboard_content(tmp_path)
+
+        assert "## In Progress" in content
+        assert "## Paused" in content
+        assert "## Backlog" in content
+        assert "## Epics" in content
+        assert "## Completed" in content
+        assert "## Archive" in content
+        # Section order: in_progress before paused before backlog
+        assert content.index("## In Progress") < content.index("## Paused")
+        assert content.index("## Paused") < content.index("## Backlog")
+        assert content.index("## Backlog") < content.index("## Epics")
+        assert content.index("## Epics") < content.index("## Completed")
+        assert content.index("## Completed") < content.index("## Archive")
+        # Superseded does not appear in active sections
+        backlog_section = content[content.index("## Backlog"):content.index("## Epics")]
+        assert "sp" not in backlog_section
+        # But does appear in archive
+        archive_section = content[content.index("## Archive"):]
+        assert "sp" in archive_section
