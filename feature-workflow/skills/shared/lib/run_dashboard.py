@@ -129,7 +129,26 @@ def _render_paused(items: list[FeatureContext]) -> list[str]:
 
 
 def _render_archive(items: list[FeatureContext], by_id: dict[str, FeatureContext]) -> list[str]:
-    return []
+    if not items:
+        return []
+    superseded = [c for c in items if c.state == FeatureState.SUPERSEDED]
+    abandoned = [c for c in items if c.state == FeatureState.ABANDONED]
+    lines = ["## Archive", ""]
+    lines.append("<details>")
+    lines.append(f"<summary>{len(superseded)} superseded, {len(abandoned)} abandoned</summary>")
+    lines.append("")
+    lines.append("| ID | Name | State | Reason / Replaced By |")
+    lines.append("|----|------|-------|----------------------|")
+    for ctx in items:
+        if ctx.state == FeatureState.SUPERSEDED:
+            detail = f"→ {ctx.superseded_by}" if ctx.superseded_by else ""
+        else:
+            detail = ctx.abandoned_reason
+        lines.append(f"| [{ctx.feature_id}](./{ctx.feature_id}/) | {ctx.name} | {ctx.state.value} | {detail} |")
+    lines.append("")
+    lines.append("</details>")
+    lines.append("")
+    return lines
 
 
 def _render_warnings(by_id: dict[str, FeatureContext]) -> list[str]:

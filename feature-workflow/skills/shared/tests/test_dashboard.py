@@ -255,3 +255,35 @@ class TestRenderPaused:
         assert "Waiting on vendor" in out
         assert "court" in out
         assert "In Progress" in out  # original lifecycle shown
+
+
+from run_dashboard import _render_archive
+
+
+class TestRenderArchive:
+    def test_empty(self):
+        assert _render_archive([], {}) == []
+
+    def test_superseded_and_abandoned(self):
+        sup = FeatureContext(
+            feature_id="old",
+            feature_dir=Path("/fake/old"),
+            status=FeatureStatus.BACKLOG,
+            name="Old",
+            state=FeatureState.SUPERSEDED,
+            superseded_by="new",
+        )
+        ab = FeatureContext(
+            feature_id="dropped",
+            feature_dir=Path("/fake/dropped"),
+            status=FeatureStatus.BACKLOG,
+            name="Dropped",
+            state=FeatureState.ABANDONED,
+            abandoned_reason="Out of scope",
+        )
+        out = "\n".join(_render_archive([sup, ab], {"old": sup, "dropped": ab}))
+        assert "## Archive" in out
+        assert "<details>" in out
+        assert "1 superseded, 1 abandoned" in out
+        assert "new" in out
+        assert "Out of scope" in out
