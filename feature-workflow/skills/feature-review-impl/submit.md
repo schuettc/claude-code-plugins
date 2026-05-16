@@ -139,6 +139,27 @@ This PR now includes the implementation. Previous plan review comments are prese
 - [What reviewers should focus on]"
    ```
 
+## Step 4.5: Branch by Effective Review Mode
+
+You have the effective review mode from Step 0 of SKILL.md, and the implementation is now pushed to the feature branch. Branch:
+
+**external_gemini / external_codex / external_default:**
+Continue to Step 5 (swap `plan-review` for `impl-review`).
+
+**internal:**
+Skip the label swap. If `plan-review` is still on the PR, remove it without replacement:
+```
+gh pr edit <pr-number> --remove-label plan-review
+```
+Then follow `${CLAUDE_PLUGIN_ROOT}/skills/shared/internal-review.md` to dispatch the subagent (phase: `impl`) and post the impl review comment. Then continue to the success message step.
+
+**skip:**
+Skip the label swap. Remove any review label still on the PR:
+```
+gh pr edit <pr-number> --remove-label plan-review --remove-label impl-review
+```
+Print: "`<id>` is configured for `review: skip`. Implementation review will not be performed." Continue to the success message step with a "review skipped" note.
+
 ## Step 5: Swap Review Labels (if CI reviewer configured)
 
 Read `.feature-workflow.yml` and check the `reviewer:` setting.

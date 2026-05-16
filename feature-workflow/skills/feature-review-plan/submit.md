@@ -124,6 +124,19 @@ gh pr create --title "plan(<id>): [feature name]" --base dev --body "<PR body>"
    gh pr comment <pr-number> --body "## Plan Update\n\n### Changes Made\n- [summary of plan changes]\n\n### Feedback Addressed\n- [which review items were fixed]"
    ```
 
+## Step 4.5: Branch by Effective Review Mode
+
+You have the effective review mode from Step 0 of SKILL.md, and the PR is now open from Step 4. Branch:
+
+**external_gemini / external_codex / external_default:**
+Continue to Step 5 (apply `plan-review` label) — the CI workflow fires on the label event.
+
+**internal:**
+Skip Step 5 entirely. Follow `${CLAUDE_PLUGIN_ROOT}/skills/shared/internal-review.md` to dispatch the subagent and post the review comment. Then continue to Step 6 (success message).
+
+**skip:**
+Skip Step 5. Print: "`<id>` is configured for `review: skip`. No review will be performed for this submission. Continue with `/feature-implement <id>` when ready." Then continue to Step 6 with a "review skipped" message.
+
 ## Step 5: Add Review Label (if CI reviewer configured)
 
 Read `.feature-workflow.yml` and check the `reviewer:` setting.

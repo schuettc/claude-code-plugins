@@ -367,6 +367,23 @@ name: Feature A
         ctx = FeatureContext.from_directory(feature_in_backlog)
         assert ctx.is_epic() is False
 
+    def test_effective_review_feature_override(self, feature_with_epic_and_relations: Path):
+        """A1 fixture has review: internal in frontmatter."""
+        from effective_review import ReviewMode
+        ctx = FeatureContext.from_directory(feature_with_epic_and_relations)
+        assert ctx.effective_review(project_reviewer="gemini") == ReviewMode.INTERNAL
+
+    def test_effective_review_falls_back_to_project(self, feature_in_backlog: Path):
+        """Default fixture has no review field; should defer to project."""
+        from effective_review import ReviewMode
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.effective_review(project_reviewer="gemini") == ReviewMode.EXTERNAL_GEMINI
+
+    def test_effective_review_both_absent_is_skip(self, feature_in_backlog: Path):
+        from effective_review import ReviewMode
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.effective_review(project_reviewer="none") == ReviewMode.SKIP
+
 
 class TestFeatureState:
     """Tests for FeatureState enum."""

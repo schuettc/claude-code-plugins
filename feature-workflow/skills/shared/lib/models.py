@@ -7,6 +7,12 @@ from pathlib import Path
 from typing import Optional
 from datetime import date
 
+# Handle both package and standalone imports
+try:
+    from .effective_review import resolve_review, ReviewMode
+except ImportError:
+    from effective_review import resolve_review, ReviewMode
+
 
 class FeatureStatus(Enum):
     """Feature lifecycle status determined by file presence."""
@@ -100,6 +106,14 @@ class FeatureContext:
     def is_epic(self) -> bool:
         """Epic features have type='Epic' and coordinate other features via children list."""
         return self.type.lower() == "epic"
+
+    def effective_review(self, project_reviewer: str) -> "ReviewMode":
+        """Compute the effective review mode for this feature.
+
+        Combines the per-feature `review:` override with the project's `reviewer:`
+        config to decide which review path runs.
+        """
+        return resolve_review(self.review, project_reviewer)
 
     def has_unmet_dependencies(self, all_features: dict[str, "FeatureContext"]) -> list[str]:
         """Return list of dependency IDs that are not yet completed."""
