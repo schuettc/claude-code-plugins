@@ -287,3 +287,41 @@ class TestRenderArchive:
         assert "1 superseded, 1 abandoned" in out
         assert "new" in out
         assert "Out of scope" in out
+
+
+from run_dashboard import _render_warnings
+
+
+class TestRenderWarnings:
+    def test_no_warnings_no_section(self):
+        a = FeatureContext(
+            feature_id="a", feature_dir=Path("/fake/a"),
+            status=FeatureStatus.BACKLOG, name="A",
+        )
+        assert _render_warnings({"a": a}) == []
+
+    def test_cycle_warning(self):
+        a = FeatureContext(
+            feature_id="a", feature_dir=Path("/fake/a"),
+            status=FeatureStatus.BACKLOG, name="A",
+            depends_on=["b"],
+        )
+        b = FeatureContext(
+            feature_id="b", feature_dir=Path("/fake/b"),
+            status=FeatureStatus.BACKLOG, name="B",
+            depends_on=["a"],
+        )
+        out = "\n".join(_render_warnings({"a": a, "b": b}))
+        assert "Validation Warnings" in out
+        assert "Cycle detected" in out
+        assert "a" in out and "b" in out
+
+    def test_unknown_dependency_warning(self):
+        a = FeatureContext(
+            feature_id="a", feature_dir=Path("/fake/a"),
+            status=FeatureStatus.BACKLOG, name="A",
+            depends_on=["missing"],
+        )
+        out = "\n".join(_render_warnings({"a": a}))
+        assert "Unknown dependency" in out
+        assert "missing" in out

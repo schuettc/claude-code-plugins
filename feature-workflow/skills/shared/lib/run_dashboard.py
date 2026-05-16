@@ -19,6 +19,7 @@ if str(LIB_DIR) not in sys.path:
 # Now we can import the modules directly
 from frontmatter import parse_frontmatter, parse_frontmatter_string
 from models import FeatureStatus, FeatureState, FeatureContext
+from deps import detect_cycles, find_unknown_refs
 
 
 def partition_features(features: list[FeatureContext]) -> dict[str, list[FeatureContext]]:
@@ -152,7 +153,18 @@ def _render_archive(items: list[FeatureContext], by_id: dict[str, FeatureContext
 
 
 def _render_warnings(by_id: dict[str, FeatureContext]) -> list[str]:
-    return []
+    cycles = detect_cycles(by_id)
+    unknown = find_unknown_refs(by_id)
+    if not cycles and not unknown:
+        return []
+    lines = ["## Validation Warnings", ""]
+    for cycle in cycles:
+        lines.append(f"- ⚠️ Cycle detected: {' → '.join(cycle)} → {cycle[0]}")
+    for fid, field_name, ref in unknown:
+        label = "Unknown dependency" if field_name == "dependsOn" else f"Unknown {field_name} reference"
+        lines.append(f"- ⚠️ {label}: `{fid}` → `{ref}`")
+    lines.append("")
+    return lines
 
 
 def _render_epics(items: list[FeatureContext], by_id: dict[str, FeatureContext]) -> list[str]:
