@@ -342,6 +342,31 @@ name: Feature A
         ctx = FeatureContext.from_directory(feature_with_multiple_assignees)
         assert ctx.assignees == ["court", "alex"]
 
+    def test_new_relation_fields_default_empty(self, feature_in_backlog: Path):
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.epic == ""
+        assert ctx.children == []
+        assert ctx.related_to == []
+        assert ctx.parallel_safe is True
+        assert ctx.review == ""
+
+    def test_relation_fields_populated(self, feature_with_epic_and_relations: Path):
+        ctx = FeatureContext.from_directory(feature_with_epic_and_relations)
+        assert ctx.epic == "auth-overhaul"
+        assert ctx.related_to == ["sso-saml"]
+        assert ctx.parallel_safe is False
+        assert ctx.review == "internal"
+
+    def test_epic_parent_has_children(self, feature_epic_parent: Path):
+        ctx = FeatureContext.from_directory(feature_epic_parent)
+        assert ctx.type == "Epic"
+        assert ctx.children == ["user-roles", "sso-saml", "mfa-totp"]
+        assert ctx.is_epic() is True
+
+    def test_is_epic_false_for_regular_feature(self, feature_in_backlog: Path):
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.is_epic() is False
+
 
 class TestFeatureState:
     """Tests for FeatureState enum."""

@@ -66,6 +66,13 @@ class FeatureContext:
     # Ownership (idea.md frontmatter)
     assignees: list[str] = field(default_factory=list)
 
+    # Grouping and relations (idea.md frontmatter)
+    epic: str = ""
+    children: list[str] = field(default_factory=list)
+    related_to: list[str] = field(default_factory=list)
+    parallel_safe: bool = True
+    review: str = ""  # "external" | "internal" | "skip" | "" (defer to project)
+
     # State overlay (idea.md frontmatter)
     state: FeatureState = FeatureState.ACTIVE
     paused_reason: str = ""
@@ -89,6 +96,10 @@ class FeatureContext:
     def is_paused(self) -> bool:
         """Paused = state==PAUSED. Surfaces in the dashboard Paused section."""
         return self.state == FeatureState.PAUSED
+
+    def is_epic(self) -> bool:
+        """Epic features have type='Epic' and coordinate other features via children list."""
+        return self.type.lower() == "epic"
 
     def has_unmet_dependencies(self, all_features: dict[str, "FeatureContext"]) -> list[str]:
         """Return list of dependency IDs that are not yet completed."""
@@ -157,6 +168,28 @@ class FeatureContext:
         else:
             assignees = []
 
+        # Parse epic relations and review override
+        epic = str(idea_fm.get("epic", "") or "")
+
+        children_raw = idea_fm.get("children", [])
+        if isinstance(children_raw, str):
+            children = [children_raw] if children_raw else []
+        elif isinstance(children_raw, list):
+            children = [str(c).strip() for c in children_raw if str(c).strip()]
+        else:
+            children = []
+
+        related_raw = idea_fm.get("relatedTo", [])
+        if isinstance(related_raw, str):
+            related_to = [related_raw] if related_raw else []
+        elif isinstance(related_raw, list):
+            related_to = [str(r).strip() for r in related_raw if str(r).strip()]
+        else:
+            related_to = []
+
+        parallel_safe = _parse_bool(idea_fm.get("parallelSafe"), default=True)
+        review = str(idea_fm.get("review", "") or "").strip().lower()
+
         # Parse state and companion fields
         state = FeatureState.parse(idea_fm.get("state"))
         paused_reason = str(idea_fm.get("pausedReason", "") or "")
@@ -179,6 +212,11 @@ class FeatureContext:
             depends_on=depends_on,
             blocked_by=blocked_by,
             assignees=assignees,
+            epic=epic,
+            children=children,
+            related_to=related_to,
+            parallel_safe=parallel_safe,
+            review=review,
             state=state,
             paused_reason=paused_reason,
             superseded_by=superseded_by,

@@ -275,3 +275,49 @@ created: 2026-04-01
 # Team Feature
 """)
     return feature_dir
+
+
+@pytest.fixture
+def feature_with_epic_and_relations(temp_project: Path) -> Path:
+    feature_dir = temp_project / "docs" / "features" / "child-feature"
+    feature_dir.mkdir()
+    (feature_dir / "idea.md").write_text("""---
+id: child-feature
+name: Child Feature
+type: Enhancement
+priority: P1
+effort: Medium
+impact: High
+epic: auth-overhaul
+dependsOn: [user-roles]
+relatedTo: [sso-saml]
+parallelSafe: false
+review: internal
+created: 2026-04-15
+---
+
+# Child Feature
+Part of the auth-overhaul epic.
+""")
+    return feature_dir
+
+
+@pytest.fixture
+def feature_epic_parent(temp_project: Path) -> Path:
+    feature_dir = temp_project / "docs" / "features" / "auth-overhaul"
+    feature_dir.mkdir()
+    (feature_dir / "idea.md").write_text("""---
+id: auth-overhaul
+name: Auth Overhaul
+type: Epic
+priority: P0
+effort: Large
+impact: High
+children: [user-roles, sso-saml, mfa-totp]
+created: 2026-04-01
+---
+
+# Auth Overhaul
+Umbrella for the auth rewrite.
+""")
+    return feature_dir
