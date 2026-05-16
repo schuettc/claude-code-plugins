@@ -330,6 +330,18 @@ name: Feature A
         assert FeatureContext.from_directory(feature_in_backlog).is_paused() is False
         assert FeatureContext.from_directory(feature_paused).is_paused() is True
 
+    def test_assignee_absent(self, feature_in_backlog: Path):
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.assignees == []
+
+    def test_assignee_single(self, feature_with_single_assignee: Path):
+        ctx = FeatureContext.from_directory(feature_with_single_assignee)
+        assert ctx.assignees == ["court"]
+
+    def test_assignee_multiple(self, feature_with_multiple_assignees: Path):
+        ctx = FeatureContext.from_directory(feature_with_multiple_assignees)
+        assert ctx.assignees == ["court", "alex"]
+
 
 class TestFeatureState:
     """Tests for FeatureState enum."""

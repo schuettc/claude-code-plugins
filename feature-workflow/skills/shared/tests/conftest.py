@@ -235,3 +235,43 @@ created: 2026-03-15
 Not pursuing.
 """)
     return feature_dir
+
+
+@pytest.fixture
+def feature_with_single_assignee(temp_project: Path) -> Path:
+    feature_dir = temp_project / "docs" / "features" / "assigned-feature"
+    feature_dir.mkdir()
+    (feature_dir / "idea.md").write_text("""---
+id: assigned-feature
+name: Assigned Feature
+type: Feature
+priority: P1
+effort: Small
+impact: Medium
+assignee: court
+created: 2026-04-01
+---
+
+# Assigned Feature
+""")
+    return feature_dir
+
+
+@pytest.fixture
+def feature_with_multiple_assignees(temp_project: Path) -> Path:
+    feature_dir = temp_project / "docs" / "features" / "team-feature"
+    feature_dir.mkdir()
+    (feature_dir / "idea.md").write_text("""---
+id: team-feature
+name: Team Feature
+type: Feature
+priority: P1
+effort: Medium
+impact: High
+assignee: [court, alex]
+created: 2026-04-01
+---
+
+# Team Feature
+""")
+    return feature_dir

@@ -63,6 +63,9 @@ class FeatureContext:
     depends_on: list[str] = field(default_factory=list)
     blocked_by: list[str] = field(default_factory=list)
 
+    # Ownership (idea.md frontmatter)
+    assignees: list[str] = field(default_factory=list)
+
     # State overlay (idea.md frontmatter)
     state: FeatureState = FeatureState.ACTIVE
     paused_reason: str = ""
@@ -145,6 +148,15 @@ class FeatureContext:
         if isinstance(blocked_by, str):
             blocked_by = [blocked_by] if blocked_by else []
 
+        # Parse assignee (handle both string and list)
+        assignee_raw = idea_fm.get("assignee", [])
+        if isinstance(assignee_raw, str):
+            assignees = [assignee_raw] if assignee_raw else []
+        elif isinstance(assignee_raw, list):
+            assignees = [str(a).strip() for a in assignee_raw if str(a).strip()]
+        else:
+            assignees = []
+
         # Parse state and companion fields
         state = FeatureState.parse(idea_fm.get("state"))
         paused_reason = str(idea_fm.get("pausedReason", "") or "")
@@ -166,6 +178,7 @@ class FeatureContext:
             shipped=shipped,
             depends_on=depends_on,
             blocked_by=blocked_by,
+            assignees=assignees,
             state=state,
             paused_reason=paused_reason,
             superseded_by=superseded_by,
