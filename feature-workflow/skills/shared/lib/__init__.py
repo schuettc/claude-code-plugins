@@ -9,7 +9,7 @@ This module provides common utilities for:
 
 from .models import FeatureStatus, FeatureContext
 from .frontmatter import parse_frontmatter
-from .dashboard import generate_dashboard
+from .run_dashboard import generate_dashboard
 from .statusline import set_context, clear_context, get_context
 
 __all__ = [

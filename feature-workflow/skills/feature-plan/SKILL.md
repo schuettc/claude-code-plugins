@@ -99,6 +99,20 @@ This command orchestrates a 6-phase workflow:
 - Read the feature's `idea.md` for full details
 - Verify feature is in backlog status (no plan.md exists yet)
 - Handle already-in-progress features with user options
+
+### State Guard
+
+After reading `idea.md`, check the `state:` field:
+
+| State | Action |
+|---|---|
+| `active` (or absent) | Proceed normally |
+| `paused` | Stop. Tell the user: "`<id>` is paused (waiting on: `<pausedReason>`). Resume with `/feature-state <id> active` before planning." |
+| `superseded` | Stop. Tell the user: "`<id>` was superseded by `<supersededBy>`. Plan that one instead, or `/feature-state <id> active` to revive." |
+| `abandoned` | Stop. Tell the user: "`<id>` was abandoned (`<abandonedReason>`). `/feature-state <id> active` to revive." |
+
+In all stop cases, do NOT create a plan.md.
+
 - **Set statusline immediately after selection** by running:
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/statusline.py set <feature-id>

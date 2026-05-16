@@ -28,6 +28,10 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root> 
 
 If the script fails or `docs/features/` doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
 
+### Archive Exclusion
+
+When checking for an existing feature, the dashboard's Archive section (collapsed `<details>`) contains superseded and abandoned features. By default, **do not** suggest these in match results — the user is looking for things they can work on. Exception: if the user's prompt explicitly mentions a tombstoned ID by name, surface it with a note like "This was superseded by X" so they know its history.
+
 ### Step 2: Search for Matches
 
 Parse the DASHBOARD.md tables to find:
