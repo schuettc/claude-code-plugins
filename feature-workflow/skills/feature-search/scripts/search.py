@@ -8,14 +8,14 @@ Usage:
     python3 search.py <project_root> [filters...] [--archive] [--format text|json]
 
 Filters:
-    --state <active|paused|superseded|abandoned>
+    --state <active|paused|replaced|abandoned>
     --assignee <name>
     --priority <P0|P1|P2>
     --type <Feature|Enhancement|Bug Fix|Tech Debt|Epic>
     --category <name>
     --epic <id>
     --depends-on <id>
-    --archive            (include superseded + abandoned; default excludes them)
+    --archive            (include replaced + abandoned; default excludes them)
 """
 
 import argparse

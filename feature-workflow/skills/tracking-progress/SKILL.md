@@ -18,7 +18,7 @@ Invoke this skill when the user:
 
 ## State Compatibility
 
-`tracking-progress` works on `active` and `paused` features. It does NOT work on `superseded` or `abandoned` features — those are tombstones; no further progress should be tracked. If invoked on a tombstoned feature, refuse and tell the user to run `/feature-state <id> active` first if they want to resume work.
+`tracking-progress` works on `active` and `paused` features. It does NOT work on `replaced` or `abandoned` features — those are tombstones; no further progress should be tracked. If invoked on a tombstoned feature, refuse and tell the user to run `/feature-state <id> active` first if they want to resume work.
 
 ## Important: Ask Before Writing
 

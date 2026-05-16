@@ -141,14 +141,14 @@ Beyond the file-presence lifecycle (`idea.md` → `plan.md` → `shipped.md`), f
 |---|---|---|
 | `active` (default) | Normal lifecycle | Backlog / In Progress / Completed |
 | `paused` | Work started, blocked on something external | Paused section |
-| `superseded` | Replaced by another feature | Archive (collapsed) |
+| `replaced` | Replaced by another feature (one-shot tombstone) | Archive (collapsed) |
 | `abandoned` | Decided not to pursue | Archive (collapsed) |
 
 Manage states with `/feature-state`:
 
 ```
 /feature-state <id> paused --reason "Waiting on vendor"
-/feature-state <id> superseded --superseded-by <new-id>
+/feature-state <id> replaced --replaced-by <new-id>
 /feature-state <id> abandoned --reason "Out of scope"
 /feature-state <id> active                            # resume
 ```
@@ -176,7 +176,7 @@ Find features across all filters:
 /feature-search --assignee court
 /feature-search --epic auth-overhaul        # Epic concept in v9.7 (Plan 3)
 /feature-search --depends-on user-roles
-/feature-search --archive                   # include superseded + abandoned
+/feature-search --archive                   # include replaced + abandoned
 ```
 
 ## Per-Feature Review Override

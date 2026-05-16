@@ -30,7 +30,7 @@ If the script fails or `docs/features/` doesn't exist: "No backlog found. Use `/
 
 ### Archive Exclusion
 
-When checking for an existing feature, the dashboard's Archive section (collapsed `<details>`) contains superseded and abandoned features. By default, **do not** suggest these in match results — the user is looking for things they can work on. Exception: if the user's prompt explicitly mentions a tombstoned ID by name, surface it with a note like "This was superseded by X" so they know its history.
+When checking for an existing feature, the dashboard's Archive section (collapsed `<details>`) contains replaced and abandoned features. By default, **do not** suggest these in match results — the user is looking for things they can work on. Exception: if the user's prompt explicitly mentions a tombstoned ID by name, surface it with a note like "This was replaced by X" so they know its history.
 
 ### Step 2: Search for Matches
 

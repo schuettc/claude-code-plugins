@@ -108,7 +108,7 @@ After reading `idea.md`, check the `state:` field:
 |---|---|
 | `active` (or absent) | Proceed normally |
 | `paused` | Stop. Tell the user: "`<id>` is paused (waiting on: `<pausedReason>`). Resume with `/feature-state <id> active` before planning." |
-| `superseded` | Stop. Tell the user: "`<id>` was superseded by `<supersededBy>`. Plan that one instead, or `/feature-state <id> active` to revive." |
+| `replaced` | Stop. Tell the user: "`<id>` was replaced by `<replacedBy>`. Plan that one instead, or `/feature-state <id> active` to revive." |
 | `abandoned` | Stop. Tell the user: "`<id>` was abandoned (`<abandonedReason>`). `/feature-state <id> active` to revive." |
 
 In all stop cases, do NOT create a plan.md.
