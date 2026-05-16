@@ -168,7 +168,31 @@ def _render_warnings(by_id: dict[str, FeatureContext]) -> list[str]:
 
 
 def _render_epics(items: list[FeatureContext], by_id: dict[str, FeatureContext]) -> list[str]:
-    return []
+    if not items:
+        return []
+    lines = ["## Epics", ""]
+    lines.append("| ID | Name | Children | Done | In Progress | Backlog |")
+    lines.append("|----|------|----------|------|-------------|---------|")
+    for epic in items:
+        done = inprog = backlog = 0
+        for child_id in epic.children:
+            child = by_id.get(child_id)
+            if child is None:
+                continue
+            if child.is_tombstone():
+                continue  # tombstoned children don't count toward epic progress
+            if child.status == FeatureStatus.COMPLETED:
+                done += 1
+            elif child.status == FeatureStatus.IN_PROGRESS:
+                inprog += 1
+            else:
+                backlog += 1
+        lines.append(
+            f"| [{epic.feature_id}](./{epic.feature_id}/) | {epic.name} | "
+            f"{len(epic.children)} | {done} | {inprog} | {backlog} |"
+        )
+    lines.append("")
+    return lines
 
 
 def generate_dashboard_content(project_root: Path) -> str:

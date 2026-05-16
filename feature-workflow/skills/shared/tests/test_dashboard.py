@@ -289,6 +289,88 @@ class TestRenderArchive:
         assert "Out of scope" in out
 
 
+from run_dashboard import _render_epics
+
+
+class TestRenderEpics:
+    def test_empty(self):
+        assert _render_epics([], {}) == []
+
+    def test_epic_with_mixed_children(self):
+        epic = FeatureContext(
+            feature_id="auth-overhaul",
+            feature_dir=Path("/fake/auth-overhaul"),
+            status=FeatureStatus.IN_PROGRESS,
+            name="Auth Overhaul",
+            type="Epic",
+            children=["a", "b", "c"],
+        )
+        a = FeatureContext(feature_id="a", feature_dir=Path("/fake/a"),
+                           status=FeatureStatus.COMPLETED, name="A")
+        b = FeatureContext(feature_id="b", feature_dir=Path("/fake/b"),
+                           status=FeatureStatus.IN_PROGRESS, name="B")
+        c = FeatureContext(feature_id="c", feature_dir=Path("/fake/c"),
+                           status=FeatureStatus.BACKLOG, name="C")
+        by_id = {"auth-overhaul": epic, "a": a, "b": b, "c": c}
+        out = "\n".join(_render_epics([epic], by_id))
+        assert "## Epics" in out
+        assert "auth-overhaul" in out
+        assert "1" in out  # done count
+        assert "Auth Overhaul" in out
+
+
+    def test_tombstoned_children_excluded_from_progress(self):
+        """Tombstoned children count toward total but not toward Done/In Progress/Backlog."""
+        from models import FeatureState
+        epic = FeatureContext(
+            feature_id="epic-x",
+            feature_dir=Path("/fake/epic-x"),
+            status=FeatureStatus.IN_PROGRESS,
+            name="Epic X",
+            type="Epic",
+            children=["live", "dead"],
+        )
+        live = FeatureContext(
+            feature_id="live", feature_dir=Path("/fake/live"),
+            status=FeatureStatus.BACKLOG, name="Live",
+        )
+        dead = FeatureContext(
+            feature_id="dead", feature_dir=Path("/fake/dead"),
+            status=FeatureStatus.BACKLOG, name="Dead",
+            state=FeatureState.ABANDONED, abandoned_reason="nope",
+        )
+        by_id = {"epic-x": epic, "live": live, "dead": dead}
+        out = _render_epics([epic], by_id)
+        # Find the data row
+        data_row = [line for line in out if "epic-x" in line and "|" in line]
+        assert len(data_row) == 1
+        # Format: | [epic-x](...) | Epic X | 2 | 0 | 0 | 1 |
+        # 2 = total children (includes tombstoned)
+        # 0/0/1 = done/in_progress/backlog excluding tombstoned (only `live` counts)
+        assert "| 2 | 0 | 0 | 1 |" in data_row[0]
+
+    def test_missing_children_silently_skipped(self):
+        """Children referenced in epic.children but not in by_id are skipped (warning surfaced elsewhere)."""
+        epic = FeatureContext(
+            feature_id="epic-y",
+            feature_dir=Path("/fake/epic-y"),
+            status=FeatureStatus.BACKLOG,
+            name="Epic Y",
+            type="Epic",
+            children=["a", "ghost", "b"],
+        )
+        a = FeatureContext(feature_id="a", feature_dir=Path("/fake/a"),
+                           status=FeatureStatus.COMPLETED, name="A")
+        b = FeatureContext(feature_id="b", feature_dir=Path("/fake/b"),
+                           status=FeatureStatus.BACKLOG, name="B")
+        by_id = {"epic-y": epic, "a": a, "b": b}  # "ghost" intentionally absent
+        out = _render_epics([epic], by_id)
+        data_row = [line for line in out if "epic-y" in line and "|" in line]
+        assert len(data_row) == 1
+        # Children column = 3 (raw count includes the missing ref), Done=1 (a), Backlog=1 (b)
+        assert "| 3 | 1 | 0 | 1 |" in data_row[0]
+
+
 from run_dashboard import _render_warnings
 
 
