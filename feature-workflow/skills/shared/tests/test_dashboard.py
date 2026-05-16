@@ -113,9 +113,9 @@ class TestGenerateDashboard:
         dashboard_path = project_root / "docs" / "features" / "DASHBOARD.md"
         content = dashboard_path.read_text()
 
-        # Check backlog table headers
-        assert "| ID | Name | Category | Priority | Effort | Added |" in content
-        assert "|----|------|----------|----------|--------|-------|" in content
+        # Check backlog table headers (now includes Epic column)
+        assert "| ID | Name | Epic | Category | Priority | Effort | Added | Blocked By |" in content
+        assert "|----|------|------|----------|----------|--------|-------|------------|" in content
 
     def test_feature_links(self, feature_in_backlog: Path):
         """Test that feature IDs are links to directories."""
@@ -136,7 +136,7 @@ class TestGenerateDashboard:
         dashboard_path = project_root / "docs" / "features" / "DASHBOARD.md"
         content = dashboard_path.read_text()
 
-        assert "| ID | Name | Category |" in content
+        assert "| ID | Name | Epic | Category |" in content
         assert "| general |" in content or "general" in content
 
     def test_in_progress_table_includes_category(self, feature_in_progress: Path):
@@ -147,10 +147,10 @@ class TestGenerateDashboard:
         dashboard_path = project_root / "docs" / "features" / "DASHBOARD.md"
         content = dashboard_path.read_text()
 
-        # Check that the in-progress table header has Category
+        # Check that the in-progress table header has Category (now also Epic and Assignee)
         lines = content.split("\n")
         for line in lines:
-            if "| ID | Name | Category | Priority | Started |" in line:
+            if "| ID | Name | Epic | Assignee | Category | Priority | Started |" in line:
                 break
         else:
             pytest.fail("In Progress table missing Category column header")
@@ -179,3 +179,53 @@ priority: P1
 
         assert "valid-feature" in content
         assert "random-dir" not in content
+
+
+from run_dashboard import partition_features
+from models import FeatureContext, FeatureStatus, FeatureState
+
+
+def _ctx(fid, *, status=FeatureStatus.BACKLOG, state=FeatureState.ACTIVE, ftype="Feature"):
+    return FeatureContext(
+        feature_id=fid,
+        feature_dir=Path(f"/fake/{fid}"),
+        status=status,
+        name=fid,
+        type=ftype,
+        state=state,
+    )
+
+
+class TestPartitionFeatures:
+    def test_active_features_partition_by_lifecycle(self):
+        features = [
+            _ctx("a", status=FeatureStatus.BACKLOG),
+            _ctx("b", status=FeatureStatus.IN_PROGRESS),
+            _ctx("c", status=FeatureStatus.COMPLETED),
+        ]
+        parts = partition_features(features)
+        assert [f.feature_id for f in parts["backlog"]] == ["a"]
+        assert [f.feature_id for f in parts["in_progress"]] == ["b"]
+        assert [f.feature_id for f in parts["completed"]] == ["c"]
+        assert parts["paused"] == []
+        assert parts["archive"] == []
+
+    def test_paused_goes_to_paused_section(self):
+        f = _ctx("p", status=FeatureStatus.IN_PROGRESS, state=FeatureState.PAUSED)
+        parts = partition_features([f])
+        assert parts["paused"] == [f]
+        assert parts["in_progress"] == []
+
+    def test_superseded_and_abandoned_go_to_archive(self):
+        sup = _ctx("sup", state=FeatureState.SUPERSEDED)
+        ab = _ctx("ab", state=FeatureState.ABANDONED)
+        parts = partition_features([sup, ab])
+        assert {f.feature_id for f in parts["archive"]} == {"sup", "ab"}
+        assert parts["backlog"] == []
+
+    def test_epic_goes_to_epics_bucket(self):
+        epic = _ctx("e1", ftype="Epic")
+        parts = partition_features([epic])
+        assert parts["epics"] == [epic]
+        # Epics also still appear in their lifecycle bucket for completeness
+        assert parts["backlog"] == [epic]
