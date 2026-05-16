@@ -1,5 +1,6 @@
 """Data models for feature-workflow plugin."""
 
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -13,6 +14,34 @@ class FeatureStatus(Enum):
     BACKLOG = "backlog"  # idea.md only
     IN_PROGRESS = "in_progress"  # idea.md + plan.md
     COMPLETED = "completed"  # idea.md + plan.md + shipped.md
+
+
+class FeatureState(Enum):
+    """Orthogonal state overlay on lifecycle. Source: idea.md frontmatter `state:`."""
+
+    ACTIVE = "active"
+    PAUSED = "paused"
+    SUPERSEDED = "superseded"
+    ABANDONED = "abandoned"
+
+    @classmethod
+    def default(cls) -> "FeatureState":
+        return cls.ACTIVE
+
+    @classmethod
+    def parse(cls, value: Optional[str]) -> "FeatureState":
+        """Parse a frontmatter value into a FeatureState. Unknown values default to ACTIVE with a warning."""
+        if not value:
+            return cls.ACTIVE
+        try:
+            return cls(str(value).strip().lower())
+        except ValueError:
+            print(f"[models] Unknown state value '{value}', defaulting to active", file=sys.stderr)
+            return cls.ACTIVE
+
+    def is_tombstone(self) -> bool:
+        """Tombstones are excluded from active backlog views."""
+        return self in (FeatureState.SUPERSEDED, FeatureState.ABANDONED)
 
 
 @dataclass
@@ -114,6 +143,20 @@ class FeatureContext:
             depends_on=depends_on,
             blocked_by=blocked_by,
         )
+
+
+def _parse_bool(value: object, default: bool) -> bool:
+    """Parse a frontmatter value into a bool. Frontmatter parser returns strings, so we accept both."""
+    if value is None or value == "":
+        return default
+    if isinstance(value, bool):
+        return value
+    s = str(value).strip().lower()
+    if s in ("true", "yes", "1"):
+        return True
+    if s in ("false", "no", "0"):
+        return False
+    return default
 
 
 def _parse_date(value: Optional[str]) -> Optional[date]:

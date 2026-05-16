@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from models import FeatureStatus, FeatureContext
+from models import FeatureStatus, FeatureContext, FeatureState, _parse_bool
 
 
 class TestFeatureStatus:
@@ -292,3 +292,55 @@ name: Feature A
 
         unmet = dep_ctx.has_unmet_dependencies(all_features)
         assert unmet == []
+
+
+class TestFeatureState:
+    """Tests for FeatureState enum."""
+
+    def test_state_values(self):
+        assert FeatureState.ACTIVE.value == "active"
+        assert FeatureState.PAUSED.value == "paused"
+        assert FeatureState.SUPERSEDED.value == "superseded"
+        assert FeatureState.ABANDONED.value == "abandoned"
+
+    def test_default_is_active(self):
+        assert FeatureState.default() == FeatureState.ACTIVE
+
+    def test_parse_known_value(self):
+        assert FeatureState.parse("paused") == FeatureState.PAUSED
+        assert FeatureState.parse("ACTIVE") == FeatureState.ACTIVE  # case-insensitive
+
+    def test_parse_empty_defaults_to_active(self):
+        assert FeatureState.parse("") == FeatureState.ACTIVE
+        assert FeatureState.parse(None) == FeatureState.ACTIVE
+
+    def test_parse_unknown_defaults_to_active_and_warns(self, capsys):
+        result = FeatureState.parse("garbled")
+        assert result == FeatureState.ACTIVE
+        captured = capsys.readouterr()
+        assert "garbled" in captured.err
+
+    def test_is_tombstone(self):
+        assert FeatureState.SUPERSEDED.is_tombstone() is True
+        assert FeatureState.ABANDONED.is_tombstone() is True
+        assert FeatureState.PAUSED.is_tombstone() is False
+        assert FeatureState.ACTIVE.is_tombstone() is False
+
+
+class TestParseBool:
+    """Tests for the _parse_bool helper."""
+
+    def test_true_values(self):
+        for v in ["true", "True", "TRUE", "yes", "1", True]:
+            assert _parse_bool(v, default=False) is True
+
+    def test_false_values(self):
+        for v in ["false", "False", "no", "0", False]:
+            assert _parse_bool(v, default=True) is False
+
+    def test_default_when_absent(self):
+        assert _parse_bool(None, default=True) is True
+        assert _parse_bool("", default=False) is False
+
+    def test_default_when_unparseable(self):
+        assert _parse_bool("garbled", default=True) is True
