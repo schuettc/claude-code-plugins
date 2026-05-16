@@ -99,10 +99,29 @@ def main() -> int:
         plugin_root = str(script_dir.parent)
 
     dashboard_script = Path(plugin_root) / "skills" / "shared" / "lib" / "run_dashboard.py"
+    sync_replaces_script = Path(plugin_root) / "skills" / "shared" / "lib" / "sync_replaces.py"
 
     if not dashboard_script.exists():
         print(f"[hook] Warning: Dashboard script not found at {dashboard_script}", file=sys.stderr)
         return 0
+
+    # First: sync `replaces:` declarations so the dashboard sees the right state.
+    # This walks every feature, finds `replaces: [...]` fields, and writes
+    # `state: replaced` + `replacedBy: <self>` on each referenced target.
+    if sync_replaces_script.exists() and file_type == "idea":
+        try:
+            sync_result = subprocess.run(
+                [sys.executable, str(sync_replaces_script), project_root],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            if sync_result.stderr:
+                print(sync_result.stderr, file=sys.stderr)
+        except subprocess.TimeoutExpired:
+            print("[hook] Warning: sync_replaces timed out", file=sys.stderr)
+        except Exception as e:
+            print(f"[hook] Warning: sync_replaces error: {e}", file=sys.stderr)
 
     # Run the dashboard generation script
     dashboard_updated = False
