@@ -4,6 +4,14 @@ on:
   pull_request:
     types: [labeled, synchronize]
 
+# Cancel in-progress runs for the same PR; the latest event wins.
+# Prevents duplicate review comments from interleaving label-swap +
+# synchronize events (the root cause of the now-playing 2026-05-16
+# post-PASS plan-review re-fire on PR #141).
+concurrency:
+  group: feature-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 env:
   GH_TOKEN: ${{ github.token }}
 
