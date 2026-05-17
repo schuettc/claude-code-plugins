@@ -143,48 +143,44 @@ git commit -m "feat(autopilot): pre-flight check that local base is in sync with
 
 ---
 
-### Task A2: Mandatory worktree isolation for parallel subagents
+### Task A2: Default to worktree isolation on every autopilot subagent dispatch
 
 **Files:**
 - Modify: `feature-workflow/skills/feature-autopilot/SKILL.md`
 
-The now-playing incident (B's implementation overlaid by C's branch switch) was the predictable consequence of two subagents sharing one working tree. Autopilot must mandate worktree isolation any time it spawns parallel subagents.
+Decision: every time autopilot spawns a subagent that does git work, pass `isolation: "worktree"`. No opt-out, no config knob, no sequential-vs-parallel distinction. The B-overlaid-by-C incident in now-playing demonstrated that shared-tree subagent dispatch is unsafe enough that the safe path is the only path.
 
-- [ ] **Step 1: Add a Parallel Dispatch Safety section to autopilot SKILL.md**
+- [ ] **Step 1: Add a Worktree Isolation section to autopilot SKILL.md**
 
 Insert after the existing "Reviewer-mode adaptations" section:
 
 ```markdown
-## Parallel Dispatch Safety
+## Worktree Isolation (mandatory)
 
-Any time the autopilot spawns multiple subagents that touch the working tree concurrently, EACH subagent MUST run in its own worktree. Two subagents in the same checkout will clobber each other on branch switches.
+Every time the autopilot dispatches a subagent that may write to the working tree or do git operations, the dispatch MUST pass `isolation: "worktree"` to the Agent tool. The harness then creates a temporary git worktree, runs the subagent there, and returns the worktree path on completion.
 
-**Rule:** when calling the Agent tool with intent to do git work, pass `isolation: "worktree"` if there is any other agent active in the same repo.
+**Applies to:**
+- Implementer subagents (subagent-driven-development pattern)
+- Fix subagents (after a review surfaces issues)
+- Child autopilots dispatched by epic dispatch (Plan 3 / v9.8.0)
+- Any subagent the orchestrator instructs to `git commit`, `git push`, or `git checkout`
 
-**This applies to:**
-- Epic parallel-wave dispatch (Plan 3 / v9.8.0)
-- Multiple `--respond` cycles running concurrently
-- Any user-driven `/feature-autopilot X` followed by `/feature-autopilot Y` in adjacent sessions
+**Does NOT apply to:**
+- Reviewer subagents — read-only, no git ops, no isolation needed
+- Subagents that only read files (research, exploration)
 
-**This does NOT apply to:**
-- Reviewer subagents (read-only — no git operations)
-- Subagents that only read files
+**Why:** even when only one autopilot is "running," the user may open another Claude Code session against the same repo. Worktree isolation removes the entire class of "two agents in one tree clobber each other on branch switches" bugs (see now-playing's B-overlaid-by-C incident, 2026-05-16).
 
-**Recovery from a clobber:**
-If a clobber has already happened (untracked files survived but tracked files were overwritten on branch checkout):
-1. Check the loser's branch in `git ls-remote origin <branch>` — if it was pushed, recover from origin
-2. Check `git fsck --lost-found` — orphaned commits may survive
-3. Read the plan.md to identify what was lost; rebuild from any surviving artifacts (e.g., test files) plus the plan
-4. **Never `--no-verify` the recovery commit** — pre-commit hooks may catch regressions
+**Cost:** ~1-2 seconds for `git worktree add` per subagent, plus per-worktree setup (venv, node_modules) that varies by project. Acceptable in exchange for eliminating clobber bugs.
 
-The recovery checklist itself is a sign of failure. Prefer worktree isolation upfront.
+There is no opt-out. The autopilot does not check a config flag before isolating. If a project's worktree setup is painfully slow, fix it at the project level (shared venv via `uv`, pnpm content-addressable store, etc.) rather than disabling isolation.
 ```
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add feature-workflow/skills/feature-autopilot/SKILL.md
-git commit -m "feat(autopilot): mandate worktree isolation for parallel subagents"
+git commit -m "feat(autopilot): mandate worktree isolation on every dispatch (no opt-out)"
 ```
 
 ---
