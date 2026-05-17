@@ -46,6 +46,17 @@ Verify in this order before starting:
    - `reviewer: none` — review gates are skipped. Autopilot goes plan → implement → ship without polling for external review.
 5. **Read `.feature-workflow.yml`** for the `base_branch:` setting (default `main`). Use this as the merge target.
 
+## Step 0: Epic vs. Feature Detection
+
+Before the linear pipeline below, read `docs/features/<id>/idea.md` and check the `type:` field. If `type: Epic`, switch to **Epic Dispatch Mode** — see [epic-dispatch.md](epic-dispatch.md) — and stop here. The linear pipeline below applies only to regular features.
+
+| `type:` value | Behavior |
+|---|---|
+| Feature / Enhancement / Bug Fix / Tech Debt | Standard linear plan → review → implement → review → ship (below) |
+| Epic | Epic Dispatch Mode — walk children in topo order via `epic-dispatch.md` |
+
+The dispatcher walks each child via its own subagent (running `/feature-autopilot <child-id>`) in its own worktree per the Worktree Isolation rule. Sequential by default; pass `--parallel` to the autopilot invocation for concurrent waves.
+
 ## Steps
 
 ### 1. Plan
