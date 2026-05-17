@@ -101,3 +101,63 @@ def find_unknown_refs(features: dict[str, FeatureContext]) -> list[tuple[str, st
             if ref not in known:
                 missing.append((fid, "replaces", ref))
     return missing
+
+
+def compute_dispatch_waves(epic_id: str, features: dict[str, FeatureContext]) -> list[list[str]]:
+    """Compute the dispatch order for an epic's children, grouped into parallel-safe waves.
+
+    Each wave is a list of child IDs that can be dispatched in parallel because none of
+    them depend on another member of the same wave. Waves are emitted in topological order:
+    wave N's members may depend on members of waves [0, N-1] but not on each other.
+
+    Filters applied before topo-sort:
+    - The target must exist and be `type: Epic`
+    - Children that don't exist in `features` are skipped (silently — dashboard validation flags them)
+    - Children that are already `COMPLETED` are excluded (their dependents are unblocked)
+    - Children with state `PAUSED`, `REPLACED`, or `ABANDONED` are excluded
+
+    Order within a wave: the epic's `children:` array order is preserved (NOT alphabetical).
+    Dependencies are restricted to the epic's own dispatchable children — `dependsOn:` entries
+    referring to features outside the epic are ignored (assumed already handled separately).
+    """
+    epic = features.get(epic_id)
+    if epic is None or not epic.is_epic():
+        return []
+
+    # Build the dispatchable set: existing children that aren't already done/tombstoned/paused
+    dispatchable: dict[str, FeatureContext] = {}
+    for child_id in epic.children:
+        child = features.get(child_id)
+        if child is None:
+            continue
+        if child.status == FeatureStatus.COMPLETED:
+            continue
+        if child.is_tombstone() or child.is_paused():
+            continue
+        dispatchable[child_id] = child
+
+    if not dispatchable:
+        return []
+
+    # Build the in-epic dependency graph (deps outside the dispatchable set don't count)
+    deps_in_epic: dict[str, set[str]] = {
+        child_id: {d for d in child.depends_on if d in dispatchable}
+        for child_id, child in dispatchable.items()
+    }
+
+    # Topo-sort into waves. Each iteration emits a wave of nodes with no remaining in-wave deps.
+    children_order = {cid: idx for idx, cid in enumerate(epic.children)}
+    waves: list[list[str]] = []
+    remaining = set(dispatchable.keys())
+
+    while remaining:
+        ready = [cid for cid in remaining if not (deps_in_epic[cid] & remaining)]
+        if not ready:
+            # Cycle in the epic's deps — bail with what we have rather than infinite-loop
+            break
+        # Order within the wave by the epic's children: array
+        ready.sort(key=lambda cid: children_order.get(cid, 1_000_000))
+        waves.append(ready)
+        remaining -= set(ready)
+
+    return waves
