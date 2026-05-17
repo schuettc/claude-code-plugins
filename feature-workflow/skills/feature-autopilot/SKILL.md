@@ -249,6 +249,9 @@ Every time the autopilot dispatches a subagent that may write to the working tre
 
 There is no opt-out. The autopilot does not check a config flag before isolating. If a project's worktree setup is painfully slow, fix it at the project level (shared venv via `uv`, pnpm content-addressable store, etc.) rather than disabling isolation.
 
-## Pre-commit Hooks
+## Pre-commit Hooks and Static Analysis
 
-If your project has pre-commit hooks (skylos, fallow, ruff, prettier, husky, etc.), see [pre-commit-compat.md](pre-commit-compat.md) for how autopilot interacts with them. **Never** use `git commit --no-verify` to bypass hooks — if a hook fails, the subagent should report BLOCKED with the failure detail. This rule has no exceptions.
+If your project has pre-commit hooks (skylos, fallow, ruff, prettier, husky, etc.), see [pre-commit-compat.md](pre-commit-compat.md) for how autopilot interacts with them. Two rules with no exceptions:
+
+1. **Never** use `git commit --no-verify` to bypass hooks. If a hook fails, the subagent should report BLOCKED with the failure detail.
+2. **Suppressions are a last resort.** Drive-by `// fallow-ignore-next-line complexity`, `# skylos: ignore`, `# noqa`, `# type: ignore`, `// @ts-ignore` etc. without an adjacent `# Why:` justification will be caught by the impl-review prompt as Blocking findings. The implementer must either refactor the underlying code or write a defensible justification. See `pre-commit-compat.md` for the full discipline.
