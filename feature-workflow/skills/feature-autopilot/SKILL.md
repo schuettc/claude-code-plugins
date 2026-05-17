@@ -212,3 +212,23 @@ See `feature-workflow/skills/shared/lib/effective_review.py` for precedence rule
 **Important:** `wait-for-review.sh` works identically across external and internal modes. Internal-review comments use the same `## Plan Review` / `## Implementation Review` headers and `### Verdict:` line that the external CI reviewer posts. No special flag is needed.
 
 For `internal` mode, the autopilot's FAIL → respond loop also works unchanged: the respond flow reads PR comments, classifies findings, replies, and pushes — exactly as for external review. The subagent re-runs on the next round because the orchestrator detects the new commits and dispatches it again.
+
+## Worktree Isolation (mandatory)
+
+Every time the autopilot dispatches a subagent that may write to the working tree or do git operations, the dispatch MUST pass `isolation: "worktree"` to the Agent tool. The harness creates a temporary git worktree, runs the subagent there, and returns the worktree path on completion.
+
+**Applies to:**
+- Implementer subagents (subagent-driven-development pattern)
+- Fix subagents (after a review surfaces issues)
+- Child autopilots dispatched by epic dispatch (Plan 3 / v9.8.0)
+- Any subagent the orchestrator instructs to `git commit`, `git push`, or `git checkout`
+
+**Does NOT apply to:**
+- Reviewer subagents — read-only, no git ops, no isolation needed
+- Subagents that only read files (research, exploration)
+
+**Why:** even when only one autopilot is "running," the user may open another Claude Code session against the same repo. Worktree isolation removes the entire class of "two agents in one tree clobber each other on branch switches" bugs. The now-playing 2026-05-16 incident — Feature B's uncommitted implementation overlaid by Feature C's branch checkout in a shared tree — is the canonical example.
+
+**Cost:** ~1-2 seconds for `git worktree add` per subagent, plus per-worktree setup (venv, node_modules) that varies by project. Acceptable in exchange for eliminating clobber bugs.
+
+There is no opt-out. The autopilot does not check a config flag before isolating. If a project's worktree setup is painfully slow, fix it at the project level (shared venv via `uv`, pnpm content-addressable store, etc.) rather than disabling isolation.
