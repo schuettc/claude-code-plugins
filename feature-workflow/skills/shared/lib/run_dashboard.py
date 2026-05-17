@@ -189,7 +189,8 @@ def _render_warnings(by_id: dict[str, FeatureContext], features_dir: Path) -> li
     cycles = detect_cycles(by_id)
     unknown = find_unknown_refs(by_id)
     unknown_keys = find_unknown_keys(features_dir)
-    if not cycles and not unknown and not unknown_keys:
+    empty_epics = [fid for fid, ctx in by_id.items() if ctx.is_epic() and not ctx.children]
+    if not cycles and not unknown and not unknown_keys and not empty_epics:
         return []
     lines = ["## Validation Warnings", ""]
     for cycle in cycles:
@@ -199,6 +200,8 @@ def _render_warnings(by_id: dict[str, FeatureContext], features_dir: Path) -> li
         lines.append(f"- ⚠️ {label}: `{fid}` → `{ref}`")
     for fid, key in unknown_keys:
         lines.append(f"- ⚠️ Unknown frontmatter key in `{fid}/idea.md`: `{key}:` (typo or unsupported field)")
+    for fid in empty_epics:
+        lines.append(f"- ⚠️ Epic `{fid}` has no children — set `children: [...]` in its frontmatter, or change `type:` away from Epic")
     lines.append("")
     return lines
 

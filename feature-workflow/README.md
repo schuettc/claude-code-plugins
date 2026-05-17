@@ -195,6 +195,47 @@ Precedence: per-feature `review:` wins if set; otherwise the project default app
 
 **Skip** is for changes where review would be ceremonial — pure typo fixes, README tweaks, etc. Use sparingly; the audit trail is real value.
 
+## Epic Dispatch
+
+Multi-feature initiatives can be coordinated as an Epic. The epic is a feature with `type: Epic` and a `children:` list:
+
+```yaml
+# docs/features/auth-overhaul/idea.md
+---
+id: auth-overhaul
+name: Auth Overhaul
+type: Epic
+priority: P0
+children: [user-roles, sso-saml, mfa-totp]
+---
+```
+
+Each child references the epic:
+
+```yaml
+# docs/features/user-roles/idea.md
+---
+id: user-roles
+type: Feature
+epic: auth-overhaul
+---
+```
+
+The post-write hook auto-syncs both directions — write `epic:` on a child and the epic's `children:` updates, or vice versa. You don't have to maintain both manually.
+
+Run `/feature-autopilot auth-overhaul` and the dispatcher walks the children in topo order, running each via its own subagent. Sequential by default; pass `--parallel` to run independent children concurrently.
+
+```
+/feature-autopilot auth-overhaul             # sequential (default)
+/feature-autopilot auth-overhaul --parallel  # parallel waves where deps allow
+```
+
+Every dispatched subagent runs in its own worktree (`isolation: "worktree"`) — no shared-tree collisions, no PR-identity confusion. Concurrency cap in parallel mode is 3.
+
+When the last non-skipped child ships, the dispatcher offers to write the epic's `shipped.md`. Decline to keep the epic open.
+
+See [skills/feature-autopilot/epic-dispatch.md](skills/feature-autopilot/epic-dispatch.md) for the full procedure.
+
 ## Automated PR Reviews
 
 Every feature can be reviewed twice — once at the plan stage, once at the implementation stage — by an external AI reviewer (Gemini or Codex) running in GitHub Actions. Reviews are posted as PR comments with a human-readable verdict (PASS / CONDITIONAL PASS / FAIL) that the author reads and acts on.

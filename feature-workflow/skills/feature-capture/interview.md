@@ -110,10 +110,15 @@ If Abandoned: ask "Why dropped?" → abandonedReason
 ```
 Is this part of a larger initiative (epic)? (epic ID, or leave blank)
 Example: auth-overhaul
-
-If the epic doesn't exist yet, suggest the user create it first with /feature-capture
-choosing type=Epic.
 ```
+
+If the user provides an ID, validate it:
+1. Check `docs/features/<epic-id>/idea.md` exists
+2. Verify its frontmatter has `type: Epic`
+3. If either check fails, **accept the value but warn**:
+   > "Note: `<epic-id>` doesn't exist as an Epic yet. Capture it first with `/feature-capture` (choose type=Epic), or update this feature later. The dashboard hook's sync_epics step will mirror `children:` onto the epic automatically once both files exist."
+
+After the new feature's idea.md is written, the post_tool_use hook's `sync_epics` step mirrors the relationship onto the epic's `children:` array automatically — no manual edit needed.
 
 ## Question 9: Category (Optional)
 

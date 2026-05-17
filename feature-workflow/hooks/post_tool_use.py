@@ -100,6 +100,7 @@ def main() -> int:
 
     dashboard_script = Path(plugin_root) / "skills" / "shared" / "lib" / "run_dashboard.py"
     sync_replaces_script = Path(plugin_root) / "skills" / "shared" / "lib" / "sync_replaces.py"
+    sync_epics_script = Path(plugin_root) / "skills" / "shared" / "lib" / "sync_epics.py"
 
     if not dashboard_script.exists():
         print(f"[hook] Warning: Dashboard script not found at {dashboard_script}", file=sys.stderr)
@@ -122,6 +123,23 @@ def main() -> int:
             print("[hook] Warning: sync_replaces timed out", file=sys.stderr)
         except Exception as e:
             print(f"[hook] Warning: sync_replaces error: {e}", file=sys.stderr)
+
+    # Second: sync `epic:` ↔ `children:` so the dashboard reflects the right
+    # epic graph. Writes the missing direction on each target.
+    if sync_epics_script.exists() and file_type == "idea":
+        try:
+            sync_result = subprocess.run(
+                [sys.executable, str(sync_epics_script), project_root],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            if sync_result.stderr:
+                print(sync_result.stderr, file=sys.stderr)
+        except subprocess.TimeoutExpired:
+            print("[hook] Warning: sync_epics timed out", file=sys.stderr)
+        except Exception as e:
+            print(f"[hook] Warning: sync_epics error: {e}", file=sys.stderr)
 
     # Run the dashboard generation script
     dashboard_updated = False
