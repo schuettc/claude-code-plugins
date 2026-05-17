@@ -18,6 +18,66 @@ If a subagent's commit fails because a pre-commit hook rejected the change:
 
 The autopilot never silently bypasses a hook.
 
+## Suppressions are a last resort
+
+Static analysis tools (fallow, skylos, ESLint, Pylint, Ruff, mypy, etc.) provide inline suppression directives:
+
+- `// fallow-ignore-next-line complexity`
+- `# skylos: ignore SKY-Q501`
+- `// eslint-disable-next-line`
+- `# noqa: E501`
+- `# type: ignore[arg-type]`
+
+These are **legitimate tools** for cases where the finding is genuinely a false positive or where the fix is worse than the suppression (e.g., a deliberately-coalesced state container, a parameterized SQL query that the linter mis-flags as injection). They are **not** a generic escape hatch for "I want this commit to pass."
+
+The failure mode the autopilot has demonstrated in practice: hit a complexity finding → add `// fallow-ignore-next-line complexity` above the unchanged function → the gate goes green → repo-wide technical debt is unmoved. The "fix" was the silence, not the code.
+
+**Before adding any suppression, the autopilot MUST:**
+
+1. **Try to fix the finding first.** Most complexity findings extract cleanly into helpers. Most dead-code findings are actually dead. Most clone groups reduce to a shared function. Most type-ignore findings reflect a real type mismatch the suppression hides.
+
+2. **If the fix is genuinely worse than living with the finding, write a justification.** Every suppression added by autopilot MUST have an adjacent comment explaining:
+   - Why the finding is a false positive, OR
+   - Why the refactor would be worse than the suppression (e.g., would scatter related mutations, would force premature abstraction, would violate a stated architectural constraint).
+
+   "complexity" with no rationale is not a justification. A reader (or a future reviewer) must be able to evaluate the choice from the comment alone.
+
+3. **Cap at 2 new suppressions per PR.** If a single feature needs more than two suppressions, the refactor pass was skipped or the feature is doing too much. Stop. Either split the work or do the refactor.
+
+### Comment shape
+
+Use a `# Why:` / `// Why:` line adjacent to the suppression:
+
+```python
+# Why: State is intentionally one container — splitting scatters
+# mutations across the codebase for no maintainability gain.
+# skylos: ignore SKY-Q501
+class State:
+    ...
+```
+
+```typescript
+// Why: this function is the bridge between two type domains;
+// extracting helpers would obscure the conversion rather than
+// simplify it (see issue #214 for the explored alternatives).
+// fallow-ignore-next-line complexity
+function parseReleaseId(search: string): number | null {
+  ...
+}
+```
+
+A drive-by `// fallow-ignore-next-line complexity` above an unmodified function with no `// Why:` is exactly what the **reviewer prompt** will catch as a Critical Finding (FAIL verdict) — see `feature-workflow/templates/review-prompt-impl.md`. The autopilot will then be forced into a respond cycle to either refactor or justify.
+
+### Legitimate examples in the wild
+
+These ARE good suppressions (and would pass review):
+
+- A `State` container with intentionally consolidated mutations, suppressed with a justification about scatter-cost.
+- A bulk `IN`-clause SQL query that's safely parameterized, suppressed because the linter pattern-matches on string concat without seeing the parameterization.
+- A test fixture with deliberately convoluted setup, suppressed because the test's whole purpose is to exercise the convoluted path.
+
+The common thread: each one has an English-language explanation of why the rule doesn't apply here. Drive-by suppressions don't.
+
 ## Recommended project setup
 
 If you use autopilot heavily, prefer running heavy linters (skylos full-SAST, fallow audit, ESLint-with-many-rules) in **CI only**, not as pre-commit hooks. Pre-commit is for quick local checks (formatting, basic syntax). Heavy analysis belongs in PR-level checks where:
