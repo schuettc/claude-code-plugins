@@ -430,6 +430,39 @@ created: 2026-05-15
         assert "supersedes" in out
         assert "bad" in out
 
+    def test_epic_without_children_warning(self):
+        """type:Epic with empty children: gets a Validation Warning."""
+        epic = FeatureContext(
+            feature_id="naked-epic",
+            feature_dir=Path("/fake/naked-epic"),
+            status=FeatureStatus.BACKLOG,
+            name="Naked Epic",
+            type="Epic",
+            # children defaults to []
+        )
+        out = "\n".join(_render_warnings({"naked-epic": epic}, self.FAKE_DIR))
+        assert "Epic" in out
+        assert "naked-epic" in out
+        assert "no children" in out
+
+    def test_epic_with_children_no_warning(self):
+        """type:Epic with non-empty children: doesn't trigger the empty-epic warning."""
+        epic = FeatureContext(
+            feature_id="full-epic",
+            feature_dir=Path("/fake/full-epic"),
+            status=FeatureStatus.BACKLOG,
+            name="Full Epic",
+            type="Epic",
+            children=["c1", "c2"],
+        )
+        c1 = FeatureContext(feature_id="c1", feature_dir=Path("/fake/c1"),
+                            status=FeatureStatus.BACKLOG, name="C1")
+        c2 = FeatureContext(feature_id="c2", feature_dir=Path("/fake/c2"),
+                            status=FeatureStatus.BACKLOG, name="C2")
+        out = "\n".join(_render_warnings({"full-epic": epic, "c1": c1, "c2": c2}, self.FAKE_DIR))
+        # No warning at all — section omitted
+        assert out == ""
+
 
 from run_dashboard import generate_dashboard_content
 
