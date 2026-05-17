@@ -29,10 +29,22 @@ Verify in this order before starting:
 
 1. **`docs/features/<id>/idea.md` exists.** If not: tell the user to run `/feature-capture` first.
 2. **Working tree is clean** on the configured base branch. Run `git status` — if anything unrelated is modified or untracked, ask the user before doing anything (don't auto-commit). Rationale: `feature-plan` branches off current HEAD, so a dirty tree drags unrelated work onto the feature branch.
-3. **Read `.feature-workflow.yml`** for the `reviewer:` setting. The autopilot adapts:
+3. **Local base branch is in sync with origin.** Run:
+   ```bash
+   "${CLAUDE_PLUGIN_ROOT}/skills/feature-autopilot/scripts/check-base-sync.sh" <base-branch>
+   ```
+   Exit semantics:
+   - `0` — in sync, proceed
+   - `1` — local is **ahead** of origin (unpushed work). **Pause and surface to user.** Branching off an ahead-base means the upcoming PR will include those unpushed commits, which is almost certainly not what the user wants. Recommend: push first OR investigate which commits don't belong on the base.
+   - `2` — local is behind origin. Run `git pull origin <base>` and re-check.
+   - `3` — diverged. Manual resolution required; do not proceed.
+   - `4` — usage error (typo in base name, branch doesn't exist locally, etc.).
+
+   This catches the "parallel Claude Code session left unpushed commits" failure mode.
+4. **Read `.feature-workflow.yml`** for the `reviewer:` setting. The autopilot adapts:
    - `reviewer: gemini` or `reviewer: codex` — review gates are active. The `feature-review.yml` GitHub Action fires on the `plan-review` / `impl-review` label and posts a comment classifiable by `wait-for-review.sh`.
    - `reviewer: none` — review gates are skipped. Autopilot goes plan → implement → ship without polling for external review.
-4. **Read `.feature-workflow.yml`** for the `base_branch:` setting (default `main`). Use this as the merge target.
+5. **Read `.feature-workflow.yml`** for the `base_branch:` setting (default `main`). Use this as the merge target.
 
 ## Steps
 
