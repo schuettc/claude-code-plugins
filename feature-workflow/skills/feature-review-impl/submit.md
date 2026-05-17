@@ -166,13 +166,19 @@ Read `.feature-workflow.yml` and check the `reviewer:` setting.
 
 **If reviewer is `gemini` or `codex`:**
 
-Remove the plan-review label (if present) and add impl-review:
+Swap labels as TWO separate operations with a short wait between, so the GitHub Actions workflow sees a clean state at each step. The previous combined `--remove --add` pattern occasionally let both labels appear briefly, which caused the workflow's job conditionals to fire against an ambiguous label set (see the now-playing 2026-05-16 incident).
 
 ```bash
-gh pr edit <pr-number> --remove-label plan-review --add-label impl-review
+# 5a. Remove plan-review. The workflow listens for `labeled` (not `unlabeled`),
+#     so this unlabeled event doesn't fire any job — it just clears the state.
+gh pr edit <pr-number> --remove-label plan-review
+sleep 3
+
+# 5b. Add impl-review. This is the labeled event we want.
+gh pr edit <pr-number> --add-label impl-review
 ```
 
-This automatically triggers the GitHub Actions workflow to run the implementation review.
+The 3-second wait gives GitHub Actions time to register the unlabeled event before the labeled event arrives. Without it, the two events can coalesce in the workflow's event queue.
 
 **If reviewer is `none`:** Skip this step.
 
