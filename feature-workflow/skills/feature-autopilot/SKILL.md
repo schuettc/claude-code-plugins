@@ -165,7 +165,12 @@ plan ─► review-plan ─► implement ─► review-impl ─► pre-ship ─�
 
 ## Auto-advance rules at review gates
 
-- **Exit 0 (PASS / CONDITIONAL PASS)** — advance immediately. Don't chase Should-fix nits after a clean pass; material recommendations can become **backlog items via the "Defer to backlog" classification in `respond.md`** (see Step 5/8 of the respond flow).
+- **Exit 0 (PASS / CONDITIONAL PASS)** — advance immediately. **First action: remove the active review label from the PR**, so subsequent pushes don't re-fire the workflow against the same plan:
+  ```bash
+  gh pr edit <pr-number> --remove-label plan-review   # or impl-review, depending on the current gate
+  ```
+  Without this, the next `git push` (e.g., the impl commit) triggers a `synchronize` event, the workflow's job conditional still passes (label is still on the PR), and a redundant review fires — see the now-playing 2026-05-16 incident where six plan-reviews ran on PR #141 for one plan, including two AFTER a clean PASS.
+  Then continue. Don't chase Should-fix nits after a clean pass; material recommendations can become **backlog items via the "Defer to backlog" classification in `respond.md`** (see Step 5/8 of the respond flow).
 - **Exit 1 (FAIL)** — **auto-respond.** Run `--respond` for the current phase, classify findings (Agree / Disagree / Already addressed / Defer to backlog / Deferred), push, and re-poll. Cap at 2 consecutive FAILs per phase before pausing for human input — see "FAIL handling" in Step 2 above.
 - **Exit 2 (workflow failure / timeout / no comment)** — stop. Diagnose CI with `gh run list --branch feature/<id>` and `gh run view <run-id>`. Once fixed, re-trigger the review by removing and re-adding the label.
 
