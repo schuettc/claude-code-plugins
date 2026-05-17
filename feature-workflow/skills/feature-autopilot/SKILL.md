@@ -237,3 +237,7 @@ Every time the autopilot dispatches a subagent that may write to the working tre
 **Cost:** ~1-2 seconds for `git worktree add` per subagent, plus per-worktree setup (venv, node_modules) that varies by project. Acceptable in exchange for eliminating clobber bugs.
 
 There is no opt-out. The autopilot does not check a config flag before isolating. If a project's worktree setup is painfully slow, fix it at the project level (shared venv via `uv`, pnpm content-addressable store, etc.) rather than disabling isolation.
+
+## Pre-commit Hooks
+
+If your project has pre-commit hooks (skylos, fallow, ruff, prettier, husky, etc.), see [pre-commit-compat.md](pre-commit-compat.md) for how autopilot interacts with them. **Never** use `git commit --no-verify` to bypass hooks — if a hook fails, the subagent should report BLOCKED with the failure detail. This rule has no exceptions.
