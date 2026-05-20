@@ -6,6 +6,40 @@ A Claude Code plugin for feature lifecycle management using a directory-based ar
 
 ## What's New
 
+### 9.8.1 — Suppression discipline
+- **Drive-by static-analysis suppressions now FAIL impl-review** — the reviewer prompt scans diffs for newly-added `// fallow-ignore-*`, `# skylos: ignore`, `# noqa`, `# type: ignore`, `// @ts-ignore`, etc. Without an adjacent `# Why:` justification, they're Blocking findings (FAIL verdict → autopilot enters the respond loop). Legitimate suppressions (false positives, parameterized SQL, deliberately-coalesced state) with written justifications pass.
+- **`pre-commit-compat.md`** documents the rule: suppressions are a last resort. Try-to-fix-first, justify if you can't, cap at 2 new suppressions per PR.
+
+### 9.8.0 — Epic Dispatch (Plan 3)
+- **`/feature-autopilot <epic-id>` walks the children to completion.** Sequential by default; `--parallel` for concurrent waves with a cap of 3 simultaneous subagents.
+- **Bidirectional `epic:` ↔ `children:` sync** via `sync_epics.py` in the post-write hook. Same pattern as `replaces:` from v9.7.2 — set one direction and the other follows on the next save.
+- **`compute_dispatch_waves(epic_id, features)`** topo-sorts children into parallel-safe waves. Skips shipped / tombstoned / paused children automatically. Order within a wave matches the epic's `children:` array.
+- **Validation warning** for `type: Epic` features with empty `children:` (the dispatcher refuses, the dashboard surfaces it).
+
+### 9.7.3 — Autopilot hardening
+- **Pre-flight check** — `check-base-sync.sh` refuses to start a feature branch if local `<base>` is ahead/behind/diverged from `origin/<base>`. Catches the "parallel Claude Code session left unpushed commits" failure mode.
+- **Mandatory worktree isolation on every dispatch** — every subagent the autopilot spawns for git work runs with `isolation: "worktree"`. No opt-out. Removes the entire class of clobber bugs where two agents in one tree overwrite each other on branch switches.
+- **Workflow YAML `concurrency: cancel-in-progress`** per PR — prevents the duplicate-review-comment pattern where one plan got six review runs (including two AFTER a clean PASS).
+- **Label-removal timing** — autopilot removes the active review label immediately after a PASS, before any subsequent push. Label swap from `plan-review` → `impl-review` is now two separate `gh pr edit` calls with `sleep 3` between.
+- **`pre-commit-compat.md`** — guidance for projects using skylos/fallow/ruff/prettier/husky; reinforces the `--no-verify` ban.
+
+### 9.7.2 — Replaced/replacedBy rename + auto-sync
+- **`superseded` → `replaced` rename** — `state: replaced`, `replacedBy:` (singular reverse), and a new `replaces: [a, b]` forward field on the new feature.
+- **`sync_replaces.py` hook** auto-sets `state: replaced` and `replacedBy: <new>` on each target when a new feature declares `replaces:`.
+- **Unknown-key validation** — dashboard warns on unrecognized frontmatter keys (catches typos like the original `supersedes:` confusion).
+- **Verdict-language tightening** — `CONDITIONAL PASS` cannot contain Blocking findings; Blocking → FAIL.
+
+### 9.7.1 — Internal review path
+- **Per-feature `review:` override** — `review: external | internal | skip` in `idea.md` frontmatter overrides the project default.
+- **Internal review** dispatches a same-session subagent loaded with the same `templates/review-prompt-{plan,impl}.md` the CI reviewers use, captures the verdict, and posts it as a PR comment. From `wait-for-review.sh`'s perspective, indistinguishable from a CI comment.
+
+### 9.7.0 — Foundations (state, assignee, search, dependencies)
+- **State overlay** — `state: active | paused | replaced | abandoned` in `idea.md`, orthogonal to lifecycle. New `/feature-state` skill manages transitions with required companion fields.
+- **Assignee** — `assignee: court` or `assignee: [court, alex]` in frontmatter; surfaced in dashboard columns and searchable.
+- **`/feature-search`** with filters: `--state`, `--assignee`, `--epic`, `--depends-on`, `--archive`.
+- **Stronger dependency markers** — `relatedTo: [c, d]` (soft link), `parallelSafe: true | false`. Stored `blockedBy:` is deprecated; the dashboard computes it dynamically from the graph.
+- **Dashboard sections** — Paused, Archive (collapsed), Epics rollup, Validation Warnings (cycles, unknown refs, unknown frontmatter keys).
+
 ### 9.2.3 — Comment-only CI reviews
 - **Simplified CI posting** — `post-review.sh` now posts reviewer output as a plain `gh pr comment` instead of parsing a VERDICT prefix to map to `--approve`/`--request-changes`. The VERDICT/inline-comments JSON protocol was too fragile — Gemini intermittently truncated before the VERDICT line, and inline comments frequently failed with HTTP 422 when the reviewer cited lines outside the diff. Reviews are advisory anyway.
 - **Human-readable verdict** — review prompts still include a `### Verdict: PASS / CONDITIONAL PASS / FAIL` heading in the markdown body for humans to scan. No machine parsing required.

@@ -7,7 +7,7 @@
     {
       "name": "feature-workflow",
       "source": "./feature-workflow",
-      "description": "Feature lifecycle management with external review gates. Capture ideas, plan, review plans and implementations via draft PRs (with optional automated review by Gemini or Codex on GitHub Actions), and ship. Directory-based features with status determined by file presence and an auto-generated DASHBOARD.md.",
+      "description": "Feature lifecycle management with state, search, epic dispatch, and review gates. Capture ideas, plan, and ship as files (idea.md → plan.md → shipped.md) with orthogonal state (active/paused/replaced/abandoned). Single-feature autopilot and parallel-wave epic dispatch — every subagent in its own worktree. Per-feature review override (external Gemini/Codex CI / internal subagent / skip). Auto-generated DASHBOARD.md with Paused, Epics, and Validation Warnings sections.",
       "version": "9.8.1"
     },
     {
