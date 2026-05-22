@@ -140,3 +140,104 @@ class TestParseSkylosJson:
         findings = parse_skylos_json(payload)
         assert len(findings) == 2
         assert findings[0].fingerprint != findings[1].fingerprint
+
+
+class TestSuppressionDetection:
+    """Skylos reports suppressed findings in its JSON with a `reason` field.
+
+    Discovered 2026-05-22 dogfooding now-playing: of 180 raw findings, 54 were
+    already suppressed at the source (`# skylos: ignore — <rationale>`); only
+    126 were genuinely active. Before this fix, the adapter counted all 180 as
+    active, inflating snapshots and triggering false alarms.
+    """
+
+    def test_inline_ignore_marks_suppressed(self):
+        payload = {
+            "quality": [
+                {
+                    "rule_id": "SKY-D211",
+                    "severity": "CRITICAL",
+                    "message": "Possible SQL injection",
+                    "file": "/abs/path/pi/queries.py",
+                    "line": 75,
+                    "reason": "inline ignore comment",
+                },
+            ],
+        }
+        findings = parse_skylos_json(payload)
+        assert len(findings) == 1
+        assert findings[0].suppressed is True
+        assert findings[0].suppression_reason == "inline ignore comment"
+
+    def test_no_reason_means_active(self):
+        # Same payload, no `reason` → active finding
+        payload = {
+            "quality": [
+                {
+                    "rule_id": "SKY-D211",
+                    "severity": "CRITICAL",
+                    "message": "Possible SQL injection",
+                    "file": "/abs/path/pi/queries.py",
+                    "line": 75,
+                },
+            ],
+        }
+        findings = parse_skylos_json(payload)
+        assert len(findings) == 1
+        assert findings[0].suppressed is False
+        assert findings[0].suppression_reason is None
+
+    def test_empty_reason_treated_as_active(self):
+        # Defensive: empty-string reason isn't a suppression
+        payload = {
+            "quality": [
+                {
+                    "rule_id": "SKY-D211",
+                    "severity": "CRITICAL",
+                    "message": "Possible SQL injection",
+                    "file": "/abs/path/pi/queries.py",
+                    "line": 75,
+                    "reason": "",
+                },
+            ],
+        }
+        findings = parse_skylos_json(payload)
+        assert findings[0].suppressed is False
+        assert findings[0].suppression_reason is None
+
+    def test_mixed_active_and_suppressed(self):
+        # Two findings of the same rule_id, one suppressed, one not — fingerprints
+        # share the rule/file/line key, so they collide on identity; pick the
+        # active one as canonical. (This shape comes from skylos when a suppression
+        # comment covers one occurrence but not another at the same line; in
+        # practice they differ in `symbol` so fingerprints diverge.)
+        payload = {
+            "danger": [
+                {
+                    "rule_id": "SKY-D324",
+                    "severity": "HIGH",
+                    "message": "symlink follow",
+                    "file": "/a/x.py",
+                    "line": 50,
+                    "symbol": "_write_one",
+                    "reason": "inline ignore comment",
+                },
+                {
+                    "rule_id": "SKY-D324",
+                    "severity": "HIGH",
+                    "message": "symlink follow",
+                    "file": "/a/x.py",
+                    "line": 60,
+                    "symbol": "_write_two",
+                },
+            ],
+        }
+        findings = parse_skylos_json(payload)
+        assert len(findings) == 2
+        by_symbol = {f.message: f for f in findings}
+        suppressed = [f for f in findings if f.suppressed]
+        active = [f for f in findings if not f.suppressed]
+        assert len(suppressed) == 1
+        assert len(active) == 1
+        assert suppressed[0].line == 50
+        assert active[0].line == 60

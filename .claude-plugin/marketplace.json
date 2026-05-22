@@ -25,8 +25,8 @@
     {
       "name": "quality-workflow",
       "source": "./quality-workflow",
-      "description": "Sister to feature-workflow for code-quality findings. Surfaces, triages, and resolves static-analysis output (skylos for Python, fallow for TS/JS) with the same backlog-and-epic discipline. Three user-invocable skills: /quality-verify-hook self-tests pre-commit hooks against known-bad fixtures (catches the silently-misconfigured-hook class of bug), /quality-audit produces fingerprinted snapshots + NEW/RESOLVED/PERSISTING delta, /quality-unblock triages failing hooks with playbook-driven fix/suppress/defer proposals and refuses bare suppressions. Day-1 playbooks for 13 skylos + 12 fallow rule_ids.",
-      "version": "0.2.0"
+      "description": "Sister to feature-workflow for code-quality findings. Surfaces, triages, and resolves static-analysis output (skylos for Python, fallow for TS/JS) with the same backlog-and-epic discipline. Three user-invocable skills: /quality-verify-hook self-tests pre-commit hooks against known-bad fixtures (catches the silently-misconfigured-hook class of bug), /quality-audit produces fingerprinted snapshots + NEW/RESOLVED/PERSISTING delta (suppressed findings excluded from active counts), /quality-unblock triages failing hooks with playbook-driven fix/suppress/defer proposals and refuses bare suppressions. Day-1 playbooks for 13 skylos + 12 fallow rule_ids.",
+      "version": "0.2.1"
     }
   ]
 }

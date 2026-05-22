@@ -12,6 +12,12 @@ Skylos's JSON output has multiple top-level arrays for different finding kinds:
 Each shape gets normalized to a QualityFinding. Fingerprints are synthesized
 from (rule_id, file, line, symbol) so the same finding produces the same
 fingerprint across runs.
+
+Suppression: skylos emits findings it knows are suppressed by inline directives
+(`# skylos: ignore`) with a `reason` field — typically the string
+"inline ignore comment". The adapter sets `suppressed=True` and stores the
+reason verbatim. Headlines and delta tables filter these out via
+`QualitySnapshot.active_findings()` / `SnapshotDiff.active_*`.
 """
 
 from __future__ import annotations
@@ -111,6 +117,14 @@ def _finding_from_item(item: dict[str, Any], key: str, category: str) -> Quality
     if confidence is not None and confidence > 1.0:
         confidence = confidence / 100.0
 
+    # Suppression: skylos sets `reason` on findings it knows were suppressed by an
+    # inline directive (`# skylos: ignore`). Without this branch the adapter would
+    # ingest suppressed findings as active — the v0.2.0 bug that inflated counts.
+    raw_reason = item.get("reason")
+    reason_str = str(raw_reason).strip() if raw_reason else ""
+    suppressed = bool(reason_str)
+    suppression_reason = reason_str if suppressed else None
+
     return QualityFinding(
         fingerprint=_fingerprint(rule_id, file_path, line, str(symbol)),
         rule_id=rule_id,
@@ -121,6 +135,8 @@ def _finding_from_item(item: dict[str, Any], key: str, category: str) -> Quality
         message=str(message),
         tool="skylos",
         confidence=confidence,
+        suppressed=suppressed,
+        suppression_reason=suppression_reason,
     )
 
 

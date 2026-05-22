@@ -153,3 +153,73 @@ class TestDiffSnapshots:
             "persisting": [f.to_dict() for f in d.persisting],
         }
         json.dumps(payload)  # raises if any field isn't JSON-safe
+
+
+class TestSuppressionAwareness:
+    """Snapshots store ALL findings (active + suppressed) so we can detect when
+    a suppression is added/removed. Counts and headlines show ACTIVE only.
+    """
+
+    def test_active_findings_filters_suppressed(self):
+        snap = QualitySnapshot(
+            date="d1", commit="c1", tool_versions={}, grade="B",
+            findings=[
+                _finding("fp_active"),
+                _finding("fp_suppressed", suppressed=True, suppression_reason="inline ignore comment"),
+            ],
+        )
+        active = snap.active_findings()
+        suppressed = snap.suppressed_findings()
+        assert [f.fingerprint for f in active] == ["fp_active"]
+        assert [f.fingerprint for f in suppressed] == ["fp_suppressed"]
+
+    def test_finding_roundtrip_includes_suppression(self, tmp_path: Path):
+        f = _finding("fp1", suppressed=True, suppression_reason="inline ignore comment")
+        d = f.to_dict()
+        assert d["suppressed"] is True
+        assert d["suppression_reason"] == "inline ignore comment"
+        f2 = QualityFinding.from_dict(d)
+        assert f2.suppressed is True
+        assert f2.suppression_reason == "inline ignore comment"
+
+    def test_diff_exposes_active_views(self):
+        # a: fp1 active, fp2 suppressed
+        # b: fp1 active (unchanged), fp2 still suppressed, fp3 NEW active, fp4 NEW suppressed
+        a = QualitySnapshot(
+            date="d1", commit="c1", tool_versions={}, grade="B",
+            findings=[
+                _finding("fp1"),
+                _finding("fp2", suppressed=True, suppression_reason="inline ignore comment"),
+            ],
+        )
+        b = QualitySnapshot(
+            date="d2", commit="c2", tool_versions={}, grade="B",
+            findings=[
+                _finding("fp1"),
+                _finding("fp2", suppressed=True, suppression_reason="inline ignore comment"),
+                _finding("fp3"),
+                _finding("fp4", suppressed=True, suppression_reason="inline ignore comment"),
+            ],
+        )
+        d = diff_snapshots(a, b)
+        # Full diff includes everything (suppressed transitions are still movement)
+        assert sorted(f.fingerprint for f in d.new) == ["fp3", "fp4"]
+        # Active-filtered views drop suppressed
+        assert [f.fingerprint for f in d.active_new] == ["fp3"]
+        assert d.active_resolved == []
+        assert [f.fingerprint for f in d.active_persisting] == ["fp1"]
+
+    def test_default_finding_is_active(self):
+        # Existing call sites that don't pass `suppressed` keep working
+        f = QualityFinding(
+            fingerprint="fp",
+            rule_id="SKY-Q301",
+            category="quality",
+            severity="HIGH",
+            file="x.py",
+            line=1,
+            message="m",
+            tool="skylos",
+        )
+        assert f.suppressed is False
+        assert f.suppression_reason is None

@@ -2,7 +2,7 @@
 
 Sister plugin to [feature-workflow](../feature-workflow). Surfaces, triages, and drives resolution of static-analysis findings (skylos for Python, fallow for TS/JS) with the same backlog-and-epic discipline that `feature-workflow` provides for feature work.
 
-> **Status: MVP (v0.2.0).** Three user-invocable skills, day-1 playbooks for skylos (13 rules) + fallow (12 rules), and the hook self-verification safety net. Spec: [`docs/superpowers/specs/2026-05-22-quality-workflow-plugin-design.md`](../docs/superpowers/specs/2026-05-22-quality-workflow-plugin-design.md). Plan: [`docs/superpowers/plans/2026-05-22-quality-workflow-mvp.md`](../docs/superpowers/plans/2026-05-22-quality-workflow-mvp.md).
+> **Status: MVP (v0.2.1).** Three user-invocable skills, day-1 playbooks for skylos (13 rules) + fallow (12 rules), and the hook self-verification safety net. v0.2.1 honors skylos's `reason` field so suppressed findings (`# skylos: ignore`) no longer inflate active counts. Spec: [`docs/superpowers/specs/2026-05-22-quality-workflow-plugin-design.md`](../docs/superpowers/specs/2026-05-22-quality-workflow-plugin-design.md). Plan: [`docs/superpowers/plans/2026-05-22-quality-workflow-mvp.md`](../docs/superpowers/plans/2026-05-22-quality-workflow-mvp.md).
 
 ## Origin
 
@@ -10,15 +10,26 @@ Sister plugin to [feature-workflow](../feature-workflow). Surfaces, triages, and
 
 The lesson — **hook silence ≠ hook working** — became the central design property of this plugin: every hook the plugin installs MUST be self-verified by injecting a known-bad fixture and asserting exit 1.
 
-## What's in scope (MVP — v0.2.0)
+## What's in scope (MVP — v0.2.1)
 
 Three user-invocable skills plus the supporting library:
 
 | Skill | What it does |
 |---|---|
 | `/quality-verify-hook` | Stages a known-bad fixture, runs `pre-commit run <hook-id>`, asserts non-zero exit. Then a clean fixture, asserts zero exit. **Run this first** after installing pre-commit hooks or editing `.pre-commit-config.yaml`. The hook silence-equals-working failure mode is the whole reason this skill exists. |
-| `/quality-audit` | Read-only. Runs `skylos --quality --danger --secrets --sca --format json` + `fallow health` / `dupes` / `dead-code`. Writes a fingerprinted snapshot to `.claude/quality-snapshots/YYYY-MM-DD.json`. Renders a grade card + delta vs. previous snapshot (NEW / RESOLVED / PERSISTING). |
+| `/quality-audit` | Read-only. Runs `skylos --quality --danger --secrets --sca --format json` + `fallow health` / `dupes` / `dead-code`. Writes a fingerprinted snapshot to `.claude/quality-snapshots/YYYY-MM-DD.json`. Renders a grade card + delta vs. previous snapshot (NEW / RESOLVED / PERSISTING) — **active counts only**. Suppressed findings (skylos `reason: "inline ignore comment"`) are retained in the snapshot for delta-tracking but excluded from headlines. |
 | `/quality-unblock` | Triggered when a pre-commit hook fails. Per finding, looks up the rule in the day-1 playbook and presents three options: **fix in code**, **suppress with a required `# Why:`**, or **defer to a feature-workflow tech-debt epic**. Refuses bare suppressions; caps at 2 per session (mirrors feature-workflow v9.8.1's reviewer enforcement). Produces structured proposals — does not execute fixes itself. |
+
+### v0.2.1 fix: honor skylos's `reason` field
+
+Discovered while dogfooding in `now-playing`: skylos emits findings it knows are
+suppressed by inline directives, just with `"reason": "inline ignore comment"`.
+v0.2.0 ingested every item regardless and reported 180 findings when only 126
+were genuinely active. v0.2.1's adapter sets `suppressed=True` on those items
+and exposes `QualitySnapshot.active_findings()` / `SnapshotDiff.active_*` so the
+audit headlines reflect what actually needs attention. Fallow does not surface
+suppressions in JSON; its `// fallow-ignore-next-line` directives are audited
+separately by the post-MVP `/quality-suppressions` skill.
 
 ## Installation + first run
 
