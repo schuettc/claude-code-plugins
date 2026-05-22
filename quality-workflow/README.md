@@ -2,7 +2,7 @@
 
 Sister plugin to [feature-workflow](../feature-workflow). Surfaces, triages, and drives resolution of static-analysis findings (skylos for Python, fallow for TS/JS) with the same backlog-and-epic discipline that `feature-workflow` provides for feature work.
 
-> **Status: scaffold (v0.1.0).** Spec is in [`docs/superpowers/specs/2026-05-22-quality-workflow-plugin-design.md`](../docs/superpowers/specs/2026-05-22-quality-workflow-plugin-design.md). MVP implementation plan is in [`docs/superpowers/plans/2026-05-22-quality-workflow-mvp.md`](../docs/superpowers/plans/2026-05-22-quality-workflow-mvp.md). Skills are not yet implemented.
+> **Status: MVP (v0.2.0).** Three user-invocable skills, day-1 playbooks for skylos (13 rules) + fallow (12 rules), and the hook self-verification safety net. Spec: [`docs/superpowers/specs/2026-05-22-quality-workflow-plugin-design.md`](../docs/superpowers/specs/2026-05-22-quality-workflow-plugin-design.md). Plan: [`docs/superpowers/plans/2026-05-22-quality-workflow-mvp.md`](../docs/superpowers/plans/2026-05-22-quality-workflow-mvp.md).
 
 ## Origin
 
@@ -10,25 +10,36 @@ Sister plugin to [feature-workflow](../feature-workflow). Surfaces, triages, and
 
 The lesson — **hook silence ≠ hook working** — became the central design property of this plugin: every hook the plugin installs MUST be self-verified by injecting a known-bad fixture and asserting exit 1.
 
-## What's in scope (MVP)
+## What's in scope (MVP — v0.2.0)
 
-Three skills + the data contract + per-rule playbooks:
+Three user-invocable skills plus the supporting library:
 
 | Skill | What it does |
 |---|---|
-| `quality-audit` | Read-only. Runs `skylos -a --format json` + `fallow health` + `fallow dupes`. Writes a structured snapshot to `.claude/quality-snapshots/YYYY-MM-DD.json`. Renders a grade card + delta vs. previous snapshot (NEW / RESOLVED / PERSISTING by fingerprint diff). |
-| `quality-unblock` | Triggered when a pre-commit hook fails. Parses the JSON output. Per finding offers three choices: **fix in code**, **suppress with a required `# Why:`**, or **defer → `feature-workflow:feature-capture`**. Refuses bare suppressions. |
-| `quality-verify-hook` | Stages a known-bad fixture, runs `pre-commit run <hook-id>`, asserts exit 1. Then a clean fixture, asserts exit 0. Run at install and after editing `.pre-commit-config.yaml`. The lesson, codified. |
+| `/quality-verify-hook` | Stages a known-bad fixture, runs `pre-commit run <hook-id>`, asserts non-zero exit. Then a clean fixture, asserts zero exit. **Run this first** after installing pre-commit hooks or editing `.pre-commit-config.yaml`. The hook silence-equals-working failure mode is the whole reason this skill exists. |
+| `/quality-audit` | Read-only. Runs `skylos --quality --danger --secrets --sca --format json` + `fallow health` / `dupes` / `dead-code`. Writes a fingerprinted snapshot to `.claude/quality-snapshots/YYYY-MM-DD.json`. Renders a grade card + delta vs. previous snapshot (NEW / RESOLVED / PERSISTING). |
+| `/quality-unblock` | Triggered when a pre-commit hook fails. Per finding, looks up the rule in the day-1 playbook and presents three options: **fix in code**, **suppress with a required `# Why:`**, or **defer to a feature-workflow tech-debt epic**. Refuses bare suppressions; caps at 2 per session (mirrors feature-workflow v9.8.1's reviewer enforcement). Produces structured proposals — does not execute fixes itself. |
 
-## What's NOT in MVP
+## Installation + first run
 
-Deferred to v0.2+:
+1. Install the plugin: `/plugin install quality-workflow@schuettc-claude-code-plugins`
+2. Ensure pre-commit is installed in your project: `pipx install pre-commit && pre-commit install`
+3. **Verify your hooks before trusting them:**
+   ```
+   /quality-verify-hook
+   ```
+   If any hook reports `bad_passed=False`, fix the configuration before continuing — the hook is silently broken.
+4. Take a baseline audit: `/quality-audit`
+5. When a pre-commit hook fails: `/quality-unblock`
 
-- `quality-suppressions` — audit ignores across the repo (rationale check, stale check)
+## What's NOT in MVP (deferred to v0.3+)
+
+- `quality-suppressions` — audit ignores across the repo (rationale check, stale check). The library modules (`audit_suppressions.py`, `stale_suppressions_check.py`) are already in place; v0.3 wraps them as a user-facing skill.
 - `quality-epic` — group PERSISTING findings into themed epics via `feature-workflow:feature-capture`
 - `quality-baseline` — snapshot the current floor for ratchet-down enforcement
 - `quality-trend` — show per-file / per-category movement across N snapshots
 - Multi-tool composition (ruff, eslint, semgrep adapters)
+- Per-project config loader (`.claude/quality-workflow.local.md`) — MVP uses code-level defaults
 
 ## Cross-plugin integration
 
@@ -47,16 +58,40 @@ The plugin shells out to both as subprocess; it doesn't bundle them.
 quality-workflow/
 ├── .claude-plugin/
 │   └── plugin.json
-├── skills/                       (MVP skills go here)
-│   └── shared/
-│       ├── lib/                  (Python helpers)
-│       │   ├── audit_suppressions.py        # prototype: walk repo, classify suppressions
-│       │   └── stale_suppressions_check.py  # prototype: strip + re-scan, find dead ignores
-│       └── tests/
-└── hooks/                        (PostToolUse / PreCommit installers)
+├── README.md
+├── pytest.ini
+├── fixtures/                                  Known-good/bad fixtures for quality-verify-hook
+│   ├── skylos-bad.py / skylos-good.py
+│   └── fallow-bad.ts / fallow-good.ts
+├── playbooks/
+│   ├── skylos.yaml                            13 day-1 rules + fallback
+│   └── fallow.yaml                            12 day-1 rules + fallback
+└── skills/
+    ├── quality-audit/SKILL.md                 Read-only snapshot + diff
+    ├── quality-unblock/SKILL.md               Triage failing hooks
+    ├── quality-verify-hook/SKILL.md           Hook self-verification
+    └── shared/
+        ├── lib/
+        │   ├── snapshot.py                    QualityFinding/QualitySnapshot + diff
+        │   ├── skylos_adapter.py              skylos → unified findings
+        │   ├── fallow_adapter.py              fallow → unified findings
+        │   ├── playbook.py                    YAML rule→action loader
+        │   ├── hook_verify.py                 Fixture-injection self-test
+        │   ├── audit_suppressions.py          Walk repo, classify suppressions
+        │   └── stale_suppressions_check.py    Strip + re-scan to find dead ignores
+        └── tests/                             56 tests
 ```
 
-The two `lib/` files are working prototypes from the 2026-05-22 now-playing session. They hard-code `REPO = "/Users/courtschuett/GitHub/schuettc/now-playing"`; the MVP turns them into proper modules that take `project_root` as a parameter.
+## Tool requirements
+
+- **Python projects**: [skylos](https://github.com/skylos-tool/skylos) installable via `uvx skylos`
+- **TS/JS projects**: [fallow](https://github.com/fallow-tool/fallow) installable via `npx fallow`
+
+The plugin shells out to both as subprocess; it doesn't bundle them. Always uses the latest version unless your project pins one.
+
+## Cross-plugin integration
+
+`quality-unblock`'s **defer** action and (post-MVP) `quality-epic` skill call `feature-workflow:feature-capture` with `category: tech-debt`. No protocol changes needed in `feature-workflow` — it already accepts metadata. The integration is one-way (quality → feature-workflow), and `feature-workflow` is unaware of `quality-workflow`.
 
 ## License
 
