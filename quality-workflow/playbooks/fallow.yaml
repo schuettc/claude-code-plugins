@@ -1,0 +1,128 @@
+$schema: ../playbook-schema.json
+tool: fallow
+version: 1
+
+# Day-1 fallow playbook. Synthetic rule_ids minted by fallow_adapter:
+# - FAL-COMPLEXITY      — from `fallow health` findings (cyclomatic/cognitive/CRAP)
+# - FAL-DUPE            — from `fallow dupes` clone groups
+# - FAL-DEAD-FILE       — from `fallow dead-code` unused_files
+# - FAL-DEAD-EXPORT     — unused_exports
+# - FAL-DEAD-TYPE       — unused_types
+# - FAL-DEAD-ENUM-MEMBER, FAL-DEAD-CLASS-MEMBER
+# - FAL-DEAD-DEP, FAL-DEAD-DEV-DEP, FAL-DEAD-OPT-DEP
+# - FAL-UNRESOLVED-IMPORT, FAL-CIRCULAR, FAL-BOUNDARY
+
+rules:
+  FAL-COMPLEXITY:
+    category: quality
+    actions:
+      - kind: fix
+        suggestion: "Extract named helpers for independent branches. Flatten guards with early returns. If coverage is missing, adding tests reduces CRAP directly."
+        agent_prompt: "Refactor {name} at {file}:{line} to reduce complexity. Extract helpers for independent branches; flatten with early returns; preserve behavior. Run the test suite."
+      - kind: suppress
+        require_why: true
+        why_template: "Function's complexity is intrinsic to {what it does} — splitting would obscure rather than simplify (alternatives explored in {context})."
+      - kind: defer
+        epic_title_template: "Reduce complexity in {file}"
+
+  FAL-DUPE:
+    category: duplication
+    actions:
+      - kind: fix
+        suggestion: "Extract the duplicated logic to a shared function. Confirm both callers' behavior is preserved."
+        agent_prompt: "Extract the duplicated code shared between {file}:{line} and the other instances in clone group {symbol} into a shared helper. Update all call sites. Run tests."
+      - kind: suppress
+        require_why: true
+        why_template: "Duplication is intentional (e.g. test scaffolding, parallel implementations under different constraints)."
+      - kind: defer
+        epic_title_template: "Deduplicate {file} clone group"
+
+  FAL-DEAD-FILE:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Delete the file. If it's an entry point, check fallow's entrypoint config."
+        agent_prompt: "Delete the unused file {file}. Also remove any references to it (config files, imports). If it's actually used, add it to fallow's entry config."
+
+  FAL-DEAD-EXPORT:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Make the export internal (drop `export`), or delete it entirely if unused."
+        agent_prompt: "At {file}:{line}, either drop the `export` keyword on {name} or delete the declaration if it's truly unused."
+      - kind: suppress
+        require_why: true
+        why_template: "Exported for {downstream consumer / future API / type-only re-export}."
+
+  FAL-DEAD-TYPE:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Delete the type declaration."
+        agent_prompt: "Delete the unused type {name} at {file}:{line}."
+
+  FAL-DEAD-ENUM-MEMBER:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Remove the enum member. Check for string-based references first."
+      - kind: suppress
+        require_why: true
+        why_template: "Reserved for {future state / external API contract}."
+
+  FAL-DEAD-CLASS-MEMBER:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Remove the unused member. Check for dynamic-property uses first."
+
+  FAL-DEAD-DEP:
+    category: dependency
+    actions:
+      - kind: fix
+        suggestion: "Remove from package.json `dependencies`."
+        agent_prompt: "Remove {name} from package.json dependencies. Run npm install / pnpm install to update the lockfile."
+      - kind: suppress
+        require_why: true
+        why_template: "Dependency used transitively or via {non-import mechanism}."
+
+  FAL-DEAD-DEV-DEP:
+    category: dependency
+    actions:
+      - kind: fix
+        suggestion: "Remove from package.json `devDependencies`."
+
+  FAL-UNRESOLVED-IMPORT:
+    category: dependency
+    actions:
+      - kind: fix
+        suggestion: "Fix the import path or install the missing dependency."
+        agent_prompt: "At {file}:{line}, fix the unresolved import. Either correct the path or install the dependency it refers to."
+
+  FAL-CIRCULAR:
+    category: quality
+    actions:
+      - kind: fix
+        suggestion: "Break the cycle by extracting shared types to a third module, or by inverting one of the dependencies."
+        agent_prompt: "Break the circular import cycle in {file}. Identify which module should depend on the other; move shared types to a third module if needed."
+      - kind: defer
+        epic_title_template: "Break circular dependency in {file}"
+
+  FAL-BOUNDARY:
+    category: quality
+    actions:
+      - kind: fix
+        suggestion: "Move the boundary-violating code to its proper layer, or formally redefine the boundary."
+      - kind: defer
+        epic_title_template: "Fix architecture boundary violation in {file}"
+
+# Fallback for unknown rule_ids
+fallback:
+  actions:
+    - kind: fix
+      suggestion: "Address the finding according to fallow's recommendation."
+    - kind: suppress
+      require_why: true
+      why_template: "Suppressed: {reason}."
+    - kind: defer
+      epic_title_template: "Address {rule_id} in {file}"
