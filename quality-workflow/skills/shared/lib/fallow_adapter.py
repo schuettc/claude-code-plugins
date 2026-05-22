@@ -11,6 +11,12 @@ And one for the hook path:
 Unlike skylos, fallow doesn't expose a rule_id field. We synthesize stable
 rule_ids per finding kind (FAL-COMPLEXITY, FAL-DUPE, FAL-DEAD-EXPORT, …).
 Fingerprints follow the same {rule_id|file|line|symbol} scheme as skylos.
+
+Suppression: fallow does not surface per-finding suppression state in its JSON —
+its `// fallow-ignore-next-line` directives cause findings to be omitted from
+the report rather than flagged. The adapter therefore leaves `suppressed=False`
+on every fallow finding. Hygiene of `// fallow-ignore-next-line` comments is
+audited separately by `audit_suppressions.py` (post-MVP `/quality-suppressions`).
 """
 
 from __future__ import annotations
