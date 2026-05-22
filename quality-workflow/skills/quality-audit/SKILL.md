@@ -98,43 +98,57 @@ out_path = out_dir / f'{snap.date}.json'
 write_snapshot(snap, out_path)
 print(f'Wrote {len(findings)} findings → {out_path.relative_to(project)}')
 
-# Diff vs previous
+# Active vs suppressed split (headlines use ACTIVE only)
+active = snap.active_findings()
+suppressed = snap.suppressed_findings()
+print(f'Active: {len(active)}  |  Suppressed (tool-honored): {len(suppressed)}')
+
+# Diff vs previous — display ACTIVE views; full diff still tracks suppressed transitions
 prev_files = sorted(p for p in out_dir.glob('*.json') if p.name != out_path.name)
 if prev_files:
     prev = read_snapshot(prev_files[-1])
     d = diff_snapshots(prev, snap)
-    print(f'Δ vs {prev.date}: {len(d.new)} NEW, {len(d.resolved)} RESOLVED, {len(d.persisting)} PERSISTING')
+    print(f'Δ vs {prev.date}: {len(d.active_new)} NEW, {len(d.active_resolved)} RESOLVED, {len(d.active_persisting)} PERSISTING  (active only)')
 "
 ```
 
 ## Step 3: Render the grade card
 
-Format the output as a scannable summary:
+Format the output as a scannable summary. **Headline counts use ACTIVE findings** —
+those skylos did NOT recognize as suppressed by an inline `# skylos: ignore`
+directive. Suppressed findings remain in the snapshot for delta-tracking but
+do not inflate the user-facing totals.
 
 ```
 # Quality Audit — 2026-05-22
 
 ## Summary
-- Total findings: 138 (skylos 125, fallow 13)
-- By severity: 1 CRITICAL, 63 HIGH, 42 MEDIUM, 10 LOW
-- By category: 76 quality, 48 security, 13 duplication, 1 dead-code
+- Active findings: 126 (skylos 113, fallow 13)
+- Suppressed (tool-honored): 54  (raw total before suppression: 180)
+- By severity (active): 1 CRITICAL, 22 HIGH, 88 MEDIUM, 15 LOW
+- By category (active): 64 quality, 48 security, 13 duplication, 1 dead-code
 
-## Delta vs 2026-05-21 (commit abc123 → def456)
+## Delta vs 2026-05-21 (commit abc123 → def456) — active only
 - NEW (3):
   - SKY-Q301 pi/orchestrator/listener.py:45 — cyclomatic complexity 17
   - …
 - RESOLVED (12):
   - SKY-D216 pi/api/_routes.py:88 — SSRF (now fixed)
   - …
-- PERSISTING (123): see snapshot for full list
+- PERSISTING (111): see snapshot for full list
 
-## Hotspots
+## Hotspots (active only)
 - pi/orchestrator/state.py: 8 findings
 - pi/control/_shared.py: 6 findings
 - kiosk/src/App.tsx: 4 findings
 ```
 
 Cap the NEW and RESOLVED lists at ~10 entries each in the rendered output. Reference the snapshot file for the full list.
+
+If `Suppressed (tool-honored)` is non-zero, note in the output that the
+suppressed list can be inspected via the raw snapshot JSON (`.suppressed`
+entries) and that the post-MVP `/quality-suppressions` skill will audit
+their rationales.
 
 ## Step 4: Suggest follow-ups
 
@@ -154,3 +168,4 @@ The snapshot is persisted. Re-running the skill on a later date produces a new s
 - If no previous snapshot exists, the delta section reports "first snapshot — no comparison available".
 - Skylos and fallow can each take 30-60s on a medium codebase; combined audits run sequentially in this MVP. v0.3+ may parallelize.
 - The skill is **read-only** with respect to code. It writes only to `.claude/quality-snapshots/` and never touches source files.
+- **Suppressed findings** (skylos `reason: "inline ignore comment"`) are stored in the snapshot with `suppressed: true` but excluded from headline counts and delta tables. They still participate in the raw fingerprint diff so a finding that loses or gains its suppression between snapshots is detectable. Fallow does not surface suppressions in its JSON; `// fallow-ignore-next-line` directives are audited by the (post-MVP) `/quality-suppressions` skill.
