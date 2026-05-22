@@ -21,6 +21,7 @@ Then install any plugin:
 | Plugin | Description | Version |
 |--------|-------------|---------|
 | [feature-workflow](./feature-workflow) | Feature lifecycle with directory-based tracking, state overlay (paused / replaced / abandoned), epic dispatch via `/feature-autopilot`, per-feature review override (external / internal / skip), event-driven hooks, and automated PR reviews via Gemini/Codex in GitHub Actions | 9.8.1 |
+| [quality-workflow](./quality-workflow) | Sister to feature-workflow for static-analysis findings. Surfaces, triages, and resolves skylos (Py) / fallow (TS) output with the same backlog-and-epic discipline. Refuses bare suppressions and self-verifies its own hooks against known-bad fixtures. Scaffold only — MVP in design | 0.1.0 |
 | [website-deployment](./website-deployment) | Guided workflow to deploy Node.js/Express apps to AWS serverless (S3 + CloudFront + Lambda + API Gateway + CDK). Analyzes your app, scaffolds infra, and deploys with step-by-step explanations | 1.0.0 |
 | [sprint-planner](./sprint-planner) | Sprint planning and team coordination for small teams (2-6 devs). Triage backlogs by deadline, assign work with self-service specs, audit specs for completeness, and generate team communication. Pairs with feature-workflow | 0.1.0 |
 

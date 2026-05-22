@@ -1,0 +1,9 @@
+{
+  "name": "quality-workflow",
+  "version": "0.1.0",
+  "description": "Code-quality workflow: surface, triage, and resolve static-analysis findings (skylos for Python, fallow for TS/JS) with the same backlog-and-epic discipline that feature-workflow provides for feature work. Read-only quality-audit, structured quality-unblock that refuses bare suppressions, hook self-verification that asserts a known-bad fixture fails (catches the silently-misconfigured-hook class of bug). Sister plugin to feature-workflow.",
+  "author": {
+    "name": "Court Schuett"
+  },
+  "skills": "./skills/"
+}
