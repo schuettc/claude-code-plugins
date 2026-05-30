@@ -7,6 +7,7 @@ This is the deliberate counterpart to `project-workflow`: that plugin is one-sho
 ## Skills
 
 - **`project-structure`** — how a repo is laid out and how files/modules are named, so every project looks the same and generated code has an obvious right place. Feature-colocation over type-folders, one-module-one-responsibility, no `utils`/`misc` junk drawers. The judgment-layer counterpart to the mechanical guardrails (skylos/fallow catch dead code & complexity; this catches *placement & organization*, which tools can't judge). Directly serves the "all our projects look the same" goal.
+- **`worktree-isolation`** — the primary clone is a coordination point, not a workspace; isolate every line of work (yours and agents') in its own git worktree so parallel work never collides in one tree. Guidance for the agent to isolate ad-hoc/quick changes mid-session (the path autopilot's built-in isolation can't cover), the native `claude -w` launch primitive, the multi-terminal pattern, and when to escalate to a devcontainer. Captured from a real shared-tree collision.
 - **`github-api-discipline`** — for build/deploy/background code that reads from another GitHub repo at runtime: one bulk fetch per repo (zipball/tarball), honor `retry-after` / `x-ratelimit-reset`, share fetched content, authenticate with an App installation token. Saved after blowing the App installation's 15000/hr quota mid-promotion. Ships the reference fetcher + backoff helper under `templates/github-rate-limit/`.
 
 ## Backlog (evergreen standards to add here)
