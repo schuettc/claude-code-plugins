@@ -1,45 +1,50 @@
 ---
 name: quality-verify-hook
-description: Verify that a project's static-analysis pre-commit hooks actually fire on bad code. Use after installing skylos/fallow hooks, after editing .pre-commit-config.yaml, or whenever the user asks "is the hook working?" / "test pre-commit" / "verify hooks". Stages known-bad fixtures and asserts non-zero exit; stages known-good fixtures and asserts zero exit. The hook silence-equals-working failure mode is the whole reason this plugin exists.
+description: Verify that a project's static-analysis git hooks actually fire on bad code — works with lefthook or the pre-commit framework. Use after installing the quality stack (lefthook install), after editing lefthook.yml / .pre-commit-config.yaml, or whenever the user asks "is the hook working?" / "test the hooks" / "verify hooks". Stages known-bad fixtures and asserts non-zero exit; stages known-good fixtures and asserts zero exit. The hook silence-equals-working failure mode is the whole reason this plugin exists.
 user-invocable: true
 allowed-tools: Read, Bash
 ---
 
-# Verify Pre-commit Hooks
+# Verify Git Hooks
 
-You are executing the **VERIFY HOOK** workflow — the safety net that the rest of quality-workflow depends on.
+You are executing the **VERIFY HOOK** workflow — the safety net that the rest of quality-workflow depends on. It is **hook-manager-agnostic**: it works whether the project uses lefthook (the current standard) or the pre-commit framework.
 
 ## Why this skill exists
 
-Pre-commit hooks can be configured to scan zero files (wrong path argument), to silently skip (broken interpreter), or to find findings but not fail the commit. None of those show up in normal commits — the user sees "Passed" on every commit and assumes the hook is working. Until they run a manual full audit and discover their grade is F.
+A hook can be configured to scan zero files (wrong path argument), to silently skip (broken interpreter), or to find findings but not fail. None of those show up in normal commits — the user sees "Passed" every time and assumes the hook works, until a manual audit reveals a grade of F.
 
-This skill stages a fixture with a deliberate violation, runs the hook, and asserts the hook fails. Then a clean fixture, asserts the hook passes. **A hook that doesn't fail on a known-bad input is not a hook.**
+This skill stages a fixture with a deliberate violation, runs the hook, and asserts it fails. Then a clean fixture, asserts it passes. **A hook that doesn't fail on a known-bad input is not a hook.**
 
 ## Arguments
 
-`$ARGUMENTS` is optional. If empty, verify every static-analysis hook in `.pre-commit-config.yaml`. If a hook ID is given (e.g. `skylos-agent`, `fallow-audit-kiosk`), verify just that one.
+`$ARGUMENTS` is optional. If empty, verify every static-analysis hook found. If a hook/command ID is given (lefthook command name like `py-scan`/`ts-scan`, or pre-commit hook ID like `skylos-agent`), verify just that one.
 
-## Step 1: Read the project's pre-commit config
+## Step 1: Detect the hook manager and the scan hooks
 
 ```bash
-cat .pre-commit-config.yaml
+ls lefthook.yml lefthook.yaml .pre-commit-config.yaml 2>/dev/null
 ```
 
-If the file doesn't exist, tell the user:
-> "No `.pre-commit-config.yaml` found. Install pre-commit first: `pipx install pre-commit && pre-commit install`."
+- `lefthook.yml`/`lefthook.yaml` present → **lefthook** (the static-scan commands live under `pre-commit:`, typically `py-scan` (skylos) and `ts-scan` (fallow)). Read it: `cat lefthook.yml`.
+- only `.pre-commit-config.yaml` → **pre-commit framework** (hook IDs like `skylos-agent`, `fallow-audit-*`). Read it: `cat .pre-commit-config.yaml`.
 
-Identify the static-analysis hooks. The plugin ships fixtures for these IDs:
+(`verify_hook` auto-detects the same way — prefers lefthook, falls back to pre-commit — so you don't have to pass the manager explicitly.)
 
-| Hook ID pattern | Fixture pair |
-|---|---|
-| Any hook running `skylos` (typically `skylos-agent`) | `fixtures/skylos-bad.py` + `fixtures/skylos-good.py` |
-| Any hook running `fallow audit` (typically `fallow-audit-kiosk` or similar) | `fixtures/fallow-bad.ts` + `fixtures/fallow-good.ts` |
+If neither exists, tell the user:
+> "No `lefthook.yml` or `.pre-commit-config.yaml` found — the quality stack isn't installed. The quickest path is `project-workflow`'s `/project-init` (or its `quality-stack-setup` skill), which drops in `lefthook.yml` + `justfile`. Then `brew install just lefthook && lefthook install` and re-run this skill."
 
-If a hook in `.pre-commit-config.yaml` runs a tool the plugin doesn't have fixtures for, surface it as "no fixture available for `<hook-id>` — skipping". Don't make up a fixture.
+The plugin ships fixtures for these scanners (match by the tool the hook runs):
 
-## Step 2: For each hook, run verification
+| Hook runs… | Typical ID (lefthook / pre-commit) | Fixture pair |
+|---|---|---|
+| `skylos` | `py-scan` / `skylos-agent` | `fixtures/skylos-bad.py` + `fixtures/skylos-good.py` |
+| `fallow audit` | `ts-scan` / `fallow-audit-*` | `fixtures/fallow-bad.ts` + `fixtures/fallow-good.ts` |
 
-Invoke `hook_verify.verify_hook(hook_id, project_root, bad_fixture, good_fixture)` via a short Python one-liner. The lib is at `${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/`.
+If a hook runs a tool the plugin has no fixture for, surface "no fixture available for `<id>` — skipping". Don't make one up.
+
+## Step 2: For each scan hook, run verification
+
+Invoke `hook_verify.verify_hook(...)`. It auto-detects the manager and runs the right command (`lefthook run pre-commit --commands <id>` or `pre-commit run <id>`). The lib is at `${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/`.
 
 ```bash
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT}"  # provided by Claude Code at runtime
@@ -50,12 +55,13 @@ from pathlib import Path
 from hook_verify import verify_hook
 
 result = verify_hook(
-    hook_id='<hook-id>',
+    hook_id='<id>',                  # 'py-scan' (lefthook) or 'skylos-agent' (pre-commit)
     project_root=Path('.').resolve(),
     bad_fixture=Path('$PLUGIN_ROOT/fixtures/<bad-fixture>'),
     good_fixture=Path('$PLUGIN_ROOT/fixtures/<good-fixture>'),
+    # manager='lefthook'|'pre-commit'  # optional; auto-detected if omitted
 )
-print(f'hook_id={result.hook_id}')
+print(f'manager={result.manager}  hook_id={result.hook_id}')
 print(f'ok={result.ok}')
 print(f'bad_passed={result.bad_passed} (exit={result.bad_exit_code})')
 print(f'good_passed={result.good_passed} (exit={result.good_exit_code})')
@@ -68,44 +74,45 @@ if result.error:
 
 | Result | Meaning | Action |
 |---|---|---|
-| `ok=True` | Hook fires on bad, passes on good — working correctly | Report: "✅ `<hook-id>` verified — fires on known-bad fixtures, passes on clean fixtures." |
-| `bad_passed=False` | Hook accepted a known-violation input — **silently broken** | Report: "❌ `<hook-id>` did NOT fail on the known-bad fixture. The hook is misconfigured — likely a wrong path argument, missing tool, or wrong `entry:` line. This is the same class of bug as now-playing's 7-day silent skylos misconfig (see plugin README)." |
-| `good_passed=False` | Hook rejected a clean input — overzealous | Report: "⚠️ `<hook-id>` failed on the known-good fixture. Either the fixture has drifted (unlikely; we ship clean trivial fixtures) or the hook's thresholds are set too low." |
-| `error` is set | Verification itself failed (missing tool, timeout) | Report the error verbatim. Common cause: `pre-commit` not installed (`pipx install pre-commit`) or the hook's dependency missing (`uvx`, `npx`). |
+| `ok=True` | Fires on bad, passes on good — working | "✅ `<id>` verified — fails on known-bad fixtures, passes on clean ones." |
+| `bad_passed=False` | Accepted a known violation — **silently broken** | "❌ `<id>` did NOT fail on the known-bad fixture. Misconfigured — likely a wrong glob/path, missing tool, or wrong command. Same class as now-playing's 7-day silent skylos misconfig." |
+| `good_passed=False` | Rejected clean input — overzealous | "⚠️ `<id>` failed on the known-good fixture. The fixture drifted, or thresholds are too tight." |
+| `error` is set | Verification itself failed | Report verbatim. Common: the manager binary missing (`brew install lefthook`) or a tool dep absent (`uvx`/`npx`). |
 
 ## Step 4: Refuse to consider hooks "installed" until they pass
 
-If any hook fails verification, the user should NOT trust that pre-commit will catch issues. Print this banner:
+If any hook fails verification, print this banner:
 
 ```
-⚠️ Pre-commit hooks NOT VERIFIED
-The following hooks failed verification:
-  - <hook-id>: <reason>
+⚠️ Git hooks NOT VERIFIED
+The following hooks failed:
+  - <id>: <reason>
 
-Until these are fixed, commits will appear to pass pre-commit but may not
-actually be scanned. Edit `.pre-commit-config.yaml`, re-run this skill, and
-fix until all hooks report ok=True.
+Until fixed, commits/pushes will appear to pass but may not actually be
+scanned. Edit lefthook.yml (or .pre-commit-config.yaml), re-run this skill,
+fix until all report ok=True.
 ```
 
 ## Step 5: Cleanup verification
 
-`verify_hook` reverts the working tree on its own, but spot-check before exiting:
+`verify_hook` reverts the working tree on its own, but spot-check:
 
 ```bash
 git status --short
 ```
 
-If anything unexpected appears (a leftover staged file from the fixture stage, an `.quality-workflow-verify/` directory), surface it to the user but DO NOT auto-clean — the user might want to inspect.
+If anything unexpected appears (a leftover staged fixture, a `.quality-workflow-verify/` dir), surface it but DO NOT auto-clean — the user may want to inspect.
 
 ## When to run this skill
 
-- **After `pipx install pre-commit && pre-commit install`** — first-time setup
-- **After editing `.pre-commit-config.yaml`** — any change to a hook's `entry:`, `args:`, `files:`, etc.
-- **After upgrading skylos or fallow** — tool versions can change exit-code semantics
-- **As part of a CI smoke test** — wire this skill into the project's CI for ongoing assurance
+- **After `lefthook install`** (or `pre-commit install`) — first-time setup
+- **After editing `lefthook.yml` / `.pre-commit-config.yaml`** — any change to a command's glob/args
+- **After upgrading skylos or fallow** — tool versions can shift exit-code semantics
+- **As part of CI** — wire it in for ongoing assurance
 
 ## Notes
 
-- This skill is **idempotent** and **non-destructive**. It always cleans up after itself. Re-running is safe.
-- The fixtures live under `${CLAUDE_PLUGIN_ROOT}/fixtures/` — don't try to read them from the user's repo.
-- If you need to add support for a new hook, add a `<hookname>-bad.<ext>` and `<hookname>-good.<ext>` fixture pair in the plugin's `fixtures/` directory, then update the hook-id-pattern table above.
+- **Idempotent** and **non-destructive** — always cleans up; re-running is safe.
+- Fixtures live under `${CLAUDE_PLUGIN_ROOT}/fixtures/` — don't read them from the user's repo.
+- To support a new scanner, add a `<name>-bad.<ext>` / `<name>-good.<ext>` fixture pair under `fixtures/` and extend the table above.
+- This verifies the **scan** hooks (skylos/fallow) that BLOCK on findings. The pre-commit *fixers* (format/lint-`--fix`) auto-fix rather than fail, so they aren't verified this way; the full `just verify` (lint/typecheck/test) is verified by CI running the identical recipe.

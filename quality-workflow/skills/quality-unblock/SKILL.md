@@ -160,7 +160,7 @@ commit-compat policy caps suppressions at 2 per PR — the autopilot's
 impl-review prompt will flag this as a Critical Finding.
 
 Either pick FIX for some of them, or split the work across multiple PRs.
-See pre-commit-compat.md for the suppression-discipline rules.
+See the suppression-discipline skill for the suppression rules.
 ```
 
 This mirrors the impl-review prompt enforcement in feature-workflow v9.8.1.

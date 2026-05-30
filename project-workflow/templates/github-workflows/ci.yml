@@ -1,0 +1,63 @@
+# CI — the UNBYPASSABLE BACKSTOP. Runs on every PR into `dev` or `main`.
+#
+# Parity by construction: this job runs `just verify` — the EXACT recipe the
+# pre-push git hook runs (see lefthook.yml + justfile). Same commands, same
+# project-pinned tools → if it passed locally on push, it passes here. The
+# local hooks can be skipped (--no-verify, lefthook not installed); a required
+# status check on this workflow cannot. That's the point of running it again.
+#
+# CUSTOMIZE:
+#  - Shows a Node + pnpm setup. For Python, add an `astral-sh/setup-uv` step
+#    and `uv sync`; `just verify` already runs the Python tools when
+#    pyproject.toml is present.
+#  - `build` is intentionally NOT in `just verify` (too heavy for every push) —
+#    it runs here only. Drop it if there's nothing to build.
+#  - After this lands, make the `ci` job a REQUIRED status check in branch
+#    protection (see the github-repo-setup skill).
+
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  # Also run on pushes to dev/main so the base branch always has a fresh status
+  # (required-check enforcement needs a passing run recorded on the base).
+  push:
+    branches: [dev, main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        # Python: add `astral-sh/setup-uv@v6` above and `uv sync --frozen` here.
+
+      # The single source of truth — identical to the pre-push hook.
+      - name: Verify (format-check + lint + typecheck + test + coverage)
+        run: just verify
+
+      - name: Build
+        run: pnpm -r build
