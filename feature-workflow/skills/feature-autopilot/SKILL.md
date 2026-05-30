@@ -249,6 +249,8 @@ Every time the autopilot dispatches a subagent that may write to the working tre
 
 There is no opt-out. The autopilot does not check a config flag before isolating. If a project's worktree setup is painfully slow, fix it at the project level (shared venv via `uv`, pnpm content-addressable store, etc.) rather than disabling isolation.
 
+**Beyond autopilot:** this rule only governs subagents *this autopilot dispatches*. Your own ad-hoc/quick changes and other parallel sessions in the same repo aren't covered here — for those, see the **`worktree-isolation`** skill (engineering-standards plugin), which keeps work made *outside* autopilot from colliding in the shared primary clone (the most common source of the very bug this rule prevents).
+
 ## Pre-commit Hooks and Static Analysis
 
 If your project has pre-commit hooks (skylos, fallow, ruff, prettier, husky, etc.), see [pre-commit-compat.md](pre-commit-compat.md) for how autopilot interacts with them. Two rules with no exceptions:
