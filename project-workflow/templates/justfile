@@ -1,0 +1,62 @@
+# justfile — the SINGLE SOURCE OF TRUTH for quality checks.
+#
+# `just verify` is called by BOTH the pre-push git hook (via lefthook) and CI,
+# so whatever passes locally passes in CI: same recipes, and the tools resolve
+# from the project's own pinned versions (uvx / pnpm / npx), not a separate
+# hook-managed env. That structural sameness is the whole point — no drift.
+#
+# Install just:    brew install just   (or cargo install just)
+# Recipes auto-detect language by a *root* manifest (pyproject.toml / package.json)
+# and run unedited for a conventional single-package repo. Adjust the commands to
+# match your project's scripts (e.g. swap `pnpm test` for your runner).
+#
+# ⚠️ SUBDIR / MONOREPO LAYOUT: the `[ -f pyproject.toml ]` guards check the REPO
+# ROOT. If your code lives in subdirs with their own manifests (and there's no
+# root one), these guards are FALSE and the recipes silently pass without
+# checking anything — a no-op gate, the exact failure this whole stack exists to
+# prevent. In that case you MUST edit the recipes to target your subdirs, e.g.:
+#     test:
+#         cd packages/api && uv run pytest --cov
+#         cd web && pnpm test -- --coverage
+# After editing, run `/quality-verify-hook` — it stages a known-bad fixture and
+# will catch a recipe that no-ops instead of failing.
+
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# Full verification — run by the pre-push hook AND by CI. No auto-fix; any
+# failure fails the recipe.
+verify: format-check lint typecheck test
+
+# Auto-fix formatting + lint. Used by the pre-commit hook (lefthook scopes it
+# to staged files there); run bare to fix the whole tree.
+fix:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f pyproject.toml ]; then uvx ruff format . && uvx ruff check --fix .; fi
+    if [ -f package.json ]; then npx --yes prettier --write --ignore-unknown . && npx --yes eslint --fix .; fi
+
+format-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f pyproject.toml ]; then uvx ruff format --check .; fi
+    if [ -f package.json ]; then npx --yes prettier --check .; fi
+
+lint:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f pyproject.toml ]; then uvx ruff check .; fi
+    if [ -f package.json ]; then npx --yes eslint --max-warnings=0 .; fi
+
+typecheck:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f pyproject.toml ]; then uvx mypy .; fi
+    if [ -f package.json ]; then npx --yes tsc --noEmit; fi
+
+# Coverage threshold lives in the test config (pyproject `--cov-fail-under`,
+# vitest/jest `coverageThreshold`) — these recipes just run the suite.
+test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f pyproject.toml ]; then uv run pytest --cov; fi
+    if [ -f package.json ]; then pnpm test -- --coverage; fi

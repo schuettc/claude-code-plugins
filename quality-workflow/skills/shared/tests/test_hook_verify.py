@@ -1,11 +1,14 @@
-"""Tests for hook_verify — uses mocks since we can't run pre-commit in CI without a fixture repo."""
+"""Tests for hook_verify — uses mocks since we can't run real hooks in CI.
+
+Covers both managers: lefthook (the default) and the pre-commit framework.
+"""
 
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 import pytest
 
-from hook_verify import VerifyResult, verify_hook
+from hook_verify import VerifyResult, verify_hook, detect_manager
 
 
 @pytest.fixture
@@ -24,137 +27,127 @@ def good_fixture(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def fake_repo(tmp_path: Path) -> Path:
-    """A directory that pretends to be a git repo for path-relative ops."""
+    """A directory that pretends to be a git repo, wired with lefthook (default)."""
     repo = tmp_path / "repo"
     repo.mkdir()
+    (repo / "lefthook.yml").write_text("pre-commit:\n  commands: {}\n")
     return repo
+
+
+# The CLI a given manager invokes for running a hook.
+HOOK_CLI = {"lefthook": "lefthook", "pre-commit": "pre-commit"}
+
+
+def _make_fake_run(call_log, hook_cli, bad_rc, good_rc):
+    """Build a subprocess.run stand-in: hook invocations return bad_rc then
+    good_rc in order; everything else (git) returns 0."""
+    def fake_run(cmd, *args, **kwargs):
+        call_log.append(cmd)
+        mock = MagicMock()
+        mock.stdout = "captured stdout"
+        mock.stderr = ""
+        if cmd[0] == hook_cli:
+            n = sum(1 for c in call_log if c[0] == hook_cli)
+            mock.returncode = bad_rc if n == 1 else good_rc
+        else:
+            mock.returncode = 0
+        return mock
+    return fake_run
 
 
 class TestVerifyResult:
     def test_ok_requires_both_phases(self):
-        # Both correct
-        r = VerifyResult(hook_id="h", bad_passed=True, good_passed=True)
-        assert r.ok
+        assert VerifyResult(hook_id="h", bad_passed=True, good_passed=True).ok
+        assert not VerifyResult(hook_id="h", bad_passed=False, good_passed=True).ok
+        assert not VerifyResult(hook_id="h", bad_passed=True, good_passed=False).ok
+        assert not VerifyResult(hook_id="h", bad_passed=True, good_passed=True, error="boom").ok
 
-        # Bad fixture didn't trigger failure
-        r = VerifyResult(hook_id="h", bad_passed=False, good_passed=True)
-        assert not r.ok
 
-        # Good fixture incorrectly fired
-        r = VerifyResult(hook_id="h", bad_passed=True, good_passed=False)
-        assert not r.ok
+class TestDetectManager:
+    def test_prefers_lefthook(self, tmp_path: Path):
+        (tmp_path / "lefthook.yml").write_text("")
+        (tmp_path / ".pre-commit-config.yaml").write_text("")
+        assert detect_manager(tmp_path) == "lefthook"
 
-        # Verification error
-        r = VerifyResult(hook_id="h", bad_passed=True, good_passed=True, error="boom")
-        assert not r.ok
+    def test_falls_back_to_pre_commit(self, tmp_path: Path):
+        (tmp_path / ".pre-commit-config.yaml").write_text("")
+        assert detect_manager(tmp_path) == "pre-commit"
+
+    def test_override_wins(self, tmp_path: Path):
+        (tmp_path / "lefthook.yml").write_text("")
+        assert detect_manager(tmp_path, "pre-commit") == "pre-commit"
+
+    def test_raises_when_none(self, tmp_path: Path):
+        with pytest.raises(FileNotFoundError):
+            detect_manager(tmp_path)
 
 
 class TestVerifyHookWithMockedSubprocess:
-    def test_hook_correctly_fails_on_bad_and_passes_on_good(
-        self, bad_fixture: Path, good_fixture: Path, fake_repo: Path
-    ):
-        """The happy path: bad fixture → exit 1, good fixture → exit 0."""
-        # Returncode pattern across the calls:
-        #   git add (bad)         → 0
-        #   pre-commit run (bad)  → 1   ← hook caught the violation
-        #   git reset (bad)       → 0
-        #   git add (good)        → 0
-        #   pre-commit run (good) → 0   ← hook passed
-        #   git reset (good)      → 0
-        def fake_run(cmd, *args, **kwargs):
-            mock = MagicMock()
-            mock.stdout = ""
-            mock.stderr = ""
-            if cmd[0] == "pre-commit":
-                # The first pre-commit invocation is for the bad fixture, second for good
-                # We track call count via a closure
-                mock.returncode = fake_run._calls
-                fake_run._calls += 1
-                return mock
-            mock.returncode = 0
-            return mock
-
-        fake_run._calls = 1  # First call returns 1 (bad failed); second returns 0 (good passed... wait that's wrong)
-
-        # Easier: track call sequence explicitly
+    def test_lefthook_happy_path(self, bad_fixture, good_fixture, fake_repo):
+        """Default manager (lefthook): bad → non-zero, good → 0."""
         call_log: list[list[str]] = []
-
-        def fake_run_v2(cmd, *args, **kwargs):
-            call_log.append(cmd)
-            mock = MagicMock()
-            mock.stdout = "captured stdout"
-            mock.stderr = ""
-            if cmd[0] == "pre-commit":
-                # Count which pre-commit invocation this is
-                pre_commit_calls = sum(1 for c in call_log if c[0] == "pre-commit")
-                mock.returncode = 1 if pre_commit_calls == 1 else 0
-            else:
-                mock.returncode = 0
-            return mock
-
-        with patch("hook_verify.subprocess.run", side_effect=fake_run_v2):
-            result = verify_hook("skylos-agent", fake_repo, bad_fixture, good_fixture)
+        with patch(
+            "hook_verify.subprocess.run",
+            side_effect=_make_fake_run(call_log, "lefthook", bad_rc=1, good_rc=0),
+        ):
+            result = verify_hook("py-scan", fake_repo, bad_fixture, good_fixture)
 
         assert result.ok
-        assert result.bad_passed
-        assert result.good_passed
-        assert result.bad_exit_code == 1
-        assert result.good_exit_code == 0
-        # We should have run pre-commit exactly twice
-        pre_commit_invocations = [c for c in call_log if c[0] == "pre-commit"]
-        assert len(pre_commit_invocations) == 2
-        assert all(c[1:3] == ["run", "skylos-agent"] for c in pre_commit_invocations)
+        assert result.manager == "lefthook"
+        assert result.bad_exit_code == 1 and result.good_exit_code == 0
+        hook_calls = [c for c in call_log if c[0] == "lefthook"]
+        assert len(hook_calls) == 2
+        assert all(c == ["lefthook", "run", "pre-commit", "--commands", "py-scan"] for c in hook_calls)
 
-    def test_hook_silently_passes_bad_fixture_caught(
-        self, bad_fixture: Path, good_fixture: Path, fake_repo: Path
-    ):
-        """The failure case the spec was written for: hook returns 0 on bad fixture."""
-        def fake_run(cmd, *args, **kwargs):
-            mock = MagicMock()
-            mock.stdout = ""
-            mock.stderr = ""
-            mock.returncode = 0  # always passes — the broken-hook scenario
-            return mock
+    def test_pre_commit_path(self, bad_fixture, good_fixture, tmp_path):
+        """Explicit pre-commit manager still works and uses `pre-commit run <id>`."""
+        repo = tmp_path / "pcrepo"
+        repo.mkdir()
+        (repo / ".pre-commit-config.yaml").write_text("")
+        call_log: list[list[str]] = []
+        with patch(
+            "hook_verify.subprocess.run",
+            side_effect=_make_fake_run(call_log, "pre-commit", bad_rc=1, good_rc=0),
+        ):
+            result = verify_hook("skylos-agent", repo, bad_fixture, good_fixture)
 
-        with patch("hook_verify.subprocess.run", side_effect=fake_run):
+        assert result.ok
+        assert result.manager == "pre-commit"
+        hook_calls = [c for c in call_log if c[0] == "pre-commit"]
+        assert len(hook_calls) == 2
+        assert all(c == ["pre-commit", "run", "skylos-agent"] for c in hook_calls)
+
+    def test_silently_passing_bad_fixture_caught(self, bad_fixture, good_fixture, fake_repo):
+        """The failure case the plugin exists for: hook returns 0 on bad input."""
+        call_log: list[list[str]] = []
+        with patch(
+            "hook_verify.subprocess.run",
+            side_effect=_make_fake_run(call_log, "lefthook", bad_rc=0, good_rc=0),
+        ):
             result = verify_hook("broken-hook", fake_repo, bad_fixture, good_fixture)
 
         assert not result.ok
-        assert not result.bad_passed  # ← the key signal: hook should have fired but didn't
-        assert result.good_passed  # good fixture passed correctly
+        assert not result.bad_passed  # ← the key signal: should have fired, didn't
+        assert result.good_passed
         assert result.bad_exit_code == 0
 
-    def test_hook_false_positive_on_good_caught(
-        self, bad_fixture: Path, good_fixture: Path, fake_repo: Path
-    ):
+    def test_false_positive_on_good_caught(self, bad_fixture, good_fixture, fake_repo):
         """The reverse problem: hook fires on a good fixture."""
-        def fake_run(cmd, *args, **kwargs):
-            call_log.append(cmd)
-            mock = MagicMock()
-            mock.stdout = ""
-            mock.stderr = ""
-            if cmd[0] == "pre-commit":
-                pre_commit_calls = sum(1 for c in call_log if c[0] == "pre-commit")
-                mock.returncode = 1  # both invocations fail
-            else:
-                mock.returncode = 0
-            return mock
-
         call_log: list[list[str]] = []
-
-        with patch("hook_verify.subprocess.run", side_effect=fake_run):
+        with patch(
+            "hook_verify.subprocess.run",
+            side_effect=_make_fake_run(call_log, "lefthook", bad_rc=1, good_rc=1),
+        ):
             result = verify_hook("overzealous-hook", fake_repo, bad_fixture, good_fixture)
 
         assert not result.ok
-        assert result.bad_passed  # bad fixture correctly triggered
-        assert not result.good_passed  # good fixture incorrectly triggered
+        assert result.bad_passed
+        assert not result.good_passed
 
-    def test_subprocess_timeout(
-        self, bad_fixture: Path, good_fixture: Path, fake_repo: Path
-    ):
-        """If pre-commit hangs, we surface a clean error rather than blocking forever."""
+    def test_subprocess_timeout(self, bad_fixture, good_fixture, fake_repo):
+        """If the hook hangs, surface a clean error rather than blocking forever."""
         def fake_run(cmd, *args, **kwargs):
-            if cmd[0] == "pre-commit":
+            if cmd[0] == "lefthook":
                 import subprocess as sp
                 raise sp.TimeoutExpired(cmd, timeout=1)
             mock = MagicMock()
@@ -169,3 +162,12 @@ class TestVerifyHookWithMockedSubprocess:
         assert not result.ok
         assert result.error is not None
         assert "timed out" in result.error.lower()
+
+    def test_missing_manager_surfaces_error(self, bad_fixture, good_fixture, tmp_path):
+        """No lefthook.yml / .pre-commit-config.yaml → clean error, not a crash."""
+        repo = tmp_path / "bare"
+        repo.mkdir()
+        result = verify_hook("py-scan", repo, bad_fixture, good_fixture)
+        assert not result.ok
+        assert result.error is not None
+        assert "hook manager" in result.error.lower()

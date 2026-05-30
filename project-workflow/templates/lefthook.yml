@@ -1,0 +1,38 @@
+# lefthook.yml — git hooks. Install once per clone:  lefthook install
+#   brew install lefthook   (or:  npm i -D lefthook  /  go install github.com/evilmartians/lefthook@latest)
+#
+# Division of labor:
+#   pre-commit → fast AUTO-FIXERS on staged files (format, lint --fix) + the
+#                staged-file static scan. Kept fast so nobody reaches for --no-verify.
+#   pre-push   → `just verify` — the whole-project gate, IDENTICAL to what CI runs.
+#
+# The check commands themselves live in the justfile (single source of truth),
+# so local == CI. lefthook only decides *when* they run. Delete the language
+# commands you don't use; adjust the `kiosk` TS dir.
+
+pre-commit:
+  parallel: true
+  commands:
+    py-fix:
+      glob: "*.py"
+      run: uvx ruff format {staged_files} && uvx ruff check --fix {staged_files}
+      stage_fixed: true
+    js-fix:
+      glob: "*.{ts,tsx,js,jsx,json,md,css,scss,yaml,yml}"
+      run: npx --yes prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+    js-lint:
+      glob: "*.{ts,tsx,js,jsx}"
+      run: npx --yes eslint --fix {staged_files}
+      stage_fixed: true
+    py-scan:
+      glob: "*.py"
+      run: uvx skylos agent pre-commit .   # staged-file AI-regression scan
+    ts-scan:
+      glob: "kiosk/**/*.{ts,tsx}"
+      run: bash -c 'cd kiosk && npx fallow audit'
+
+pre-push:
+  commands:
+    verify:
+      run: just verify   # format-check + lint + typecheck + test+coverage — same as CI
