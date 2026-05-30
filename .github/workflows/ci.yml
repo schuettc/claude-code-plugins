@@ -1,0 +1,64 @@
+# CI — the PR gate for this plugin marketplace.
+#
+# This repo is a plugin marketplace, not a deployable app: it has no build and
+# nothing to deploy, but it ships real Python (the feature-workflow and
+# quality-workflow shared libs + their test suites) and JSON manifests that
+# must stay valid. So the gate is: manifests parse + both test suites pass.
+# (No deploy workflows, environments, or TS tooling — none apply here. This is
+# the "non-deployable repo" shape that project-workflow's /project-init detects.)
+#
+# Make the `ci` job a required status check on `main` once it has run green once.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps
+        run: pip install pytest pyyaml
+
+      - name: Validate plugin manifests (JSON)
+        run: |
+          python - <<'PY'
+          import json, glob, sys
+          files = ["./.claude-plugin/marketplace.json"] + sorted(glob.glob("*/.claude-plugin/plugin.json"))
+          bad = []
+          for f in files:
+              try:
+                  json.load(open(f))
+              except Exception as e:
+                  bad.append(f"{f}: {e}")
+          if bad:
+              print("\n".join(bad)); sys.exit(1)
+          print(f"{len(files)} manifests valid")
+          PY
+
+      - name: Test — feature-workflow
+        run: python -m pytest -q
+        working-directory: feature-workflow
+
+      - name: Test — quality-workflow
+        run: python -m pytest -q
+        working-directory: quality-workflow

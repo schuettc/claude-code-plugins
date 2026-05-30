@@ -7,3 +7,7 @@ docs/planning/
 # Worktrees
 .worktrees/
 __pycache__/
+
+# Internal planning/spec/dogfood docs — not part of the published plugins
+docs/superpowers/
+.pytest_cache/

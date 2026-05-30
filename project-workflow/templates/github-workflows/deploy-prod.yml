@@ -1,0 +1,74 @@
+# Deploy Prod — triggers on push to `main`. The dev → main promotion PR
+# is the only thing that should push to main. See the branch-promotion-model skill.
+#
+# CUSTOMIZE: same surface as deploy-dev.yml. Use prod-specific secrets,
+# URLs, and a stricter smoke check if you have one.
+
+name: Deploy Prod
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_PROD }}
+          aws-region: us-east-1
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        env:
+          DEPLOY_ENV: prod
+        run: pnpm -r build
+
+      - name: Deploy
+        run: pnpm cdk deploy --all --context env=prod --require-approval=never
+
+      - name: Smoke check
+        run: |
+          set -euo pipefail
+          for url in https://example.com https://api.example.com/health; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "$url")
+            echo "$url -> $code"
+            [ "$code" = "200" ] || { echo "::error::$url returned $code"; exit 1; }
+          done
+
+      - name: Job summary
+        run: |
+          {
+            echo "## Prod deploy succeeded"
+            echo ""
+            echo "- Landing: https://example.com"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,9 @@
+{
+  "name": "engineering-standards",
+  "version": "0.1.0",
+  "description": "Evergreen engineering standards I hold code to — the judgment layer that AI-slop resistance needs on top of the mechanical quality stack. Project-structure conventions (consistent layout + naming so every repo looks the same), worktree isolation (every line of work in its own tree so parallel work never collides), and GitHub API discipline (zipball over per-file, rate-limit backoff), with automation-auth (GitHub App vs PAT) and hook-escape conventions on the way. Pure advisory skills that fire when the situation matches — no tooling, no setup, safe to leave enabled for a project's whole life. Backed by lessons from real incidents.",
+  "author": {
+    "name": "Court Schuett"
+  },
+  "skills": "./skills/"
+}

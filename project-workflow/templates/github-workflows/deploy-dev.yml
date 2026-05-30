@@ -1,0 +1,79 @@
+# Deploy Dev — triggers on push to `dev`, NOT main.
+# Pair with deploy-prod.yml (push: main). See the branch-promotion-model skill.
+#
+# CUSTOMIZE:
+#  - AWS_ROLE_ARN_DEV / region / OIDC bits if not using AWS, or replace the
+#    Configure AWS step with your cloud's auth.
+#  - The build/deploy steps (Install / Bundle / Build / Deploy) — these
+#    show a Node + pnpm + CDK pattern; adapt to your stack.
+#  - Smoke-check URLs.
+#  - paths-ignore — by default doc-only changes don't redeploy. Tune as needed.
+
+name: Deploy Dev
+
+on:
+  push:
+    branches: [dev]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+          aws-region: us-east-1
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        env:
+          DEPLOY_ENV: dev
+        run: pnpm -r build
+
+      - name: Deploy
+        run: pnpm cdk deploy --all --context env=dev --require-approval=never
+
+      - name: Smoke check
+        run: |
+          set -euo pipefail
+          for url in https://dev.example.com https://api-dev.example.com/health; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "$url")
+            echo "$url -> $code"
+            [ "$code" = "200" ] || { echo "::error::$url returned $code"; exit 1; }
+          done
+
+      - name: Job summary
+        run: |
+          {
+            echo "## Dev deploy succeeded"
+            echo ""
+            echo "- Landing: https://dev.example.com"
+          } >> "$GITHUB_STEP_SUMMARY"
