@@ -243,7 +243,7 @@ Every time the autopilot dispatches a subagent that may write to the working tre
 - Reviewer subagents — read-only, no git ops, no isolation needed
 - Subagents that only read files (research, exploration)
 
-**Why:** even when only one autopilot is "running," the user may open another Claude Code session against the same repo. Worktree isolation removes the entire class of "two agents in one tree clobber each other on branch switches" bugs. The now-playing 2026-05-16 incident — Feature B's uncommitted implementation overlaid by Feature C's branch checkout in a shared tree — is the canonical example.
+**Why:** even when only one autopilot is "running," the user may open another Claude Code session against the same repo. Worktree isolation removes the entire class of "two agents in one tree clobber each other on branch switches" bugs — the shared-tree collision where one branch's checkout overlays another's uncommitted work.
 
 **Cost:** ~1-2 seconds for `git worktree add` per subagent, plus per-worktree setup (venv, node_modules) that varies by project. Acceptable in exchange for eliminating clobber bugs.
 

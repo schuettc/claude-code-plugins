@@ -13,7 +13,7 @@ This is non-negotiable when *any* parallel work is live: an autopilot running, a
 
 ## Why
 
-**Real incident (`now-playing`, 2026-05-16):** Feature B's uncommitted implementation was overlaid when Feature C's branch was checked out in the *same* tree. The autopilot already isolates its subagents (see `feature-workflow`), so the collision came from the **other** direction — a human/main-session "quick change" made directly in the primary clone while parallel work was live, because editing the shared tree was the path of least resistance. Under time pressure the *easy* path won, and git state got confused.
+**The failure mode:** Feature B has an uncommitted implementation in the working tree, and then Feature C's branch gets checked out in the *same* tree on top of it. You get overlaid changes, "branch already checked out" errors when something else tries to use B's branch, and confusion about which branch is even live. The autopilot already isolates its own subagents (see `feature-workflow`), so the exposure is everything *else* that can reach the same checkout — a change made directly in the primary clone, or a second Claude session opened against the repo, while parallel work is live. Nothing structural stops any of those from landing on top of in-flight work.
 
 The fix is structural, not willpower: make isolation the easy path, so "just make the change" lands in a worktree instead of the shared tree.
 
