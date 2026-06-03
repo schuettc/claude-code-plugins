@@ -6,8 +6,7 @@ on:
 
 # Cancel in-progress runs for the same PR; the latest event wins.
 # Prevents duplicate review comments from interleaving label-swap +
-# synchronize events (the root cause of the now-playing 2026-05-16
-# post-PASS plan-review re-fire on PR #141).
+# synchronize events.
 concurrency:
   group: feature-review-${{ github.event.pull_request.number }}
   cancel-in-progress: true

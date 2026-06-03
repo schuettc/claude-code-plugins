@@ -166,7 +166,7 @@ Read `.feature-workflow.yml` and check the `reviewer:` setting.
 
 **If reviewer is `gemini` or `codex`:**
 
-Swap labels as TWO separate operations with a short wait between, so the GitHub Actions workflow sees a clean state at each step. The previous combined `--remove --add` pattern occasionally let both labels appear briefly, which caused the workflow's job conditionals to fire against an ambiguous label set (see the now-playing 2026-05-16 incident).
+Swap labels as TWO separate operations with a short wait between, so the GitHub Actions workflow sees a clean state at each step. The previous combined `--remove --add` pattern occasionally let both labels appear briefly, which caused the workflow's job conditionals to fire against an ambiguous label set.
 
 ```bash
 # 5a. Remove plan-review. The workflow listens for `labeled` (not `unlabeled`),
