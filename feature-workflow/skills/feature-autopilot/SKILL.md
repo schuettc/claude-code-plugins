@@ -180,7 +180,7 @@ plan ─► review-plan ─► implement ─► review-impl ─► pre-ship ─�
   ```bash
   gh pr edit <pr-number> --remove-label plan-review   # or impl-review, depending on the current gate
   ```
-  Without this, the next `git push` (e.g., the impl commit) triggers a `synchronize` event, the workflow's job conditional still passes (label is still on the PR), and a redundant review fires — see the now-playing 2026-05-16 incident where six plan-reviews ran on PR #141 for one plan, including two AFTER a clean PASS.
+  Without this, the next `git push` (e.g., the impl commit) triggers a `synchronize` event, the workflow's job conditional still passes (label is still on the PR), and a redundant review fires.
   Then continue. Don't chase Should-fix nits after a clean pass; material recommendations can become **backlog items via the "Defer to backlog" classification in `respond.md`** (see Step 5/8 of the respond flow).
 - **Exit 1 (FAIL)** — **auto-respond.** Run `--respond` for the current phase, classify findings (Agree / Disagree / Already addressed / Defer to backlog / Deferred), push, and re-poll. Cap at 2 consecutive FAILs per phase before pausing for human input — see "FAIL handling" in Step 2 above.
 - **Exit 2 (workflow failure / timeout / no comment)** — stop. Diagnose CI with `gh run list --branch feature/<id>` and `gh run view <run-id>`. Once fixed, re-trigger the review by removing and re-adding the label.
@@ -243,7 +243,7 @@ Every time the autopilot dispatches a subagent that may write to the working tre
 - Reviewer subagents — read-only, no git ops, no isolation needed
 - Subagents that only read files (research, exploration)
 
-**Why:** even when only one autopilot is "running," the user may open another Claude Code session against the same repo. Worktree isolation removes the entire class of "two agents in one tree clobber each other on branch switches" bugs. The now-playing 2026-05-16 incident — Feature B's uncommitted implementation overlaid by Feature C's branch checkout in a shared tree — is the canonical example.
+**Why:** even when only one autopilot is "running," the user may open another Claude Code session against the same repo. Worktree isolation removes the entire class of "two agents in one tree clobber each other on branch switches" bugs — the shared-tree collision where one branch's checkout overlays another's uncommitted work.
 
 **Cost:** ~1-2 seconds for `git worktree add` per subagent, plus per-worktree setup (venv, node_modules) that varies by project. Acceptable in exchange for eliminating clobber bugs.
 
