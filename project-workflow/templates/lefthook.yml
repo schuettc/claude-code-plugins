@@ -33,7 +33,8 @@ pre-commit:
     # backlog is reported, never blocks. See the "Existing / legacy repo" section
     # of the quality-stack-setup skill.
     skylos-scan:
-      # security / secrets / high-signal AI regressions on staged code.
+      # broad static analysis on staged code: code quality, dead code, complexity,
+      # clones, security/danger, secrets, dependencies (SCA), AI regressions.
       # skylos `agent pre-commit` is cross-language (TS/JS/C#/JSON), not just Python.
       glob: "*.{py,ts,tsx,js,jsx,mjs,cjs,cs,json}"
       run: uvx skylos agent pre-commit .
