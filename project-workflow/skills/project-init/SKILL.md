@@ -96,5 +96,7 @@ The install is not done until the hooks are *proven to fire*:
 ## Notes
 
 - Don't push or commit on the user's behalf — let them review the staged changes.
-- If the user is in a project that's mostly TypeScript, skip the skylos pieces and only apply fallow.
+- TypeScript projects: use **fallow** for the dead-code / complexity / duplication scan, and keep **skylos in `agent pre-commit` mode** for the security/secrets layer — that mode scans staged TS/JS/C#/JSON, *not just Python*, so it earns its place on a TS repo. Skip only skylos's *full Python audit* (that lives in `/quality-audit`). Never wire skylos behind a `*.py` glob on a TS repo — it'll silently scan nothing useful and confuse everyone.
+- **Existing / legacy repo:** expect a large findings backlog (hundreds–thousands). Wire the scanners **new-only** so they gate what's introduced and merely *report* the backlog without blocking every commit — then plan an incremental cleanup. Full details + exact flags in the "Existing / legacy repo: gate new, fix old incrementally" section of `quality-stack-setup`.
+- A critical failure mode when adapting the `lefthook.yml` template (especially for a monorepo): keeping the auto-fixers (prettier/eslint, ruff) but **dropping the static-analysis scans** (`py-scan`/`ts-scan`). The scans are the load-bearing AI-slop guardrail — pre-commit without them only formats. After customizing, confirm both `skylos` and `fallow` scan commands are still present and pointed at the real source dirs, and that `/quality-verify-hook` proves each fires.
 - If the user is in a docs-only repo (no `package.json`, no `pyproject.toml`), only apply the branch promotion model — quality hooks would be ceremony with no value.

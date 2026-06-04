@@ -25,12 +25,26 @@ pre-commit:
       glob: "*.{ts,tsx,js,jsx}"
       run: npx --yes eslint --fix {staged_files}
       stage_fixed: true
-    py-scan:
-      glob: "*.py"
-      run: uvx skylos agent pre-commit .   # staged-file AI-regression scan
-    ts-scan:
-      glob: "kiosk/**/*.{ts,tsx}"
-      run: bash -c 'cd kiosk && npx fallow audit'
+    # ── Static-analysis scans — the LOAD-BEARING anti-slop gates ──────────────
+    # DELETE only the language you don't have. Do NOT drop both and keep just the
+    # fixers above — that is the #1 setup mistake (pre-commit then only formats
+    # and never catches dead code / complexity / secrets). Both gate NEW findings
+    # only, so they are safe to add to a legacy repo with a large backlog: the
+    # backlog is reported, never blocks. See the "Existing / legacy repo" section
+    # of the quality-stack-setup skill.
+    skylos-scan:
+      # security / secrets / high-signal AI regressions on staged code.
+      # skylos `agent pre-commit` is cross-language (TS/JS/C#/JSON), not just Python.
+      glob: "*.{py,ts,tsx,js,jsx,mjs,cjs,cs,json}"
+      run: uvx skylos agent pre-commit .
+    fallow-scan:
+      # dead-code / complexity / duplication on CHANGED TS. --changed-since HEAD
+      # gates new-only; the inherited backlog is excluded (in CI use the PR base
+      # sha). Set the glob to your TS source dir(s); duplicate this block per
+      # package in a monorepo. <<TS_DIR>> is a placeholder — replace it (a wrong
+      # dir makes fallow silently scan nothing; /quality-verify-hook catches that).
+      glob: "<<TS_DIR>>/**/*.{ts,tsx}"
+      run: npx fallow audit --changed-since HEAD
 
 pre-push:
   commands:
