@@ -62,7 +62,7 @@ Because pre-push and CI invoke the *identical* `just verify`, "passed locally �
 A repo with history almost always has a large backlog of findings (slay-the-spire had ~2160). If the hooks blocked on the whole backlog, **every commit would fail** and the team would reach for `--no-verify` — defeating the stack. So on an existing repo the rule is **gate new, report old**: the scanners fail only on findings you *introduce*; the inherited backlog is reported but never blocks. This is a property of *how you invoke the scanners*, so wire them new-only:
 
 - **fallow** (TS/JS dead-code / complexity / duplication) → `npx fallow audit --changed-since HEAD` — scopes the gate to the diff; inherited findings are excluded. In CI use `--changed-since <base-sha>` against the PR base.
-- **skylos** (security / secrets / high-signal AI regressions on staged **TS/JS/C#/JSON — not just Python**) → `uvx skylos agent pre-commit .` — the `agent pre-commit` mode is conservative by design and only surfaces new, high-confidence issues, so the backlog's low-signal noise stays quiet. (skylos's *full* audit is Python-centric and belongs in `/quality-audit`, not the hook.)
+- **skylos** (broad static analysis on staged **TS/JS/C#/JSON — not just Python**: code quality, dead code, complexity, clones, security/danger, secrets, dependencies/SCA, AI-introduced regressions) → `uvx skylos agent pre-commit .` — the `agent pre-commit` mode is conservative by design and only surfaces new, high-confidence issues, so the backlog's low-signal noise stays quiet. (The heavier full audit, `skylos --quality --danger --secrets --sca`, runs in `/quality-audit`, not the hook.)
 
 Then the backlog is a separate, non-blocking workstream — **this is the plan for a legacy repo**:
 
