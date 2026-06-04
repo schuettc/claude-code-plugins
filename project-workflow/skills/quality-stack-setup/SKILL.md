@@ -57,6 +57,23 @@ Because pre-push and CI invoke the *identical* `just verify`, "passed locally �
 5. Document the rules in the project `CLAUDE.md`:
    > **Quality stack:** `lefthook` runs auto-fixers on commit and `just verify` on push; CI runs the same `just verify`. Don't bypass with `--no-verify`. Suppressions require an inline rationale — see the `suppression-discipline` skill.
 
+### Existing / legacy repo: gate new, fix old incrementally
+
+A repo with history almost always has a large backlog of findings (slay-the-spire had ~2160). If the hooks blocked on the whole backlog, **every commit would fail** and the team would reach for `--no-verify` — defeating the stack. So on an existing repo the rule is **gate new, report old**: the scanners fail only on findings you *introduce*; the inherited backlog is reported but never blocks. This is a property of *how you invoke the scanners*, so wire them new-only:
+
+- **fallow** (TS/JS dead-code / complexity / duplication) → `npx fallow audit --changed-since HEAD` — scopes the gate to the diff; inherited findings are excluded. In CI use `--changed-since <base-sha>` against the PR base.
+- **skylos** (security / secrets / high-signal AI regressions on staged **TS/JS/C#/JSON — not just Python**) → `uvx skylos agent pre-commit .` — the `agent pre-commit` mode is conservative by design and only surfaces new, high-confidence issues, so the backlog's low-signal noise stays quiet. (skylos's *full* audit is Python-centric and belongs in `/quality-audit`, not the hook.)
+
+Then the backlog is a separate, non-blocking workstream — **this is the plan for a legacy repo**:
+
+1. **Add the gates first** (this PR) — stops the bleeding; no *new* slop can land.
+2. **Snapshot the backlog** with `/quality-audit` so it's visible and tracked.
+3. **Burn it down incrementally** — fix inherited findings in their own PRs over time (not a flag-day); each fix shrinks the next audit's number.
+
+Tuning that made it usable on slay-the-spire: pick skylos's `agent pre-commit` mode (not full audit) so backlog false-positives stay quiet; scope fallow with `.fallowrc.json` (ignore tests / dist / build-output / vendored / docs); pin fallow as a devDep for reproducible, fast runs; and document both — with the tuning knobs (`skylos --conf`, `.fallowrc.json`) and a `/quality-audit` pointer — in the project `CLAUDE.md`. **Local prereq:** committers need `uv` (for `uvx skylos`) alongside lefthook/just; fallow auto-installs via npm.
+
+Verify the new-vs-old behavior empirically before declaring done: a clean commit must **pass** (scanners report the backlog but exit 0), and a deliberately-bad new change must **block** (exit 1). The pre-commit/pre-push gates can still be skipped with `--no-verify`; to make them unbypassable on the PR diff, add a CI job running `fallow audit --changed-since <base>` + `skylos --diff-base <base>`.
+
 ### After installing — verify and hand off
 
 - **Run `/quality-verify-hook`** (quality-workflow) immediately. It stages a known-bad fixture and asserts the hook fails — the only way to know a silently-misconfigured gate isn't waving everything through.
