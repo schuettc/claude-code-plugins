@@ -16,14 +16,31 @@ Write `docs/features/[id]/idea.md` with the following format:
 ---
 id: [kebab-case-id]
 name: [Original Name]
-type: [Feature|Enhancement|Bug Fix|Tech Debt]
+type: [Feature|Enhancement|Bug Fix|Tech Debt|Epic]
 priority: [P0|P1|P2]
 effort: [Small|Medium|Large]
 impact: [Low|Medium|High]
 category: [category]
 created: [YYYY-MM-DD]
-dependsOn: [id1, id2]
-blockedBy: [id3, id4]
+
+# Ownership (optional)
+assignee: [name OR list of names]
+
+# State (optional, default active)
+state: [active|paused|replaced|abandoned]
+pausedReason: "..."         # if paused
+replacedBy: <feature-id>  # if replaced
+abandonedReason: "..."      # if abandoned
+
+# Relations (optional)
+epic: <epic-id>             # parent epic
+children: [id1, id2]        # only for type: Epic
+dependsOn: [id1, id2]       # hard blockers
+relatedTo: [id3, id4]       # soft links
+parallelSafe: true          # default true
+
+# Review override (optional, defers to project config if absent)
+review: [external|internal|skip]
 ---
 
 # [Original Name]
@@ -47,27 +64,31 @@ All metadata goes in YAML frontmatter between `---` markers:
 |-------|----------|-------------|
 | id | Yes | Kebab-case identifier (matches directory name) |
 | name | Yes | Human-readable name |
-| type | Yes | Feature, Enhancement, Bug Fix, or Tech Debt |
+| type | Yes | Feature, Enhancement, Bug Fix, Tech Debt, or Epic |
 | priority | Yes | P0 (critical), P1 (important), P2 (nice to have) |
 | effort | Yes | Small (<1 day), Medium (1-3 days), Large (>3 days) |
 | impact | Yes | Low, Medium, High |
 | category | No | Grouping category (default: "general") |
 | created | Yes | Date in YYYY-MM-DD format |
 | dependsOn | No | Array of feature IDs this feature depends on: `[id1, id2]` |
-| blockedBy | No | Array of feature IDs that list this feature as a dependency |
+| assignee | No | Single name or list |
+| state | No | active (default) / paused / replaced / abandoned |
+| pausedReason | If state=paused | What we're waiting on |
+| replacedBy | If state=replaced | The replacing feature's ID |
+| abandonedReason | If state=abandoned | Why we dropped it |
+| epic | No | Parent epic ID |
+| children | No | List of child IDs (Epic features only) |
+| relatedTo | No | Soft links to related features |
+| parallelSafe | No | Default `true`; set `false` for features that touch shared files |
+| review | No | external / internal / skip — overrides project default |
 
 ## Dependency Handling
 
 When capturing a feature with dependencies:
 
-1. **Validate IDs**: Check that each dependency ID exists (soft warning if not found - may be capturing future feature)
-2. **Write dependsOn**: Add `dependsOn: [id1, id2]` to new feature's idea.md
-3. **Update blockedBy**: For each dependency target, add this feature's ID to its `blockedBy` field
-
-Example bidirectional sync:
-- Feature B depends on Feature A
-- B's idea.md: `dependsOn: [feature-a]`
-- A's idea.md: `blockedBy: [feature-b]`
+1. **Validate IDs**: Check that each dependency ID exists (soft warning if not — may be pre-capturing).
+2. **Write `dependsOn:`** on the new feature.
+3. **Do NOT write `blockedBy:` on the dependency targets** — blocked-by is computed dynamically from the dependency graph by the dashboard. Legacy stored `blockedBy:` fields are still parsed for backward compat but no longer maintained on writes.
 
 ## Hook Behavior
 

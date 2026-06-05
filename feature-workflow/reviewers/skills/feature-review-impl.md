@@ -62,7 +62,20 @@ Review against the full superset of concerns:
 - **Scope creep** — changes the plan did not authorize
 - **Test coverage** — risky paths without tests, weak assertions, missing failure-mode tests
 - **Maintainability** — conventions, clarity, testability, docs drift
+- **Static analysis suppressions** — see dedicated check below
 - **Areas of Concern** — whatever the PR description specifically flagged
+
+### Static analysis suppression check (mandatory)
+
+Scan the diff for added suppression directives (`// fallow-ignore-*`, `# skylos: ignore SKY-*`, `// eslint-disable*`, `# noqa`, `# type: ignore`, `# pylint: disable=*`, `// @ts-ignore`, `// @ts-expect-error`, etc.).
+
+For each NEW suppression (lines starting with `+`):
+
+1. **Is there an adjacent `# Why:` / `// Why:` justification?** It must explain why the finding is a false positive OR why the refactor would be worse than the suppression. Bare `# noqa` or `// fallow-ignore-next-line complexity` with no rationale is a drive-by.
+2. **Can the underlying code plausibly be refactored?** If yes, the suppression is drive-by even if it has a flippant justification.
+3. **Count.** More than 2 new suppressions in a single PR signals a skipped refactor pass.
+
+**Drive-by suppressions are Blocking findings (verdict FAIL).** The required fix is either refactor the code or add a defensible `# Why:` comment. Legitimate suppressions (false positives, deliberately-coalesced state, parameterized SQL the linter mis-flags) pass this check on their justifications. The rule is **no drive-by silencing**, not "ban all suppressions."
 
 ## Step 5: Post the PR Review
 
@@ -80,10 +93,10 @@ Review body format:
 ### Verdict: [PASS / CONDITIONAL PASS / FAIL]
 
 ### Critical Findings
-- [Blocking issues — ordered by severity, with file:line references]
+- [Only present under FAIL. Blocking issues — ordered by severity, with file:line references.]
 
 ### Recommendations
-- [Non-blocking suggestions for improvement]
+- [Should-fix items. Present under any verdict. Implementer addresses these inline or as follow-up; no re-review needed.]
 
 ### Plan Drift / Scope
 - [Where implementation diverges from plan.md, if anywhere]
@@ -94,6 +107,14 @@ Review body format:
 ### Areas of Concern Response
 - [Direct response to concerns flagged in the PR description]
 ```
+
+### Verdict meanings (binding)
+
+- **PASS** — Implementation is great. No changes needed.
+- **CONDITIONAL PASS** — Implementation is good. Recommendations should be addressed (in PR or follow-up), but **no re-review needed**.
+- **FAIL** — Implementation needs rework before shipping. **Implementer must revise and re-request review.**
+
+**Calibration:** Blocking findings belong ONLY under FAIL. If you list a Blocking finding, the verdict MUST be FAIL. CONDITIONAL PASS is for diffs you'd merge without seeing a revision; if you wouldn't, it's FAIL.
 
 **Inline comments**: For specific code issues, post inline comments on the relevant lines:
 

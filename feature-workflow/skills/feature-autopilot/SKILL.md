@@ -21,6 +21,7 @@ This skill **does not replace** `feature-plan`, `feature-implement`, `feature-re
 - The plan needs design discussion → use `/feature-plan` directly first, then optionally autopilot from review onward
 - The user is iterating on a single phase (e.g. just responding to review feedback) → use the per-phase skill directly
 - No `idea.md` exists → run `/feature-capture` first
+- The user wants a different review path than what's configured — edit the `review:` field in the feature's `idea.md` frontmatter (`external` / `internal` / `skip`) BEFORE running autopilot.
 
 ## Preconditions
 
@@ -28,10 +29,33 @@ Verify in this order before starting:
 
 1. **`docs/features/<id>/idea.md` exists.** If not: tell the user to run `/feature-capture` first.
 2. **Working tree is clean** on the configured base branch. Run `git status` — if anything unrelated is modified or untracked, ask the user before doing anything (don't auto-commit). Rationale: `feature-plan` branches off current HEAD, so a dirty tree drags unrelated work onto the feature branch.
-3. **Read `.feature-workflow.yml`** for the `reviewer:` setting. The autopilot adapts:
+3. **Local base branch is in sync with origin.** Run:
+   ```bash
+   "${CLAUDE_PLUGIN_ROOT}/skills/feature-autopilot/scripts/check-base-sync.sh" <base-branch>
+   ```
+   Exit semantics:
+   - `0` — in sync, proceed
+   - `1` — local is **ahead** of origin (unpushed work). **Pause and surface to user.** Branching off an ahead-base means the upcoming PR will include those unpushed commits, which is almost certainly not what the user wants. Recommend: push first OR investigate which commits don't belong on the base.
+   - `2` — local is behind origin. Run `git pull origin <base>` and re-check.
+   - `3` — diverged. Manual resolution required; do not proceed.
+   - `4` — usage error (typo in base name, branch doesn't exist locally, etc.).
+
+   This catches the "parallel Claude Code session left unpushed commits" failure mode.
+4. **Read `.feature-workflow.yml`** for the `reviewer:` setting. The autopilot adapts:
    - `reviewer: gemini` or `reviewer: codex` — review gates are active. The `feature-review.yml` GitHub Action fires on the `plan-review` / `impl-review` label and posts a comment classifiable by `wait-for-review.sh`.
    - `reviewer: none` — review gates are skipped. Autopilot goes plan → implement → ship without polling for external review.
-4. **Read `.feature-workflow.yml`** for the `base_branch:` setting (default `main`). Use this as the merge target.
+5. **Read `.feature-workflow.yml`** for the `base_branch:` setting (default `main`). Use this as the merge target.
+
+## Step 0: Epic vs. Feature Detection
+
+Before the linear pipeline below, read `docs/features/<id>/idea.md` and check the `type:` field. If `type: Epic`, switch to **Epic Dispatch Mode** — see [epic-dispatch.md](epic-dispatch.md) — and stop here. The linear pipeline below applies only to regular features.
+
+| `type:` value | Behavior |
+|---|---|
+| Feature / Enhancement / Bug Fix / Tech Debt | Standard linear plan → review → implement → review → ship (below) |
+| Epic | Epic Dispatch Mode — walk children in topo order via `epic-dispatch.md` |
+
+The dispatcher walks each child via its own subagent (running `/feature-autopilot <child-id>`) in its own worktree per the Worktree Isolation rule. Sequential by default; pass `--parallel` to the autopilot invocation for concurrent waves.
 
 ## Steps
 
@@ -152,7 +176,12 @@ plan ─► review-plan ─► implement ─► review-impl ─► pre-ship ─�
 
 ## Auto-advance rules at review gates
 
-- **Exit 0 (PASS / CONDITIONAL PASS)** — advance immediately. Don't chase Should-fix nits after a clean pass; material recommendations can become **backlog items via the "Defer to backlog" classification in `respond.md`** (see Step 5/8 of the respond flow).
+- **Exit 0 (PASS / CONDITIONAL PASS)** — advance immediately. **First action: remove the active review label from the PR**, so subsequent pushes don't re-fire the workflow against the same plan:
+  ```bash
+  gh pr edit <pr-number> --remove-label plan-review   # or impl-review, depending on the current gate
+  ```
+  Without this, the next `git push` (e.g., the impl commit) triggers a `synchronize` event, the workflow's job conditional still passes (label is still on the PR), and a redundant review fires.
+  Then continue. Don't chase Should-fix nits after a clean pass; material recommendations can become **backlog items via the "Defer to backlog" classification in `respond.md`** (see Step 5/8 of the respond flow).
 - **Exit 1 (FAIL)** — **auto-respond.** Run `--respond` for the current phase, classify findings (Agree / Disagree / Already addressed / Defer to backlog / Deferred), push, and re-poll. Cap at 2 consecutive FAILs per phase before pausing for human input — see "FAIL handling" in Step 2 above.
 - **Exit 2 (workflow failure / timeout / no comment)** — stop. Diagnose CI with `gh run list --branch feature/<id>` and `gh run view <run-id>`. Once fixed, re-trigger the review by removing and re-adding the label.
 
@@ -181,10 +210,50 @@ This keeps each feature focused and prevents the autopilot from getting stuck in
 
 ## Reviewer-mode adaptations
 
-| `.feature-workflow.yml` reviewer | Step 2 (plan review) | Step 4 (impl review) |
-|---|---|---|
-| `gemini` | Active — wait-for-review polls | Active — wait-for-review polls |
-| `codex` | Active — wait-for-review polls | Active — wait-for-review polls |
-| `none` | Skipped — go straight to Step 3 | Skipped — go straight to Step 5 |
+The autopilot's behavior at each review gate is driven by the **effective** review mode for the feature being processed:
 
-When `reviewer: none`, autopilot becomes plan → implement → pre-ship → ship with no external gating. Useful for solo work where the user trusts their own judgment, but the audit trail (PR + merge commit) is still preserved.
+| Effective mode | Step 2 (plan review) | Step 4 (impl review) |
+|---|---|---|
+| `external_gemini` / `external_codex` | Active — apply label, wait-for-review polls CI | Active — same |
+| `external_default` (feature says external, project says none) | **Error** — surface to user; can't dispatch without a configured reviewer | Same — error |
+| `internal` | Dispatch internal-review subagent → post comment → wait-for-review polls comments | Same — post impl-review comment, same poll |
+| `skip` | Skip review gate entirely; advance to implement | Skip; advance to ship |
+
+The effective mode is computed per-feature using:
+- Project default from `.feature-workflow.yml` (`reviewer:` setting)
+- Per-feature override from `idea.md` frontmatter (`review:` field)
+
+See `feature-workflow/skills/shared/lib/effective_review.py` for precedence rules.
+
+**Important:** `wait-for-review.sh` works identically across external and internal modes. Internal-review comments use the same `## Plan Review` / `## Implementation Review` headers and `### Verdict:` line that the external CI reviewer posts. No special flag is needed.
+
+For `internal` mode, the autopilot's FAIL → respond loop also works unchanged: the respond flow reads PR comments, classifies findings, replies, and pushes — exactly as for external review. The subagent re-runs on the next round because the orchestrator detects the new commits and dispatches it again.
+
+## Worktree Isolation (mandatory)
+
+Every time the autopilot dispatches a subagent that may write to the working tree or do git operations, the dispatch MUST pass `isolation: "worktree"` to the Agent tool. The harness creates a temporary git worktree, runs the subagent there, and returns the worktree path on completion.
+
+**Applies to:**
+- Implementer subagents (subagent-driven-development pattern)
+- Fix subagents (after a review surfaces issues)
+- Child autopilots dispatched by epic dispatch (Plan 3 / v9.8.0)
+- Any subagent the orchestrator instructs to `git commit`, `git push`, or `git checkout`
+
+**Does NOT apply to:**
+- Reviewer subagents — read-only, no git ops, no isolation needed
+- Subagents that only read files (research, exploration)
+
+**Why:** even when only one autopilot is "running," the user may open another Claude Code session against the same repo. Worktree isolation removes the entire class of "two agents in one tree clobber each other on branch switches" bugs — the shared-tree collision where one branch's checkout overlays another's uncommitted work.
+
+**Cost:** ~1-2 seconds for `git worktree add` per subagent, plus per-worktree setup (venv, node_modules) that varies by project. Acceptable in exchange for eliminating clobber bugs.
+
+There is no opt-out. The autopilot does not check a config flag before isolating. If a project's worktree setup is painfully slow, fix it at the project level (shared venv via `uv`, pnpm content-addressable store, etc.) rather than disabling isolation.
+
+**Beyond autopilot:** this rule only governs subagents *this autopilot dispatches*. Your own ad-hoc/quick changes and other parallel sessions in the same repo aren't covered here — for those, see the **`worktree-isolation`** skill (engineering-standards plugin), which keeps work made *outside* autopilot from colliding in the shared primary clone (the most common source of the very bug this rule prevents).
+
+## Pre-commit Hooks and Static Analysis
+
+If your project has pre-commit hooks (skylos, fallow, ruff, prettier, husky, etc.), see [pre-commit-compat.md](pre-commit-compat.md) for how autopilot interacts with them. Two rules with no exceptions:
+
+1. **Never** use `git commit --no-verify` to bypass hooks. If a hook fails, the subagent should report BLOCKED with the failure detail.
+2. **Suppressions are a last resort.** Drive-by `// fallow-ignore-next-line complexity`, `# skylos: ignore`, `# noqa`, `# type: ignore`, `// @ts-ignore` etc. without an adjacent `# Why:` justification will be caught by the impl-review prompt as Blocking findings. The implementer must either refactor the underlying code or write a defensible justification. See `pre-commit-compat.md` for the full discipline.

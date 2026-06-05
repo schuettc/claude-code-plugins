@@ -21,9 +21,16 @@ Invoke this skill when the user asks:
 ## Arguments
 
 `$ARGUMENTS` can be:
-- Empty — show full dashboard
-- `cat:<category>` — filter all tables to only show features matching that category (case-insensitive)
+- Empty — show full dashboard (active sections only)
+- `cat:<category>` — filter all tables to that category (case-insensitive)
+- `state:<state>` — filter to features with that state (e.g., `state:paused`)
+- `assignee:<name>` — filter to features owned by that name
+- `--archive` — include replaced and abandoned features
 - A feature ID — show details for that specific feature
+
+Filters can stack: `state:active assignee:court` shows court's active features.
+
+For filter combinations beyond what the dashboard table supports, fall back to invoking `/feature-search` with equivalent flags.
 
 ## Instructions
 
@@ -37,16 +44,25 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/shared/lib/run_dashboard.py <project_root> 
 
 If the script fails or `docs/features/` doesn't exist: "No backlog found. Use `/feature-capture` to start tracking."
 
-### Step 1.5: Apply Category Filter
+### Step 1.5: Apply Filters
 
-If `$ARGUMENTS` starts with `cat:`, extract the category name (everything after `cat:`). Filter all dashboard tables to only show features whose Category column matches (case-insensitive). Display a header: **"Filtered by category: [name]"**
+Parse `$ARGUMENTS` for filter tokens before rendering:
+
+- `cat:<value>` — keep only rows whose Category column matches (case-insensitive). Display header: **"Filtered by category: [value]"**
+- `state:<value>` — keep only rows whose State/Status column matches (case-insensitive). Display header: **"Filtered by state: [value]"**
+- `assignee:<value>` — keep only rows whose Assignee column matches (case-insensitive). Display header: **"Filtered by assignee: [value]"**
+- `--archive` — include the Archive section (replaced/abandoned features) in the output; omit it by default
+- Multiple filter tokens stack (AND logic); apply all before rendering.
 
 ### Step 2: Parse Dashboard Sections
 
-The DASHBOARD.md contains three tables:
+The DASHBOARD.md may contain the following sections (render each that is present):
 - **In Progress** - Features currently being worked on
+- **Paused** - Features that were started but are temporarily on hold
 - **Backlog** - Features waiting to start
+- **Epics** - Multi-feature initiatives grouping related work
 - **Completed** - Finished features
+- **Archive** - Superseded or abandoned features (omit unless `--archive` flag is present)
 
 ### Step 3: Format Response
 
@@ -74,10 +90,13 @@ docs/features/[id]/
 ```
 # Project Status
 
-**Summary**: 1 in progress, 4 in backlog, 3 completed
+**Summary**: 1 in progress, 1 paused, 4 in backlog, 3 completed
 
 ## In Progress
 - **Dark Mode Toggle** (P1) - Started 2024-01-18
+
+## Paused
+- **Offline Mode** (P2) - Paused 2024-01-12 (blocked: waiting on design)
 
 ## Backlog (Ready to Start)
 | Priority | Name | Effort |

@@ -20,9 +20,16 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| [feature-workflow](./feature-workflow) | Feature lifecycle with directory-based tracking, event-driven hooks, and optional automated PR reviews via Gemini/Codex in GitHub Actions | 9.2.0 |
+| [project-workflow](./project-workflow) | One-shot setup for a new repo's standards: feat → dev → main promotion model + PR CI gate, GitHub repo setup (branch protection, environments, secrets, OIDC), and the language-agnostic quality stack. `/project-init` detects current state and applies only the gaps — new or existing repos. Setup-only and disposable; pulls in the evergreen plugins as dependencies | 0.1.0 |
+| [engineering-standards](./engineering-standards) | Evergreen engineering standards consulted while writing/reviewing code: GitHub API discipline (zipball over per-file, rate-limit backoff), with automation-auth and hook-escape conventions on the way. Pure advisory, no tooling — safe to leave enabled forever | 0.1.0 |
+| [feature-workflow](./feature-workflow) | Feature lifecycle with directory-based tracking, state overlay (paused / replaced / abandoned), epic dispatch via `/feature-autopilot`, per-feature review override (external / internal / skip), event-driven hooks, and automated PR reviews via Gemini/Codex in GitHub Actions | 9.8.1 |
+| [quality-workflow](./quality-workflow) | Sister to feature-workflow for static-analysis findings. Surfaces, triages, and resolves skylos (Py) / fallow (TS) output. `/quality-verify-hook` self-tests pre-commit hooks against known-bad fixtures (catches the silently-misconfigured-hook class of bug). `/quality-audit` produces fingerprinted snapshots + diff (active counts only). `/quality-unblock` triages failing hooks; refuses bare suppressions. Plus the language-agnostic `suppression-discipline` standard | 0.3.0 |
 | [website-deployment](./website-deployment) | Guided workflow to deploy Node.js/Express apps to AWS serverless (S3 + CloudFront + Lambda + API Gateway + CDK). Analyzes your app, scaffolds infra, and deploys with step-by-step explanations | 1.0.0 |
 | [sprint-planner](./sprint-planner) | Sprint planning and team coordination for small teams (2-6 devs). Triage backlogs by deadline, assign work with self-service specs, audit specs for completeness, and generate team communication. Pairs with feature-workflow | 0.1.0 |
+
+## Bringing a project up to standard
+
+These plugins **compose** — each owns one phase of a project's life (setup → standards → quality → features → planning). For the full walkthrough of adopting them on a **new** or **existing** project, how they hand off to each other, and which one is safe to disable when its job is done, see **[ADOPTION.md](./ADOPTION.md)**.
 
 ## Plugin: feature-workflow
 

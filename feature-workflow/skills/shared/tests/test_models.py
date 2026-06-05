@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from models import FeatureStatus, FeatureContext
+from models import FeatureStatus, FeatureContext, FeatureState, _parse_bool
 
 
 class TestFeatureStatus:
@@ -292,3 +292,167 @@ name: Feature A
 
         unmet = dep_ctx.has_unmet_dependencies(all_features)
         assert unmet == []
+
+    def test_state_active_by_default(self, feature_in_backlog: Path):
+        """Features without explicit state default to active."""
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.state == FeatureState.ACTIVE
+        assert ctx.paused_reason == ""
+        assert ctx.replaced_by == ""
+        assert ctx.abandoned_reason == ""
+        assert ctx.replaces == []
+
+    def test_replaces_field(self, tmp_path: Path):
+        """The forward-direction `replaces:` field parses as a list."""
+        feature_dir = tmp_path / "docs" / "features" / "new-thing"
+        feature_dir.mkdir(parents=True)
+        (feature_dir / "idea.md").write_text("""---
+id: new-thing
+name: New Thing
+type: Feature
+priority: P1
+effort: Small
+impact: Medium
+replaces: [old-a, old-b]
+created: 2026-05-15
+---
+
+# New Thing
+""")
+        ctx = FeatureContext.from_directory(feature_dir)
+        assert ctx.replaces == ["old-a", "old-b"]
+
+    def test_state_paused(self, feature_paused: Path):
+        ctx = FeatureContext.from_directory(feature_paused)
+        assert ctx.state == FeatureState.PAUSED
+        assert ctx.paused_reason == "Waiting on vendor API access"
+
+    def test_state_replaced(self, feature_replaced: Path):
+        ctx = FeatureContext.from_directory(feature_replaced)
+        assert ctx.state == FeatureState.REPLACED
+        assert ctx.replaced_by == "new-feature"
+
+    def test_state_abandoned(self, feature_abandoned: Path):
+        ctx = FeatureContext.from_directory(feature_abandoned)
+        assert ctx.state == FeatureState.ABANDONED
+        assert ctx.abandoned_reason == "Out of scope for this quarter"
+
+    def test_is_active(self, feature_in_backlog: Path, feature_paused: Path, feature_replaced: Path):
+        assert FeatureContext.from_directory(feature_in_backlog).is_active() is True
+        assert FeatureContext.from_directory(feature_paused).is_active() is False
+        assert FeatureContext.from_directory(feature_replaced).is_active() is False
+
+    def test_is_tombstone(self, feature_in_backlog: Path, feature_replaced: Path, feature_abandoned: Path):
+        assert FeatureContext.from_directory(feature_in_backlog).is_tombstone() is False
+        assert FeatureContext.from_directory(feature_replaced).is_tombstone() is True
+        assert FeatureContext.from_directory(feature_abandoned).is_tombstone() is True
+
+    def test_is_paused(self, feature_in_backlog: Path, feature_paused: Path):
+        assert FeatureContext.from_directory(feature_in_backlog).is_paused() is False
+        assert FeatureContext.from_directory(feature_paused).is_paused() is True
+
+    def test_assignee_absent(self, feature_in_backlog: Path):
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.assignees == []
+
+    def test_assignee_single(self, feature_with_single_assignee: Path):
+        ctx = FeatureContext.from_directory(feature_with_single_assignee)
+        assert ctx.assignees == ["court"]
+
+    def test_assignee_multiple(self, feature_with_multiple_assignees: Path):
+        ctx = FeatureContext.from_directory(feature_with_multiple_assignees)
+        assert ctx.assignees == ["court", "alex"]
+
+    def test_new_relation_fields_default_empty(self, feature_in_backlog: Path):
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.epic == ""
+        assert ctx.children == []
+        assert ctx.related_to == []
+        assert ctx.parallel_safe is True
+        assert ctx.review == ""
+
+    def test_relation_fields_populated(self, feature_with_epic_and_relations: Path):
+        ctx = FeatureContext.from_directory(feature_with_epic_and_relations)
+        assert ctx.epic == "auth-overhaul"
+        assert ctx.related_to == ["sso-saml"]
+        assert ctx.parallel_safe is False
+        assert ctx.review == "internal"
+
+    def test_epic_parent_has_children(self, feature_epic_parent: Path):
+        ctx = FeatureContext.from_directory(feature_epic_parent)
+        assert ctx.type == "Epic"
+        assert ctx.children == ["user-roles", "sso-saml", "mfa-totp"]
+        assert ctx.is_epic() is True
+
+    def test_is_epic_false_for_regular_feature(self, feature_in_backlog: Path):
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.is_epic() is False
+
+    def test_effective_review_feature_override(self, feature_with_epic_and_relations: Path):
+        """A1 fixture has review: internal in frontmatter."""
+        from effective_review import ReviewMode
+        ctx = FeatureContext.from_directory(feature_with_epic_and_relations)
+        assert ctx.effective_review(project_reviewer="gemini") == ReviewMode.INTERNAL
+
+    def test_effective_review_falls_back_to_project(self, feature_in_backlog: Path):
+        """Default fixture has no review field; should defer to project."""
+        from effective_review import ReviewMode
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.effective_review(project_reviewer="gemini") == ReviewMode.EXTERNAL_GEMINI
+
+    def test_effective_review_both_absent_is_skip(self, feature_in_backlog: Path):
+        from effective_review import ReviewMode
+        ctx = FeatureContext.from_directory(feature_in_backlog)
+        assert ctx.effective_review(project_reviewer="none") == ReviewMode.SKIP
+
+
+class TestFeatureState:
+    """Tests for FeatureState enum."""
+
+    def test_state_values(self):
+        assert FeatureState.ACTIVE.value == "active"
+        assert FeatureState.PAUSED.value == "paused"
+        assert FeatureState.REPLACED.value == "replaced"
+        assert FeatureState.ABANDONED.value == "abandoned"
+
+    def test_default_is_active(self):
+        assert FeatureState.default() == FeatureState.ACTIVE
+
+    def test_parse_known_value(self):
+        assert FeatureState.parse("paused") == FeatureState.PAUSED
+        assert FeatureState.parse("ACTIVE") == FeatureState.ACTIVE  # case-insensitive
+
+    def test_parse_empty_defaults_to_active(self):
+        assert FeatureState.parse("") == FeatureState.ACTIVE
+        assert FeatureState.parse(None) == FeatureState.ACTIVE
+
+    def test_parse_unknown_defaults_to_active_and_warns(self, capsys):
+        result = FeatureState.parse("garbled")
+        assert result == FeatureState.ACTIVE
+        captured = capsys.readouterr()
+        assert "garbled" in captured.err
+
+    def test_is_tombstone(self):
+        assert FeatureState.REPLACED.is_tombstone() is True
+        assert FeatureState.ABANDONED.is_tombstone() is True
+        assert FeatureState.PAUSED.is_tombstone() is False
+        assert FeatureState.ACTIVE.is_tombstone() is False
+
+
+class TestParseBool:
+    """Tests for the _parse_bool helper."""
+
+    def test_true_values(self):
+        for v in ["true", "True", "TRUE", "yes", "1", True]:
+            assert _parse_bool(v, default=False) is True
+
+    def test_false_values(self):
+        for v in ["false", "False", "no", "0", False]:
+            assert _parse_bool(v, default=True) is False
+
+    def test_default_when_absent(self):
+        assert _parse_bool(None, default=True) is True
+        assert _parse_bool("", default=False) is False
+
+    def test_default_when_unparseable(self):
+        assert _parse_bool("garbled", default=True) is True

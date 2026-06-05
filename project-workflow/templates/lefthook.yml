@@ -1,0 +1,53 @@
+# lefthook.yml — git hooks. Install once per clone:  lefthook install
+#   brew install lefthook   (or:  npm i -D lefthook  /  go install github.com/evilmartians/lefthook@latest)
+#
+# Division of labor:
+#   pre-commit → fast AUTO-FIXERS on staged files (format, lint --fix) + the
+#                staged-file static scan. Kept fast so nobody reaches for --no-verify.
+#   pre-push   → `just verify` — the whole-project gate, IDENTICAL to what CI runs.
+#
+# The check commands themselves live in the justfile (single source of truth),
+# so local == CI. lefthook only decides *when* they run. Delete the language
+# commands you don't use; adjust the `kiosk` TS dir.
+
+pre-commit:
+  parallel: true
+  commands:
+    py-fix:
+      glob: "*.py"
+      run: uvx ruff format {staged_files} && uvx ruff check --fix {staged_files}
+      stage_fixed: true
+    js-fix:
+      glob: "*.{ts,tsx,js,jsx,json,md,css,scss,yaml,yml}"
+      run: npx --yes prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+    js-lint:
+      glob: "*.{ts,tsx,js,jsx}"
+      run: npx --yes eslint --fix {staged_files}
+      stage_fixed: true
+    # ── Static-analysis scans — the LOAD-BEARING anti-slop gates ──────────────
+    # DELETE only the language you don't have. Do NOT drop both and keep just the
+    # fixers above — that is the #1 setup mistake (pre-commit then only formats
+    # and never catches dead code / complexity / secrets). Both gate NEW findings
+    # only, so they are safe to add to a legacy repo with a large backlog: the
+    # backlog is reported, never blocks. See the "Existing / legacy repo" section
+    # of the quality-stack-setup skill.
+    skylos-scan:
+      # broad static analysis on staged code: code quality, dead code, complexity,
+      # clones, security/danger, secrets, dependencies (SCA), AI regressions.
+      # skylos `agent pre-commit` is cross-language (TS/JS/C#/JSON), not just Python.
+      glob: "*.{py,ts,tsx,js,jsx,mjs,cjs,cs,json}"
+      run: uvx skylos agent pre-commit .
+    fallow-scan:
+      # dead-code / complexity / duplication on CHANGED TS. --changed-since HEAD
+      # gates new-only; the inherited backlog is excluded (in CI use the PR base
+      # sha). Set the glob to your TS source dir(s); duplicate this block per
+      # package in a monorepo. <<TS_DIR>> is a placeholder — replace it (a wrong
+      # dir makes fallow silently scan nothing; /quality-verify-hook catches that).
+      glob: "<<TS_DIR>>/**/*.{ts,tsx}"
+      run: npx fallow audit --changed-since HEAD
+
+pre-push:
+  commands:
+    verify:
+      run: just verify   # format-check + lint + typecheck + test+coverage — same as CI

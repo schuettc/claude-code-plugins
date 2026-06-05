@@ -1,0 +1,162 @@
+$schema: ../playbook-schema.json
+tool: skylos
+version: 1
+
+# Day-1 playbook: top rule_ids observed in real now-playing skylos output.
+# Each rule maps to a list of actions the implementer (or autopilot) can take.
+# Actions are evaluated by quality-unblock; the user picks one per finding.
+#
+# kind values:
+#   fix       — refactor the code; agent_prompt is the rewrite instruction
+#   suppress  — silence the finding with `# skylos: ignore SKY-...`
+#               require_why: true means quality-unblock will demand a # Why: comment
+#   defer     — capture as a feature-workflow tech-debt epic
+#
+# Unknown rules fall through to the generic actions defined in fallback.
+
+rules:
+  # ---- Quality (SKY-Q*) ----
+
+  SKY-Q301:  # cyclomatic complexity
+    category: quality
+    actions:
+      - kind: fix
+        suggestion: "Extract helper functions for independent branches. Replace nested ifs with early returns."
+        agent_prompt: "Refactor {file}:{line} ({name}) to reduce cyclomatic complexity. Extract helpers for independent branches; flatten guards with early returns; preserve behavior. Run tests."
+      - kind: suppress
+        require_why: true
+        why_template: "Complexity intrinsic to {what} — splitting would scatter {logic} across {N} files."
+      - kind: defer
+        epic_title_template: "Reduce cyclomatic complexity in {file}"
+
+  SKY-Q302:  # nesting depth
+    category: quality
+    actions:
+      - kind: fix
+        suggestion: "Flatten with early returns (guard clauses). Extract inner blocks to named helpers."
+        agent_prompt: "Refactor {file}:{line} to use early-return pattern for guards; preserve behavior."
+      - kind: suppress
+        require_why: true
+        why_template: "Nesting is intrinsic to {domain reason}."
+      - kind: defer
+        epic_title_template: "Flatten nesting in {file}"
+
+  SKY-Q501:  # too-many-attributes (god object signal)
+    category: quality
+    actions:
+      - kind: fix
+        suggestion: "Split the container by responsibility. Look for natural seams (lifecycle, state, config)."
+        agent_prompt: "Refactor {file}:{name} to reduce attribute count. Identify cohesive subsets and extract them into separate classes. Preserve behavior."
+      - kind: suppress
+        require_why: true
+        why_template: "{name} is intentionally one container — splitting scatters mutations across the codebase for no maintainability gain."
+      - kind: defer
+        epic_title_template: "Split {name} container"
+
+  SKY-L029:  # bool positional argument
+    category: quality
+    actions:
+      - kind: fix
+        suggestion: "Make the bool parameter keyword-only via `*,`."
+        agent_prompt: "At {file}:{line}, change the bool parameter on {name} to keyword-only (`*, flag=False`). Update callers."
+      - kind: suppress
+        require_why: true
+        why_template: "Positional bool kept for {test/API stability reason}."
+
+  # ---- Dead code (SKY-D*, SKY-DEAD-*) ----
+
+  SKY-D211:  # SQL injection (false-positive prone on parameterized bulk IN)
+    category: security
+    actions:
+      - kind: fix
+        suggestion: "Use parameterized query bindings. Reject any string-built SQL."
+        agent_prompt: "At {file}:{line}, replace string-built SQL with a parameterized query. Verify the query uses driver placeholders, not interpolation."
+      - kind: suppress
+        require_why: true
+        require_severity_ack: true
+        why_template: "Query is parameterized; skylos pattern-matches on string concat without seeing the binding."
+      # No defer — SQL injection is fix-or-explicitly-accept, not backlog.
+
+  SKY-D215:  # path traversal
+    category: security
+    actions:
+      - kind: fix
+        suggestion: "Resolve and validate the path stays within an allow-list root. Reject `..` traversal."
+        agent_prompt: "At {file}:{line}, validate the path resolves inside the allowed root before any filesystem operation. Use Path.resolve() and a startswith() check against the canonical root."
+      - kind: suppress
+        require_why: true
+        require_severity_ack: true
+        why_template: "Path source is trusted: {explain provenance}."
+
+  SKY-D216:  # SSRF
+    category: security
+    actions:
+      - kind: fix
+        suggestion: "Validate the URL against an allow-list of trusted hosts and schemes before the HTTP call."
+        agent_prompt: "At {file}:{line}, wrap the HTTP call with a host allow-list check; reject untrusted schemes; reject localhost/private addresses unless explicitly permitted."
+      - kind: suppress
+        require_why: true
+        require_severity_ack: true
+        why_template: "URL source is trusted: {explain provenance}."
+
+  SKY-D324:  # symlink-following write
+    category: security
+    actions:
+      - kind: fix
+        suggestion: "Open with O_NOFOLLOW; verify the resolved path doesn't escape the intended root."
+        agent_prompt: "At {file}:{line}, open with O_NOFOLLOW and verify the resolved path is inside the intended root. Reject symlinks pointing outside."
+      - kind: suppress
+        require_why: true
+        require_severity_ack: true
+        why_template: "Write target is trusted: {explain provenance}."
+
+  # ---- Synthetic dead-code IDs (our adapter mints these from unused_* arrays) ----
+
+  SKY-DEAD-FUNCTION:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Delete the function. If it's intended as a future API, add a `# skylos: ignore SKY-DEAD-FUNCTION` with a Why: explaining the future use."
+        agent_prompt: "Delete unused function {name} at {file}:{line} and any imports of it."
+      - kind: suppress
+        require_why: true
+        why_template: "Reserved for {future use case}; will be wired up when {trigger event}."
+      - kind: defer
+        epic_title_template: "Remove dead code from {file}"
+
+  SKY-DEAD-IMPORT:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Delete the import. If it's needed for side effects, add a comment explaining."
+        agent_prompt: "Delete unused import at {file}:{line}."
+      - kind: suppress
+        require_why: true
+        why_template: "Import kept for {side-effect / type-only / re-export} purpose."
+
+  SKY-DEAD-CLASS:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Delete the class. Check for hidden uses (string-based instantiation, plugin registries) before deleting."
+      - kind: suppress
+        require_why: true
+        why_template: "Reserved for {future use}; or referenced dynamically via {mechanism}."
+
+  SKY-DEAD-VARIABLE:
+    category: dead-code
+    actions:
+      - kind: fix
+        suggestion: "Delete the variable assignment."
+        agent_prompt: "Delete unused variable {name} at {file}:{line}."
+
+# Fallback for unknown rule_ids
+fallback:
+  actions:
+    - kind: fix
+      suggestion: "Address the finding according to the tool's recommendation."
+    - kind: suppress
+      require_why: true
+      why_template: "Suppressed: {reason}."
+    - kind: defer
+      epic_title_template: "Address {rule_id} in {file}"

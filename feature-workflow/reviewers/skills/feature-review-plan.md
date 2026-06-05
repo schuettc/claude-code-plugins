@@ -80,10 +80,10 @@ Review body format:
 ### Verdict: [PASS / CONDITIONAL PASS / FAIL]
 
 ### Critical Findings
-- [Blocking gaps — ordered by severity, referencing specific plan sections]
+- [Only present under FAIL. Blocking gaps — ordered by severity, referencing specific plan sections.]
 
 ### Recommendations
-- [Non-blocking suggestions for improvement]
+- [Should-fix items. Present under any verdict. Implementer addresses these inline; no re-review needed.]
 
 ### Scope
 - [Where the plan may be expanding beyond the stated outcome]
@@ -94,6 +94,14 @@ Review body format:
 ### Areas of Concern Response
 - [Direct response to concerns flagged in the PR description]
 ```
+
+### Verdict meanings (binding)
+
+- **PASS** — Plan is great. No changes needed.
+- **CONDITIONAL PASS** — Plan is good. Recommendations should be addressed during implementation, but **no re-review needed**.
+- **FAIL** — Plan needs rework before implementation. **Implementer must revise and re-request review.**
+
+**Calibration:** Blocking findings belong ONLY under FAIL. If you list a Blocking finding, the verdict MUST be FAIL. CONDITIONAL PASS is for plans you'd merge without seeing a revision; if you wouldn't, it's FAIL.
 
 **Inline comments**: For specific plan-section issues, post inline comments:
 

@@ -51,7 +51,37 @@ Review against the full superset of concerns:
 - **Scope creep** — changes the plan did not authorize
 - **Test coverage** — risky paths without tests, weak assertions, missing failure-mode tests
 - **Maintainability** — conventions, clarity, testability, docs drift
+- **Static analysis suppressions** — see dedicated check below
 - **Areas of Concern** — whatever the PR description specifically flagged
+
+### Static analysis suppression check (mandatory)
+
+Scan the diff for added suppression directives:
+
+- `// fallow-ignore-*`
+- `# skylos: ignore SKY-*`
+- `// eslint-disable*` / `// eslint-disable-next-line`
+- `# noqa` / `# noqa: <code>`
+- `# type: ignore` / `# type: ignore[<code>]`
+- `# pylint: disable=*`
+- `// @ts-ignore` / `// @ts-expect-error`
+- Any other tool-specific suppression comment
+
+For each NEW suppression in the diff (lines starting with `+`):
+
+1. **Is there an adjacent justification?** Look for a `# Why:` / `// Why:` comment on the line above (or the same line, trailing). The justification must explain either (a) why the finding is a false positive, or (b) why a refactor would be worse than the suppression. A bare `# noqa` or `// fallow-ignore-next-line complexity` with no rationale is a drive-by.
+
+2. **Can the underlying code plausibly be refactored?** If you can sketch a one-paragraph refactor that would eliminate the finding without making the code worse, the suppression is drive-by.
+
+3. **Count.** Tally all new suppressions in the diff. **More than 2 in a single PR** is a strong signal the refactor pass was skipped or the feature is doing too much.
+
+**Drive-by suppressions are Blocking findings** (verdict FAIL). The required fix is one of:
+- Refactor the code to eliminate the finding, OR
+- Add a `# Why:` / `// Why:` comment that defensibly explains why the suppression is the right call.
+
+If the diff adds zero suppressions, this check passes silently — don't add a Recommendation about it.
+
+Legitimate suppressions (genuinely false positives, deliberately consolidated state containers, parameterized SQL the linter mis-pattern-matches) have written justifications and will pass this check. The rule is **no drive-by silencing**, not "ban all suppressions."
 
 ## Step 4: Output the Review
 
@@ -70,10 +100,10 @@ Template:
 One or two sentences — what you reviewed and the overall read.
 
 ### Critical Findings
-- [Blocking issues — ordered by severity, with file:line references]
+- [Only present under FAIL. Blocking issues — ordered by severity, with file:line references.]
 
 ### Recommendations
-- [Non-blocking should-fix items]
+- [Should-fix items. Present under any verdict. The implementer addresses these inline or in a follow-up; no re-review needed.]
 
 ### Plan Drift / Scope
 - [Where implementation diverges from plan.md, if anywhere]
@@ -85,13 +115,20 @@ One or two sentences — what you reviewed and the overall read.
 - [Direct response to concerns flagged in the PR description]
 ```
 
-### Verdict meanings (for the human reader — no workflow gating)
+### Verdict meanings (binding rules — pick exactly one)
 
-- **PASS** — No critical issues. Implementation is solid and matches the plan. Residual risks noted but not blocking.
-- **CONDITIONAL PASS** — Minor issues or recommendations that should be addressed but don't block merge.
-- **FAIL** — Critical issues that must be resolved before the feature can ship.
+- **PASS** — The implementation is great. No changes needed. Recommendations and Residual Risks may be noted for context but the code can ship as-written.
+- **CONDITIONAL PASS** — The implementation is good. Recommendations should be addressed (either in this PR before merge or as a follow-up), but **no re-review is needed**. The implementer is trusted to handle them.
+- **FAIL** — The implementation needs rework before it can ship. **The implementer must revise the code and re-request review.**
 
-The verdict is advisory. The workflow posts your review as a comment regardless — it does not approve, request changes, or block the PR. Humans read the verdict and decide.
+**Calibration rules (read before picking a verdict):**
+
+1. **Blocking findings belong ONLY in `### Critical Findings` under FAIL.** If you write a Blocking finding, the verdict MUST be FAIL. If your verdict is PASS or CONDITIONAL PASS, the `### Critical Findings` section MUST be absent or empty.
+2. **CONDITIONAL PASS is for diffs you would be willing to merge without seeing a revision.** If you would not merge without seeing the fix, the verdict is FAIL.
+3. **Should-fix items go in `### Recommendations` under any verdict.** Recommendations are an inline TODO list for the implementer; they don't gate the verdict.
+4. **There is no in-between.** "I want them to fix this but I don't need to see it again" = CONDITIONAL PASS with a Recommendation. "I want them to fix this and show me the fix" = FAIL with a Critical Finding.
+
+The verdict is advisory at the workflow level (the comment posts either way), but downstream tooling — the autopilot's `wait-for-review.sh`, the `--respond` flow — branches on it. PASS / CONDITIONAL PASS advance the work; FAIL triggers a respond cycle.
 
 ## Signal Over Noise (read before writing findings)
 

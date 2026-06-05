@@ -97,6 +97,10 @@ The script reads the existing reviewer from `.feature-workflow.yml` and refreshe
 
 It does **not** touch `.feature-workflow.yml`, the API key secret, `docs/features/`, or any feature documents. After it finishes, commit and push the refreshed files to the default branch so the new workflow is live.
 
+> **`--update` overwrites the workflow YAML unconditionally.** If you've customized `.github/workflows/feature-review.yml` locally, those edits will be replaced by the current template. Diff before committing if you have local customizations.
+
+> **When to run `--update`:** any time you upgrade the feature-workflow plugin. The workflow template carries bug fixes (e.g., v9.7.3 added a `concurrency:` block that prevents duplicate review comments) that only reach your project via this refresh. Plugin upgrade alone does NOT propagate to your `.github/`.
+
 ## Step 4: Confirm
 
 ```

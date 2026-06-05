@@ -20,6 +20,12 @@ $ARGUMENTS
 
 If the plan doesn't exist, suggest running `/feature-workflow:feature-plan` first.
 
+### State Guard
+
+Read `idea.md` `state:` field. If state is `paused`, `replaced`, or `abandoned`, stop and tell the user the same way `/feature-plan` does. Do NOT continue with implementation steps.
+
+Tracking-progress edits to plan.md are allowed for paused features — that's a deliberate exception so completed steps can be checked off when work resumes. The block is on starting *new* implementation work.
+
 ## Step 2: Set Context
 
 Set the statusline so the user can see which feature is active:

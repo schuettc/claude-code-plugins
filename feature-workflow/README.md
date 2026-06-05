@@ -6,6 +6,40 @@ A Claude Code plugin for feature lifecycle management using a directory-based ar
 
 ## What's New
 
+### 9.8.1 — Suppression discipline
+- **Drive-by static-analysis suppressions now FAIL impl-review** — the reviewer prompt scans diffs for newly-added `// fallow-ignore-*`, `# skylos: ignore`, `# noqa`, `# type: ignore`, `// @ts-ignore`, etc. Without an adjacent `# Why:` justification, they're Blocking findings (FAIL verdict → autopilot enters the respond loop). Legitimate suppressions (false positives, parameterized SQL, deliberately-coalesced state) with written justifications pass.
+- **`pre-commit-compat.md`** documents the rule: suppressions are a last resort. Try-to-fix-first, justify if you can't, cap at 2 new suppressions per PR.
+
+### 9.8.0 — Epic Dispatch (Plan 3)
+- **`/feature-autopilot <epic-id>` walks the children to completion.** Sequential by default; `--parallel` for concurrent waves with a cap of 3 simultaneous subagents.
+- **Bidirectional `epic:` ↔ `children:` sync** via `sync_epics.py` in the post-write hook. Same pattern as `replaces:` from v9.7.2 — set one direction and the other follows on the next save.
+- **`compute_dispatch_waves(epic_id, features)`** topo-sorts children into parallel-safe waves. Skips shipped / tombstoned / paused children automatically. Order within a wave matches the epic's `children:` array.
+- **Validation warning** for `type: Epic` features with empty `children:` (the dispatcher refuses, the dashboard surfaces it).
+
+### 9.7.3 — Autopilot hardening
+- **Pre-flight check** — `check-base-sync.sh` refuses to start a feature branch if local `<base>` is ahead/behind/diverged from `origin/<base>`. Catches the "parallel Claude Code session left unpushed commits" failure mode.
+- **Mandatory worktree isolation on every dispatch** — every subagent the autopilot spawns for git work runs with `isolation: "worktree"`. No opt-out. Removes the entire class of clobber bugs where two agents in one tree overwrite each other on branch switches.
+- **Workflow YAML `concurrency: cancel-in-progress`** per PR — prevents the duplicate-review-comment pattern where one plan got six review runs (including two AFTER a clean PASS).
+- **Label-removal timing** — autopilot removes the active review label immediately after a PASS, before any subsequent push. Label swap from `plan-review` → `impl-review` is now two separate `gh pr edit` calls with `sleep 3` between.
+- **`pre-commit-compat.md`** — guidance for projects using skylos/fallow/ruff/prettier/husky; reinforces the `--no-verify` ban.
+
+### 9.7.2 — Replaced/replacedBy rename + auto-sync
+- **`superseded` → `replaced` rename** — `state: replaced`, `replacedBy:` (singular reverse), and a new `replaces: [a, b]` forward field on the new feature.
+- **`sync_replaces.py` hook** auto-sets `state: replaced` and `replacedBy: <new>` on each target when a new feature declares `replaces:`.
+- **Unknown-key validation** — dashboard warns on unrecognized frontmatter keys (catches typos like the original `supersedes:` confusion).
+- **Verdict-language tightening** — `CONDITIONAL PASS` cannot contain Blocking findings; Blocking → FAIL.
+
+### 9.7.1 — Internal review path
+- **Per-feature `review:` override** — `review: external | internal | skip` in `idea.md` frontmatter overrides the project default.
+- **Internal review** dispatches a same-session subagent loaded with the same `templates/review-prompt-{plan,impl}.md` the CI reviewers use, captures the verdict, and posts it as a PR comment. From `wait-for-review.sh`'s perspective, indistinguishable from a CI comment.
+
+### 9.7.0 — Foundations (state, assignee, search, dependencies)
+- **State overlay** — `state: active | paused | replaced | abandoned` in `idea.md`, orthogonal to lifecycle. New `/feature-state` skill manages transitions with required companion fields.
+- **Assignee** — `assignee: court` or `assignee: [court, alex]` in frontmatter; surfaced in dashboard columns and searchable.
+- **`/feature-search`** with filters: `--state`, `--assignee`, `--epic`, `--depends-on`, `--archive`.
+- **Stronger dependency markers** — `relatedTo: [c, d]` (soft link), `parallelSafe: true | false`. Stored `blockedBy:` is deprecated; the dashboard computes it dynamically from the graph.
+- **Dashboard sections** — Paused, Archive (collapsed), Epics rollup, Validation Warnings (cycles, unknown refs, unknown frontmatter keys).
+
 ### 9.2.3 — Comment-only CI reviews
 - **Simplified CI posting** — `post-review.sh` now posts reviewer output as a plain `gh pr comment` instead of parsing a VERDICT prefix to map to `--approve`/`--request-changes`. The VERDICT/inline-comments JSON protocol was too fragile — Gemini intermittently truncated before the VERDICT line, and inline comments frequently failed with HTTP 422 when the reviewer cited lines outside the diff. Reviews are advisory anyway.
 - **Human-readable verdict** — review prompts still include a `### Verdict: PASS / CONDITIONAL PASS / FAIL` heading in the markdown body for humans to scan. No machine parsing required.
@@ -132,6 +166,109 @@ Evidence-based runtime verification for a completed or in-progress feature. Inje
 
 #### `/feature-troubleshoot`
 Structured problem-definition → hypothesis → investigation → resolution → verification flow for bugs found in a shipped feature. Good for "this isn't working and I don't know why" situations.
+
+## Feature States and Relations
+
+Beyond the file-presence lifecycle (`idea.md` → `plan.md` → `shipped.md`), features carry an orthogonal **state** field in `idea.md` frontmatter:
+
+| State | Meaning | Shown in |
+|---|---|---|
+| `active` (default) | Normal lifecycle | Backlog / In Progress / Completed |
+| `paused` | Work started, blocked on something external | Paused section |
+| `replaced` | Replaced by another feature (one-shot tombstone) | Archive (collapsed) |
+| `abandoned` | Decided not to pursue | Archive (collapsed) |
+
+Manage states with `/feature-state`:
+
+```
+/feature-state <id> paused --reason "Waiting on vendor"
+/feature-state <id> replaced --replaced-by <new-id>
+/feature-state <id> abandoned --reason "Out of scope"
+/feature-state <id> active                            # resume
+```
+
+### Assignee
+
+Add `assignee:` to `idea.md` frontmatter to track ownership. Single (`assignee: court`) or multiple (`assignee: [court, alex]`).
+
+### Stronger Dependency Markers
+
+| Field | Meaning |
+|---|---|
+| `dependsOn: [a, b]` | Hard blockers — must be completed before this can start |
+| `relatedTo: [c, d]` | Soft links — informational only |
+| `parallelSafe: true/false` | Can this run alongside siblings? Default `true` |
+
+The dashboard computes `blockedBy` dynamically from the graph; you no longer need to maintain it manually. Cycles and unknown references show up as Validation Warnings on the dashboard.
+
+### Search
+
+Find features across all filters:
+
+```
+/feature-search --state paused
+/feature-search --assignee court
+/feature-search --epic auth-overhaul        # Epic concept in v9.7 (Plan 3)
+/feature-search --depends-on user-roles
+/feature-search --archive                   # include replaced + abandoned
+```
+
+## Per-Feature Review Override
+
+By default, every feature uses the project-wide `reviewer:` setting from `.feature-workflow.yml`. For one-off needs, individual features can override this in their `idea.md` frontmatter:
+
+```yaml
+review: external   # use the project's configured CI reviewer
+review: internal   # run an in-session review subagent and post the result as a PR comment
+review: skip       # no review at all (rare; doc fixes, typo corrections)
+```
+
+Precedence: per-feature `review:` wins if set; otherwise the project default applies; if both are absent, the feature ships without review.
+
+**Internal review** dispatches a same-session subagent with the same prompt the external CI reviewers use (`templates/review-prompt-{plan,impl}.md`), and posts the verdict as a normal PR comment. The autopilot, respond flow, and verdict classifier work identically across external and internal — the only difference is who runs the prompt.
+
+**Skip** is for changes where review would be ceremonial — pure typo fixes, README tweaks, etc. Use sparingly; the audit trail is real value.
+
+## Epic Dispatch
+
+Multi-feature initiatives can be coordinated as an Epic. The epic is a feature with `type: Epic` and a `children:` list:
+
+```yaml
+# docs/features/auth-overhaul/idea.md
+---
+id: auth-overhaul
+name: Auth Overhaul
+type: Epic
+priority: P0
+children: [user-roles, sso-saml, mfa-totp]
+---
+```
+
+Each child references the epic:
+
+```yaml
+# docs/features/user-roles/idea.md
+---
+id: user-roles
+type: Feature
+epic: auth-overhaul
+---
+```
+
+The post-write hook auto-syncs both directions — write `epic:` on a child and the epic's `children:` updates, or vice versa. You don't have to maintain both manually.
+
+Run `/feature-autopilot auth-overhaul` and the dispatcher walks the children in topo order, running each via its own subagent. Sequential by default; pass `--parallel` to run independent children concurrently.
+
+```
+/feature-autopilot auth-overhaul             # sequential (default)
+/feature-autopilot auth-overhaul --parallel  # parallel waves where deps allow
+```
+
+Every dispatched subagent runs in its own worktree (`isolation: "worktree"`) — no shared-tree collisions, no PR-identity confusion. Concurrency cap in parallel mode is 3.
+
+When the last non-skipped child ships, the dispatcher offers to write the epic's `shipped.md`. Decline to keep the epic open.
+
+See [skills/feature-autopilot/epic-dispatch.md](skills/feature-autopilot/epic-dispatch.md) for the full procedure.
 
 ## Automated PR Reviews
 
