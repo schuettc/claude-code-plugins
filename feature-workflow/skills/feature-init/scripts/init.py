@@ -363,7 +363,11 @@ def main() -> int:
     print(f"  PRs target:    {args.target}")
 
     if args.reviewer != "none":
-        secret_name = "GOOGLE_API_KEY" if args.reviewer == "gemini" else "OPENAI_API_KEY"
+        secret_name = {
+            "gemini": "GOOGLE_API_KEY",
+            "codex": "OPENAI_API_KEY",
+            "oci": "OCI_GENAI_API_KEY",
+        }.get(args.reviewer, "OPENAI_API_KEY")
         print("")
         print("  CI Review:     .github/workflows/feature-review.yml")
         print(f"  API Secret:    {secret_name}")

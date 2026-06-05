@@ -15,6 +15,9 @@ set -uo pipefail
 : "${MODEL:?MODEL not set}"
 : "${PR_NUMBER:?PR_NUMBER not set}"
 : "${PROMPT_FILE:?PROMPT_FILE not set}"
+# Optional under set -u (always present on pull_request events; default for safety).
+HEAD_REF="${HEAD_REF:-}"
+BASE_REF="${BASE_REF:-main}"
 
 DIFF="$(gh pr diff "$PR_NUMBER" --patch 2>/dev/null | head -c 250000)"
 
