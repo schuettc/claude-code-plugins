@@ -44,7 +44,10 @@ gh api "repos/{owner}/{repo}/pulls?state=open&per_page=100" \
    ```bash
    git status --porcelain
    ```
-3. If there are changes, commit:
+3. If there are changes, commit with a Conventional Commits message (`feat`/`fix`
+   for code, `docs` for doc-only changes) — do NOT use `implement(...)` or any
+   other non-conventional verb; the `commit-msg` hook will reject it. See
+   [../shared/commit-conventions.md](../shared/commit-conventions.md).
    ```bash
    git commit -m "feat(<id>): submit implementation for review"
    ```
