@@ -16,6 +16,7 @@ You are executing the **SHIP FEATURE** workflow — writing the completion recor
 |---------|---------|----------|
 | `branch.prefix` | `feature/` | Branch naming: `<prefix><id>` |
 | `branch.target` | `dev` | Merge target, checkout after merge |
+| `merge_method` | `merge` | How Phase 4 merges the PR: `squash` / `merge` / `rebase` |
 
 Throughout this skill, replace `feature/<id>` with `<prefix><id>` and `dev` with `<target>` based on the config.
 
@@ -136,11 +137,14 @@ PRs are opened as non-draft (since v9.5.2), so no draft → ready conversion is 
 
 1. Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
 2. **If you encounter a draft PR (legacy / opened externally):** convert with `gh pr ready <pr-number>` once. This is a GraphQL mutation, used at most once per stuck PR. Don't retry on rate-limit failure — wait for the GraphQL window to reset (`gh api rate_limit --jq '.resources.graphql.reset'`).
-3. Merge the PR via REST and delete the branch:
+3. Merge the PR via REST and delete the branch. Use the `merge_method` read from
+   `.feature-workflow.yml` (default `merge` if unset). For example maxwell sets
+   `merge_method: squash` so features land as one clean commit on `dev`:
    ```bash
+   # <merge_method> = the merge_method from .feature-workflow.yml (squash | merge | rebase; default merge)
    gh api "repos/{owner}/{repo}/pulls/<pr-number>/merge" \
      --method PUT \
-     --field merge_method=merge
+     --field merge_method=<merge_method>
 
    # Delete the remote branch (REST):
    gh api "repos/{owner}/{repo}/git/refs/heads/feature/<id>" --method DELETE
