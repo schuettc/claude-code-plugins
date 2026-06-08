@@ -16,6 +16,13 @@ on:
   pull_request:
     types: [labeled, synchronize]
 
+# Cancel in-progress runs for the same PR; the latest event wins.
+# Prevents duplicate review comments from interleaving label-swap +
+# synchronize events. Matches the gemini/codex reviewer templates.
+concurrency:
+  group: feature-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 env:
   GH_TOKEN: ${{ github.token }}
 

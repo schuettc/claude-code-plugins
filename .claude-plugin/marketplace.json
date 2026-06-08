@@ -20,7 +20,7 @@
       "name": "feature-workflow",
       "source": "./feature-workflow",
       "description": "Feature lifecycle management with state, search, epic dispatch, and review gates. Capture ideas, plan, and ship as files (idea.md → plan.md → shipped.md) with orthogonal state (active/paused/replaced/abandoned). Single-feature autopilot and parallel-wave epic dispatch — every subagent in its own worktree. Per-feature review override (external Gemini/Codex CI / internal subagent / skip). Auto-generated DASHBOARD.md with Paused, Epics, and Validation Warnings sections. Multi-repo workspaces: an aggregated cross-repo dashboard, cross-repo epics, contract-edit warnings, and coordinated producer-first deploy.",
-      "version": "9.12.0"
+      "version": "9.12.1"
     },
     {
       "name": "website-deployment",
