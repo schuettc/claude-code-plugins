@@ -22,6 +22,7 @@ Read the current repo's state quickly:
   - Node/TS → `package.json` (and `tsconfig.json` for a real TS project; a handful of stray `.ts` files with no `package.json` are scripts/templates, **not** a project — don't wire TS tooling for them).
   - Note the **layout**: is there a root manifest, or does the code live in subdirs (monorepo / plugin-style)? This decides where the quality stack points (see Finding-3 handling in `quality-stack-setup`).
 - **Deployability** — does anything actually deploy? Look for IaC (`cdk.json`, `*.tf`, `serverless.yml`, `Dockerfile` + a host), a deploy script, or existing deploy workflows. **If nothing deploys, this is a library / CLI / docs / plugin-marketplace repo** → apply the branch model + CI gate, and **skip** `deploy-{dev,prod}.yml`, environments, secrets, and OIDC entirely.
+- **Multi-repo?** Check for `.feature-workspace.yml` at the root (already a workspace) — and if absent, consider whether this repo is meant to *coordinate several interconnected repos in one org* (the user is setting up a hub, the repo is near-empty but the org has related repos, or they say so). A **workspace** is a thin coordination repo with member repos nested as independent clones; it's scaffolded by `feature-init --workspace`, not by hand. If it's a workspace (or should be), offer the multi-repo on-ramp (Step 2 menu → Step 3 section). An ordinary single repo skips all of this.
 
 Report what you found before asking anything. Don't apply patterns that are already in place, and don't propose deploy machinery for a repo with nothing to deploy.
 
@@ -34,6 +35,9 @@ Use AskUserQuestion with one multi-select question covering only the *missing* p
 | Branch promotion model (`dev` + CI gate; **+ deploy workflows only if the repo deploys**) | `branch-promotion-model` | `github-workflows/ci.yml` always; `deploy-{dev,prod}.yml` only if deployable |
 | GitHub repo setup — branch protection always; **environments/secrets/OIDC only if deployable** | `github-repo-setup` | none — `gh` commands |
 | Quality stack (lefthook hooks + justfile, shared with CI) | `quality-stack-setup` | `justfile`, `lefthook.yml` (+ `fallowrc.example.json` if TS) |
+| Multi-repo workspace scaffolding (coordinate several repos as one) — **only if this is/should be a workspace** | `feature-workflow:feature-init --workspace` | `.feature-workspace.yml`, `.gitignore`, `.claude/settings.json`, `CLAUDE.md`, `scripts/clone-members.sh` |
+
+The **multi-repo workspace** row is independent of the others: it's the on-ramp for `feature-workflow`'s cross-repo model, not a per-repo standard. Offer it only when Step 1 found (or the user wants) a workspace. The branch model + CI gate + quality stack still apply — to the workspace repo itself, and separately to each member (run `/project-init` inside a member).
 
 **If the repo deploys:** the promotion model and repo setup are paired — the deploy workflows reference `environment:` / `secrets.*` that repo setup creates, so recommend them together or the first deploy fails. **If it doesn't deploy** (library/CLI/docs/marketplace — per the Step 1 deployability probe): offer only `dev` + `ci.yml` + branch protection; do **not** propose `deploy-{dev,prod}.yml`, environments, secrets, or OIDC.
 
@@ -77,6 +81,23 @@ Load the `quality-stack-setup` skill for the full rationale. The model: a **`jus
 5. Confirm `ci.yml` is present and runs `just verify` (it's installed with the promotion model) — that's the unbypassable backstop and the parity anchor. It must be a **required status check** (see the GitHub repo setup section).
 6. Suggest adding to project `CLAUDE.md`: a "Quality stack" section — lefthook runs fixers on commit + `just verify` on push; CI runs the same; no `--no-verify`; suppressions need an inline rationale (point at the `suppression-discipline` skill).
 
+### Multi-repo workspace scaffolding
+
+**Only when Step 1 found (or the user wants) a workspace** — a coordination repo for several interconnected repos. This is **not** a per-repo standard; it's the on-ramp for the multi-repo model in `feature-workflow`. Skip it for an ordinary single repo.
+
+The model: a thin **workspace** repo holds the coordination files; each member repo is nested inside it as an **independent, gitignored clone** (not a submodule). You launch Claude at the workspace root, so cross-repo edits never prompt, yet each member stays its own git repo. Full day-to-day model: `feature-workflow/skills/shared/workspace.md`.
+
+1. **Scaffold it — don't hand-write the manifest.** Run the feature-workflow scaffolder:
+   ```bash
+   /feature-workflow:feature-init --workspace --org <org> \
+     --member <dir>=<owner/repo> --member <dir>=<owner/repo>
+   ```
+   This writes `.feature-workspace.yml` (manifest + workspace identity), a `.gitignore` that ignores the member clones (while **keeping the shared `.claude/settings.json` tracked**), `.claude/settings.json` allowlisting `git -C *` / `gh -R *` so member ops never prompt, a `CLAUDE.md` topology skeleton, the workspace's own `.feature-workflow.yml` (targets `main`), and `scripts/clone-members.sh`.
+2. **Pull the members in:** `bash scripts/clone-members.sh` clones every member listed in the manifest into the workspace tree (idempotent — skips ones already present).
+3. **Fill in the topology** (optional; edit `.feature-workspace.yml`, the scaffolder leaves commented examples): `contracts:` (producer → consumers — drives the contract-edit warning) and `deploy:` (ordered producer-first — drives `/feature-deploy`).
+4. **Apply standards to the right place.** The branch model + CI gate + quality stack apply to the **workspace coordination repo itself** (its own commits), and **separately to each member** — run `/project-init` *inside* a member to bring it up to standard. The workspace's `.feature-workflow.yml` already targets `main`; each member keeps its own `dev` → `main` model.
+5. **Hand off:** point the user at `feature-workflow/skills/shared/workspace.md` — how single-member features (`cd <member>`), cross-repo epics (`repo:id` children), contracts, and coordinated deploy work from here.
+
 ### Verify and hand off (do this whenever the quality stack was installed)
 
 The install is not done until the hooks are *proven to fire*:
@@ -90,6 +111,7 @@ The install is not done until the hooks are *proven to fire*:
 - List what was applied (path of each file written + edited).
 - List what still needs the user's manual customization (with the specific TODOs).
 - Note the cross-plugin next steps that were handed off (`/quality-verify-hook`, `/quality-audit`, and `/feature-init` if they want feature tracking — see the repo's top-level `ADOPTION.md` for the full sequence).
+- **If a workspace was scaffolded:** note the next moves — `bash scripts/clone-members.sh` to pull members in, fill `contracts:`/`deploy:` in the manifest, run `/project-init` inside each member, and read `feature-workflow/skills/shared/workspace.md`.
 - Suggest the next concrete action: typically "create a `chore/project-standards` branch, commit these, PR it into `main` to bring the standards in."
 - Once setup is complete and verified, mention that `project-workflow` is a setup plugin — they can disable it for this repo via `/plugin` if they don't want `/project-init` lingering (the evergreen standards live in the other plugins, which stay enabled).
 
