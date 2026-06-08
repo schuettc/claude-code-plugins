@@ -6,7 +6,12 @@ manifest, not its name. Written by `feature-init --workspace`.
 """
 
 import json
+import re
 from pathlib import Path
+
+# Matches a member entry `- { dir: engine, repo: owner/engine }` in the manifest.
+# The commented contract/deploy examples lack the `, repo:` tail, so they're skipped.
+_MEMBER_RE = re.compile(r"dir:\s*([\w.-]+)\s*,\s*repo:\s*([\w./-]+)")
 
 MANIFEST_TEMPLATE = """\
 # .feature-workspace.yml — multi-repo workspace manifest.
@@ -101,6 +106,26 @@ for m in re.finditer(r"dir:\s*([\w.-]+)\s*,\s*repo:\s*([\w./-]+)", text):
   gh repo clone "$repo" "$dir" 2>/dev/null || git clone "git@github.com:$repo.git" "$dir"
 done
 """
+
+
+def is_workspace(root: Path) -> bool:
+    """True if `root` is a multi-repo workspace (carries a manifest)."""
+    return (Path(root) / ".feature-workspace.yml").exists()
+
+
+def load_members(workspace_root: Path) -> list[dict]:
+    """Return the member ``{dir, repo}`` entries from the workspace manifest.
+
+    Returns an empty list when there is no manifest, so callers can treat a
+    plain repo and a workspace uniformly.
+    """
+    manifest = Path(workspace_root) / ".feature-workspace.yml"
+    if not manifest.exists():
+        return []
+    return [
+        {"dir": m.group(1), "repo": m.group(2)}
+        for m in _MEMBER_RE.finditer(manifest.read_text())
+    ]
 
 
 def _members_block(members: list[dict]) -> str:

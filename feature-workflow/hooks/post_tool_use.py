@@ -165,6 +165,26 @@ def main() -> int:
     except Exception as e:
         print(f"[hook] Warning: Dashboard regeneration error: {e}", file=sys.stderr)
 
+    # If this feature lives inside a member of a multi-repo workspace, also
+    # refresh the workspace's aggregated dashboard. Walk up from project_root
+    # for the nearest ancestor carrying a `.feature-workspace.yml` manifest.
+    workspace_root = None
+    ancestor = Path(project_root).resolve()
+    for candidate in [ancestor, *ancestor.parents]:
+        if (candidate / ".feature-workspace.yml").exists():
+            workspace_root = candidate
+            break
+    if workspace_root is not None and str(workspace_root) != str(ancestor):
+        try:
+            subprocess.run(
+                [sys.executable, str(dashboard_script), str(workspace_root)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except Exception as e:
+            print(f"[hook] Warning: Workspace dashboard regeneration error: {e}", file=sys.stderr)
+
     # Return context to Claude about what happened
     if dashboard_updated:
         output = {
