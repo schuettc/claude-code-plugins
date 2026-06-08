@@ -20,9 +20,9 @@ Then install any plugin:
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| [project-workflow](./project-workflow) | One-shot setup for a new repo's standards: feat → dev → main promotion model + PR CI gate, GitHub repo setup (branch protection, environments, secrets, OIDC), and the language-agnostic quality stack. `/project-init` detects current state and applies only the gaps — new or existing repos. Setup-only and disposable; pulls in the evergreen plugins as dependencies | 0.1.0 |
+| [project-workflow](./project-workflow) | One-shot setup for a new repo's standards: feat → dev → main promotion model + PR CI gate, GitHub repo setup (branch protection, environments, secrets, OIDC), and the language-agnostic quality stack. `/project-init` detects current state and applies only the gaps — new or existing repos — plus a multi-repo workspace on-ramp. Setup-only and disposable; pulls in the evergreen plugins as dependencies | 0.2.0 |
 | [engineering-standards](./engineering-standards) | Evergreen engineering standards consulted while writing/reviewing code: GitHub API discipline (zipball over per-file, rate-limit backoff), with automation-auth and hook-escape conventions on the way. Pure advisory, no tooling — safe to leave enabled forever | 0.1.0 |
-| [feature-workflow](./feature-workflow) | Feature lifecycle with directory-based tracking, state overlay (paused / replaced / abandoned), epic dispatch via `/feature-autopilot`, per-feature review override (external / internal / skip), event-driven hooks, and automated PR reviews via Gemini/Codex/OCI in GitHub Actions | 9.9.0 |
+| [feature-workflow](./feature-workflow) | Feature lifecycle with directory-based tracking, state overlay (paused / replaced / abandoned), epic dispatch via `/feature-autopilot`, per-feature review override (external / internal / skip), event-driven hooks, and automated PR reviews via Gemini/Codex/OCI in GitHub Actions. Scales to multi-repo workspaces: aggregated cross-repo dashboard, cross-repo epics, contract-edit warnings, and coordinated producer-first deploy (`/feature-deploy`) | 9.11.0 |
 | [quality-workflow](./quality-workflow) | Sister to feature-workflow for static-analysis findings. Surfaces, triages, and resolves skylos (Py) / fallow (TS) output. `/quality-verify-hook` self-tests pre-commit hooks against known-bad fixtures (catches the silently-misconfigured-hook class of bug). `/quality-audit` produces fingerprinted snapshots + diff (active counts only). `/quality-unblock` triages failing hooks; refuses bare suppressions. Plus the language-agnostic `suppression-discipline` standard | 0.3.0 |
 | [website-deployment](./website-deployment) | Guided workflow to deploy Node.js/Express apps to AWS serverless (S3 + CloudFront + Lambda + API Gateway + CDK). Analyzes your app, scaffolds infra, and deploys with step-by-step explanations | 1.0.0 |
 | [sprint-planner](./sprint-planner) | Sprint planning and team coordination for small teams (2-6 devs). Triage backlogs by deadline, assign work with self-service specs, audit specs for completeness, and generate team communication. Pairs with feature-workflow | 0.1.0 |
@@ -37,6 +37,7 @@ Structured feature development from idea to production, with draft-PR review gat
 
 **Setup:**
 - `/feature-init` — one-time project setup. Choose a reviewer (gemini / codex / none), drop in an API key, and the skill writes the workflow, prompts, and `post-review.sh` to `.github/`, uploads the secret, and enables bot PR approvals.
+- `/feature-init --workspace` — scaffold a **multi-repo workspace** (coordinate several interconnected repos in one org as one). See [Multi-repo workspaces](#multi-repo-workspaces) below.
 
 **Lifecycle:**
 - `/feature-capture` — capture a feature idea to `docs/features/<id>/idea.md`
@@ -57,6 +58,18 @@ Structured feature development from idea to production, with draft-PR review gat
 ```
 
 See [feature-workflow/README.md](./feature-workflow/README.md) for full documentation.
+
+### Multi-repo workspaces
+
+When several repos in one org are developed together, set up a **workspace** — a thin coordination repo with each member nested inside it as an independent, gitignored clone (not a submodule). Launch Claude at the workspace root: every member is in the tree, so cross-repo edits never prompt, yet each member stays its own git repo.
+
+- **Set it up:** `/feature-init --workspace --org <org> --member <dir>=<owner/repo> …` (or let `/project-init` offer the on-ramp).
+- **Single-member feature** → `cd <member>` and use the normal flow.
+- **Cross-repo feature** → an **epic** in the workspace, one child per member (`repo:id`); `/feature-autopilot <epic>` dispatches each child into its member.
+- **Contracts** drive producer-edit warnings; **deploy groups** drive `/feature-deploy` (producer-first).
+- The dashboard auto-aggregates across the workspace and all members.
+
+Day-to-day model: [`feature-workflow/skills/shared/workspace.md`](./feature-workflow/skills/shared/workspace.md). Design: [`docs/designs/2026-06-08-multi-repo-workspace.md`](./docs/designs/2026-06-08-multi-repo-workspace.md).
 
 ## Plugin: website-deployment
 
