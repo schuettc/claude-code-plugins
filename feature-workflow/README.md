@@ -1,10 +1,20 @@
 # Feature Workflow Plugin
 
-**Version:** 9.9.0
+**Version:** 9.11.0
 
-A Claude Code plugin for feature lifecycle management using a directory-based architecture with event-driven hooks. Capture feature ideas, plan implementations, and ship features through a review-gated pipeline — optionally with automated PR reviews from an external AI (Gemini or Codex) via GitHub Actions.
+A Claude Code plugin for feature lifecycle management using a directory-based architecture with event-driven hooks. Capture feature ideas, plan implementations, and ship features through a review-gated pipeline — optionally with automated PR reviews from an external AI (Gemini or Codex) via GitHub Actions. Scales to **multi-repo workspaces** — coordinate several interconnected repos in one org as if they were one (see [Multi-repo workspaces](#multi-repo-workspaces)).
 
 ## What's New
+
+### 9.11.0 — Multi-repo workspaces: cross-repo epics, contracts, coordinated deploy
+- **Aggregated workspace dashboard** — in a workspace (a root with `.feature-workspace.yml`), the dashboard hook auto-detects the manifest and writes a cross-repo roll-up: per-repo counts plus combined In Progress / Backlog / Epics across the workspace and every member. Editing a member feature also refreshes the workspace aggregate (walk-up in the hook).
+- **Cross-repo epics** — an epic's `children:` use namespaced `repo:id` refs (e.g. `engine:engine-api`), and `dependsOn:` uses the same form for cross-repo prerequisites. `build_workspace_by_id()` feeds the existing `compute_dispatch_waves`, so producer-first wave ordering works unchanged — each child autopilots inside its own member repo.
+- **Contract-edit warning** — declare standing `contracts:` (producer → consumers) in the manifest; editing a producer member surfaces a one-time warning (marker-deduped per member) steering contract reshapes into a producer-first epic.
+- **`/feature-deploy [<epic-id>]`** — coordinated deploy that walks the manifest's `deploy:` groups in producer-first order, preflighting and gating each member before the next.
+- **`shared/workspace.md`** documents the day-to-day model; linked from capture / autopilot / ship.
+
+### 9.10.0 — Workspace scaffolder
+- **`/feature-init --workspace --org <org> --member <dir>=<owner/repo> …`** scaffolds a multi-repo workspace: a `.feature-workspace.yml` manifest, a `.gitignore` that nests member repos as independent clones (while keeping the shared `.claude/settings.json` tracked), `.claude/settings.json` allowlisting `git -C *` / `gh -R *`, a `CLAUDE.md` topology skeleton, the workspace's own `.feature-workflow.yml`, and `scripts/clone-members.sh`. A member is a full clone in the working tree, so `cd <member>` and the normal feature flow just works — no permission prompts.
 
 ### 9.9.0 — OCI GenAI reviewer
 - **New `oci` reviewer** — `/feature-init --reviewer oci` wires PR review to OCI Generative AI's OpenAI-compatible `chat/completions` endpoint (no agentic CLI). Same label-gated plan/impl lifecycle, prompts, and `post-review.sh` as gemini/codex. Because a single chat call can't explore the repo, `oci-review.sh` gathers the PR diff plus the feature's `idea.md`/`plan.md` and sends them inline. Secret `OCI_GENAI_API_KEY`; optional vars `OCI_GENAI_BASE_URL` / `OCI_GENAI_MODEL` (default `us-ashburn-1` + `openai.gpt-4.1`).
@@ -124,6 +134,17 @@ docs/features/
 | **Human-readable** | All data in markdown with YAML frontmatter |
 | **Claude reads, hook writes** | Claude reads DASHBOARD.md, hooks regenerate it |
 
+## Multi-repo workspaces
+
+When several repos in one org are developed together, set up a **workspace**: a thin coordination repo with each member repo nested inside it as an independent, gitignored clone (not a submodule). Scaffold it with `/feature-init --workspace`. Launch Claude at the workspace root — every member is in the working tree, so cross-repo edits never prompt, yet each member stays its own git repo (operate on one with `git -C <dir>` / `gh -R <owner/repo>`, both allowlisted).
+
+- **Single-member feature** → `cd <member>` and use the normal flow; docs land in that member's `docs/features/`.
+- **Cross-repo feature** → an **epic** in the workspace `docs/features/`, one child per member (`children: [engine:engine-api, app:app-ui]`); `/feature-autopilot <epic>` dispatches each child into its member repo.
+- **Contracts** (`contracts:` in the manifest) drive a producer-edit warning; **deploy groups** (`deploy:`) drive `/feature-deploy`.
+- The dashboard auto-aggregates across the workspace and all members.
+
+Full model + helper reference: [`skills/shared/workspace.md`](./skills/shared/workspace.md). Setup on-ramp: `project-workflow`'s `/project-init` offers it too. Design doc: [`docs/designs/2026-06-08-multi-repo-workspace.md`](../docs/designs/2026-06-08-multi-repo-workspace.md).
+
 ## Commands
 
 All commands below are user-invocable skills. Type `/<name>` in Claude Code to trigger them.
@@ -135,6 +156,7 @@ One-time setup for a new project. Creates `docs/features/`, `.feature-workflow.y
 
 Flags:
 - `--update` — refresh the CI workflow + review prompts + `post-review.sh` from the current plugin templates without touching `.feature-workflow.yml`, your API secret, or `docs/features/`. Use this after a plugin upgrade.
+- `--workspace --org <org> --member <dir>=<owner/repo> …` — scaffold a **multi-repo workspace** (a coordination repo with member repos nested as independent clones) instead of initializing a single repo. See [Multi-repo workspaces](#multi-repo-workspaces).
 
 ### Lifecycle
 
@@ -158,6 +180,11 @@ Pushes the implementation to the same feature branch, swaps `plan-review` → `i
 
 #### `/feature-ship [id]`
 Final quality gates before merge. Runs the security-reviewer and qa-engineer agents, executes tests/type checks/build, removes review labels, merges the PR, and writes `shipped.md` — the hook moves the feature to Completed and clears the statusline.
+
+### Coordination (multi-repo)
+
+#### `/feature-deploy [id]`
+Coordinated deploy across a workspace's member repos. Walks the manifest's `deploy:` groups in producer-first order, preflighting each member (clean working tree, on its release branch) and gating each group healthy before the next. With an epic id, scopes to the members that epic touched. Workspace-only — see [Multi-repo workspaces](#multi-repo-workspaces).
 
 ### Diagnostics
 
