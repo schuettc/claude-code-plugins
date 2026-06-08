@@ -161,6 +161,8 @@ If anything in the checklist is red, pause and surface it.
 
 Writes `docs/features/<id>/shipped.md`, commits it, pushes the branch, marks the PR ready (non-draft), merges it, and deletes the branch. Cleans up locally on the base branch.
 
+If the base branch requires a **merge queue**, `feature-ship` enqueues the PR instead of merging directly and waits for the queue to merge it — so the merge is asynchronous and ship completes once the PR reaches MERGED. Autopilot still advances on that completion; it just may wait out the queue first.
+
 After merge, the dashboard moves the feature from In Progress → Completed automatically.
 
 ## Loop diagram
