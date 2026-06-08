@@ -43,9 +43,16 @@ INPUT="$(mktemp)"
 } > "$INPUT"
 
 BODY="$(mktemp)"
+# Use max_completion_tokens, not max_tokens: gpt-5.x models (e.g. the configured
+# OCI_GENAI_MODEL openai.gpt-5.5) reject max_tokens with HTTP 400 ("Unsupported
+# parameter ... Use 'max_completion_tokens' instead"). The budget must also cover
+# reasoning: gpt-5.5 spends ~1.5-2k reasoning tokens on a real review prompt, so a
+# 2000 budget is fully consumed by reasoning (finish_reason=length, empty content)
+# and the workflow only ever posts the "unavailable" placeholder. 16000 leaves
+# room for the review markdown after reasoning (verified against the live endpoint).
 jq -n --rawfile u "$INPUT" '{
   model: env.MODEL,
-  max_tokens: 2000,
+  max_completion_tokens: 16000,
   messages: [
     {role: "system", content: "You are a senior reviewer. Follow the reviewer instructions in the user message exactly. Output only the review markdown — do not run commands and do not attempt to post anything."},
     {role: "user", content: $u}

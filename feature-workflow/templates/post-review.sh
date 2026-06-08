@@ -20,11 +20,17 @@ if [[ -z "${GEMINI_SUMMARY:-}" ]]; then
 fi
 
 BODY_FILE="$(mktemp)"
-{
-  echo "## ${REVIEW_KIND} Review"
-  echo ""
-  printf '%s\n' "$GEMINI_SUMMARY"
-} > "$BODY_FILE"
+# Avoid a doubled heading: the reviewer prompts already start their output with a
+# "## <Kind> Review" heading, so only add the wrapper header when it's missing.
+if printf '%s' "$GEMINI_SUMMARY" | head -n1 | grep -q '^##[[:space:]]'; then
+  printf '%s\n' "$GEMINI_SUMMARY" > "$BODY_FILE"
+else
+  {
+    echo "## ${REVIEW_KIND} Review"
+    echo ""
+    printf '%s\n' "$GEMINI_SUMMARY"
+  } > "$BODY_FILE"
+fi
 
 echo "Posting ${REVIEW_KIND} review as PR comment."
 gh pr comment "$PR_NUMBER" --body-file "$BODY_FILE"
