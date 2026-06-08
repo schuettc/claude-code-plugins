@@ -97,6 +97,14 @@ The difference between the tracks: **new** is a straight apply; **existing** lea
 
 ---
 
+## Multi-repo: coordinating several repos
+
+When several repos in one org are developed together (shared contracts, lockstep releases), stand up a **workspace** instead of juggling them separately: a thin coordination repo with each member nested as an independent, gitignored clone. `/project-init` offers this on-ramp (it delegates to `feature-workflow`'s `/feature-init --workspace`). From then on the workspace gives you an aggregated cross-repo dashboard, cross-repo **epics** (one child per member), contract-edit warnings, and `/feature-deploy` for producer-first releases.
+
+Apply the standards in **two places**: the **workspace repo itself** (its own branch model + CI + quality stack, via `/project-init` at the root) and **each member** (run `/project-init` inside it — members stay independent repos with their own `dev → main`). Launch Claude at the workspace root so cross-repo edits never prompt. Day-to-day model: [`feature-workflow/skills/shared/workspace.md`](./feature-workflow/skills/shared/workspace.md).
+
+---
+
 ## Disabling the setup plugin
 
 `project-workflow` is **setup-only and disposable**. Once a repo is stood up, `/project-init` has nothing left to do. To stop it lingering, disable it *for that repo*:
