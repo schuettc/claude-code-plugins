@@ -18,7 +18,7 @@ You are executing the **SHIP FEATURE** workflow — writing the completion recor
 |---------|---------|----------|
 | `branch.prefix` | `feature/` | Branch naming: `<prefix><id>` |
 | `branch.target` | `dev` | Merge target, checkout after merge |
-| `merge_method` | `merge` | How Phase 4 merges the PR: `squash` / `merge` / `rebase` |
+| `merge_method` | `merge` | How Phase 4 merges the PR: `squash` / `merge` / `rebase`. Ignored when the base branch requires a merge queue — the queue's own configured method wins, so keep them aligned. |
 
 Throughout this skill, replace `feature/<id>` with `<prefix><id>` and `dev` with `<target>` based on the config.
 
@@ -135,13 +135,22 @@ DASHBOARD.md is auto-resolved on merge via CI — no need to commit it from feat
 
 ## Phase 4: Merge PR
 
-PRs are opened as non-draft (since v9.5.2), so no draft → ready conversion is needed. Merge directly via REST.
+PRs are opened as non-draft (since v9.5.2), so no draft → ready conversion is needed.
 
 1. Confirm with user: **"Merge PR #<number> for feature/<id> into dev?"**
 2. **If you encounter a draft PR (legacy / opened externally):** convert with `gh pr ready <pr-number>` once. This is a GraphQL mutation, used at most once per stuck PR. Don't retry on rate-limit failure — wait for the GraphQL window to reset (`gh api rate_limit --jq '.resources.graphql.reset'`).
-3. Merge the PR via REST and delete the branch. Use the `merge_method` read from
-   `.feature-workflow.yml` (default `merge` if unset). For example maxwell sets
-   `merge_method: squash` so features land as one clean commit on `dev`:
+3. **Detect whether the base branch requires a merge queue, then merge accordingly.**
+   A queue-protected branch rejects a direct merge — the only way in is the queue —
+   so the merge path forks on this:
+   ```bash
+   # true when the base branch has a merge_queue rule (via ruleset).
+   QUEUED=$(gh api "repos/{owner}/{repo}/rules/branches/<base>" \
+     --jq 'any(.[]; .type == "merge_queue")' 2>/dev/null || echo false)
+   ```
+
+   **No queue (`QUEUED` = false) — direct REST merge** (the common path). Use the
+   `merge_method` read from `.feature-workflow.yml` (default `merge` if unset). For
+   example maxwell sets `merge_method: squash` so features land as one clean commit:
    ```bash
    # <merge_method> = the merge_method from .feature-workflow.yml (squash | merge | rebase; default merge)
    gh api "repos/{owner}/{repo}/pulls/<pr-number>/merge" \
@@ -154,7 +163,31 @@ PRs are opened as non-draft (since v9.5.2), so no draft → ready conversion is 
 
    > **Why REST merge:** `gh pr merge` uses GraphQL `mergePullRequest`. The REST endpoint `PUT /pulls/{n}/merge` is functionally equivalent, doesn't count against the GraphQL points budget, and isn't subject to the secondary mutation rate limit. The 405 "still a draft" failure mode no longer applies because we never open as draft.
 
-4. Switch to dev, pull, and delete the local feature branch:
+   **Queue required (`QUEUED` = true) — enqueue, then wait for the queue to merge.**
+   A direct REST merge returns 405 here; `gh pr merge` enters the queue natively (no
+   merge-strategy flag — the queue's own configured method governs the merge, so the
+   `.feature-workflow.yml` `merge_method` is ignored on this path; keep the two in
+   sync). If required checks haven't passed yet it enables auto-merge instead, so the
+   same command is correct either way:
+   ```bash
+   gh pr merge <pr-number>   # enqueues (GraphQL, once); queue's merge method applies
+
+   # The queue re-runs the required checks against the queued branch and merges
+   # asynchronously. Poll until the PR is MERGED before declaring shipped:
+   until [ "$(gh pr view <pr-number> --json state -q .state)" = "MERGED" ]; do
+     sleep 30
+   done
+
+   # The queue deletes the head branch on merge; tolerate an already-gone ref.
+   gh api "repos/{owner}/{repo}/git/refs/heads/feature/<id>" --method DELETE 2>/dev/null || true
+   ```
+
+   > If the queue is slow and you don't want to block, you may stop after `gh pr merge`
+   > and report the PR as **enqueued** — it merges when the queue drains. Phase 5
+   > cleanup (dashboard, local branch delete) only applies once it has actually merged.
+
+4. Switch to the base branch, pull, and delete the local feature branch (after the
+   merge has landed — for a queued PR that's after the poll above):
    ```bash
    git checkout dev && git pull && git branch -d feature/<id>
    ```
@@ -194,6 +227,7 @@ The feature is now in dev. Dashboard updated.
 | No PR exists | Suggest `/feature-review-impl` first, or offer local merge |
 | Not on feature branch | Switch to `feature/<id>` |
 | Already completed | Feature has shipped.md — nothing to do |
+| Direct merge returns 405 / "merge queue required" | The base branch requires a merge queue — use the queue path in Phase 4 step 3 (`gh pr merge <pr>`, then poll for MERGED) instead of the REST merge |
 
 ---
 
