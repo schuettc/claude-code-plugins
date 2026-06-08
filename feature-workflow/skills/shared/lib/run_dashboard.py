@@ -280,6 +280,26 @@ def generate_dashboard(project_root: Path) -> None:
     print(f"[dashboard] Generated DASHBOARD.md", file=sys.stderr)
 
 
+def build_workspace_by_id(workspace_root: Path) -> dict:
+    """Scan the workspace and every member, keyed by namespaced feature ref.
+
+    Workspace-own features keep their bare id; member features are keyed
+    ``<member_dir>:<id>``. A cross-repo epic's ``children:`` use the same
+    ``repo:id`` form, so this map feeds ``deps.compute_dispatch_waves`` directly
+    — cross-repo wave ordering reuses the single-repo dispatcher unchanged.
+    """
+    from workspace import load_members
+
+    workspace_root = Path(workspace_root)
+    by_id: dict = {}
+    for f in _scan_features(workspace_root):
+        by_id[f.feature_id] = f
+    for m in load_members(workspace_root):
+        for f in _scan_features(workspace_root / m["dir"]):
+            by_id[f"{m['dir']}:{f.feature_id}"] = f
+    return by_id
+
+
 def generate_workspace_dashboard_content(workspace_root: Path) -> str:
     """Aggregate this workspace's own features plus every member repo's.
 

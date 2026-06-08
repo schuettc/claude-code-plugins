@@ -21,6 +21,18 @@ from deps import compute_dispatch_waves
 waves = compute_dispatch_waves(epic_id, by_id)
 ```
 
+**Single repo:** build `by_id` from this repo's `docs/features/` (the standard scan).
+
+**Multi-repo workspace** (a `.feature-workspace.yml` exists at the root, and the epic's `children:` use `repo:id` refs like `engine:engine-api`): build a namespaced `by_id` spanning every member, then dispatch unchanged:
+
+```python
+from run_dashboard import build_workspace_by_id
+by_id = build_workspace_by_id(workspace_root)   # bare id for workspace-own; "<dir>:<id>" for members
+waves = compute_dispatch_waves(epic_id, by_id)   # cross-repo deps via "<dir>:<id>" in dependsOn
+```
+
+A cross-repo child names its prerequisites in the same namespaced form (`dependsOn: [engine:engine-api]`), so producer-first ordering falls out of the normal topo-sort.
+
 `waves` is `list[list[str]]`. Each inner list is a parallel-safe wave. Filters applied:
 - Already-shipped children skipped (lifecycle == completed)
 - Tombstoned children skipped (state in [replaced, abandoned])
@@ -111,6 +123,32 @@ Wait for ALL subagents in a batch to complete. Sibling cancellation on failure i
 Aggregate results:
 - All DONE → advance to next wave
 - Any BLOCKED → pause epic, surface aggregate to user with per-child status
+
+### Cross-repo children (workspace)
+
+When a child ref is namespaced (`engine:engine-api`), split it with `parse_feature_ref` and run the child **inside its member repo**, not the workspace root:
+
+```python
+from workspace import parse_feature_ref
+member_dir, child_local_id = parse_feature_ref(child_ref)   # ("engine", "engine-api")
+```
+
+- `member_dir is None` → workspace-own child, dispatch exactly as the single-repo case above.
+- otherwise → direct the subagent into `./<member_dir>` (a full nested clone) before running autopilot:
+
+```python
+prompt = (
+    f"cd into the workspace member repo ./{member_dir}, then run "
+    f"/feature-workflow:feature-autopilot {child_local_id} from start to merged PR. "
+    f"That member is its own git repo — its branch/PR/merge all target the member's "
+    f"own remote (use the member's .feature-workflow.yml for branch.target/reviewer). "
+    f"Report DONE on success, BLOCKED if any review FAILs persist past the cap."
+)
+```
+
+The child's worktree is created **within its member clone** (the autopilot's Worktree Isolation rule applies inside `./<member_dir>`), so parallel cross-repo children never collide — they're in different repos entirely. The epic doc, plan.md, and progress log stay in the **workspace** `docs/features/<epic-id>/`; only the child's code/feature-docs live in the member.
+
+> Cross-repo dispatch coordinates independent member-repo PRs. There is no meta-branch and no cross-repo rollback — revert a shipped child by reverting its member PR. Validate the end-to-end flow against a real workspace before relying on unattended cross-repo autopilot.
 
 ## Step 5: Advance Through Waves
 

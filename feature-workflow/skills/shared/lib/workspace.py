@@ -218,6 +218,16 @@ def load_deploy_groups(workspace_root: Path) -> list[dict]:
     return out
 
 
+def select_deploy_groups(workspace_root: Path, member_dirs: list[str] | None = None) -> list[dict]:
+    """Deploy groups in manifest (producer-first) order, optionally narrowed to
+    a set of member dirs (e.g. the members an epic touched). ``None`` -> all."""
+    groups = load_deploy_groups(workspace_root)
+    if member_dirs is None:
+        return groups
+    keep = set(member_dirs)
+    return [g for g in groups if g["dir"] in keep]
+
+
 def contract_consumers(workspace_root: Path, member_dir: str) -> list[dict]:
     """Contracts owned by ``member_dir`` that have at least one consumer.
 

@@ -11,6 +11,7 @@ from workspace import (
     format_feature_ref,
     load_contracts,
     load_deploy_groups,
+    select_deploy_groups,
     contract_consumers,
 )
 
@@ -103,6 +104,18 @@ def test_deploy_groups_do_not_match_member_lines(tmp_path: Path):
     # Member entries also carry `dir:` but no `group:` — must not be picked up.
     scaffold_workspace(tmp_path, org="acme", members=MEMBERS)
     assert load_deploy_groups(tmp_path) == []
+
+
+def test_select_deploy_groups_all(tmp_path: Path):
+    (tmp_path / ".feature-workspace.yml").write_text(FILLED_MANIFEST)
+    groups = select_deploy_groups(tmp_path)
+    assert [g["group"] for g in groups] == ["engine-stack", "app-stack"]
+
+
+def test_select_deploy_groups_scoped_to_members(tmp_path: Path):
+    (tmp_path / ".feature-workspace.yml").write_text(FILLED_MANIFEST)
+    groups = select_deploy_groups(tmp_path, member_dirs=["engine"])
+    assert [g["group"] for g in groups] == ["engine-stack"]  # order preserved, app dropped
 
 
 def test_contract_consumers_only_returns_owned_with_consumers(tmp_path: Path):
