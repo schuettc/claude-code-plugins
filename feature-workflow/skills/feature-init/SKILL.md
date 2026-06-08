@@ -8,12 +8,30 @@ user-invocable: true
 
 You are executing the **FEATURE INIT** workflow — either a one-time setup for a new project, or an update that refreshes CI files in an existing project.
 
-## Two Modes
+## Modes
 
 - **Init** — first time setup. Creates `docs/features/`, `.feature-workflow.yml`, and (if chosen) the GitHub Actions review workflow + prompts + API key secret.
 - **Update** — existing project. Refreshes `.github/workflows/feature-review.yml` and `.github/review-prompt-*.md` from the current plugin templates. Does **not** touch `.feature-workflow.yml`, the API key secret, or `docs/features/`. Use this after upgrading the plugin to pull in improved workflow/prompt logic.
+- **Workspace** — scaffold a multi-repo **workspace repo** (manifest + members + topology) instead of a single project. See "Workspace mode" below.
 
 If the user said `/feature-init --update` or asked to "update" / "refresh" the CI files, jump to **Step 3: Run Init Script** with `--update` and skip the config gathering.
+
+## Workspace mode (`/feature-init --workspace`)
+
+If the user invokes `/feature-init --workspace` (or asks to "set up a multi-repo workspace"), scaffold a **workspace repo** instead of a single-project init:
+
+1. Ask for the **GitHub org** and the **member repos** (each as `dir=owner/repo`). If they're unsure, list the org's repos with `gh repo list <org>`.
+2. Run the scaffolder:
+
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/skills/feature-init/scripts/init.py" . --workspace \
+     --org <org> \
+     --member <dir>=<owner/repo> [--member <dir>=<owner/repo> ...]
+   ```
+
+3. Tell the user to run `./scripts/clone-members.sh` to pull the members in, then launch Claude from the workspace directory — every member is then in-tree, so cross-repo edits don't prompt.
+
+The workspace is identified by its `.feature-workspace.yml` manifest, not its name. Single-repo features live in each member's `docs/features/`; cross-repo work is an **epic** in the workspace `docs/features/`. See `docs/designs/2026-06-08-multi-repo-workspace.md` for the full model.
 
 ## Step 1: Check for Existing Setup
 
