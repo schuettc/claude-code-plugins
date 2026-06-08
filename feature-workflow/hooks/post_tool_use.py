@@ -25,6 +25,61 @@ FEATURE_FILE_PATTERN = re.compile(r"docs/features/([^/]+)/(idea|plan|shipped)\.m
 REVIEW_STATUS_PATTERN = re.compile(r"docs/features/([^/]+)/reviews/review-status\.md$")
 
 
+def _maybe_contract_warning(file_path: str) -> str | None:
+    """If ``file_path`` is a non-doc edit inside a workspace member that produces
+    a cross-repo contract with consumers, return a one-time warning string.
+
+    Deduped per member with a marker under the workspace's ``.git`` so a normal
+    editing session isn't spammed — you're reminded the first time you touch a
+    producer, then it stays quiet.
+    """
+    try:
+        p = Path(file_path).resolve()
+    except Exception:
+        return None
+
+    workspace_root = None
+    for candidate in [p, *p.parents]:
+        if (candidate / ".feature-workspace.yml").exists():
+            workspace_root = candidate
+            break
+    if workspace_root is None:
+        return None
+
+    try:
+        rel = p.relative_to(workspace_root)
+    except ValueError:
+        return None
+    parts = rel.parts
+    if len(parts) < 2:
+        return None  # directly in the workspace root, not a member
+    member_dir = parts[0]
+    if "docs" in parts:
+        return None  # feature/docs edits are not contract reshapes
+
+    lib_dir = Path(__file__).parent.parent / "skills" / "shared" / "lib"
+    if str(lib_dir) not in sys.path:
+        sys.path.insert(0, str(lib_dir))
+    try:
+        from workspace import build_contract_warning
+    except Exception:
+        return None
+
+    warning = build_contract_warning(workspace_root, member_dir)
+    if not warning:
+        return None
+
+    marker = workspace_root / ".git" / f"fw-contract-warned-{member_dir}"
+    try:
+        if marker.exists():
+            return None
+        if marker.parent.exists():
+            marker.write_text("1")
+    except Exception:
+        pass  # marker is best-effort; warn anyway if we can't write it
+    return warning
+
+
 def main() -> int:
     """Check if dashboard needs regeneration after a tool call."""
     # Read hook input from stdin
@@ -81,6 +136,15 @@ def main() -> int:
     # Check if this is a feature file write
     match = FEATURE_FILE_PATTERN.search(file_path)
     if not match:
+        # Non-feature edit. If it lands in a workspace member that produces a
+        # cross-repo contract, warn once (per member) so contract reshapes get
+        # coordinated as an epic instead of silently breaking consumers.
+        warning = _maybe_contract_warning(file_path)
+        if warning:
+            json.dump(
+                {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": warning}},
+                sys.stdout,
+            )
         return 0
 
     feature_id = match.group(1)
