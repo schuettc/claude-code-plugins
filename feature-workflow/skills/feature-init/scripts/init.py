@@ -58,6 +58,32 @@ reviewer: "{reviewer}"  # External reviewer: gemini, codex, or none
 """
 
 
+def _load_scaffold_workspace():
+    """Import scaffold_workspace from the shared lib (sibling of feature-init)."""
+    lib_dir = Path(__file__).resolve().parent.parent.parent / "shared" / "lib"
+    sys.path.insert(0, str(lib_dir))
+    from workspace import scaffold_workspace  # noqa: E402
+    return scaffold_workspace
+
+
+def workspace_mode(project_root: Path, org: str, members: list) -> int:
+    if not org:
+        print("ERROR: --workspace requires --org <github-org>.")
+        return 1
+    if not members:
+        print("ERROR: --workspace requires at least one --member dir=owner/repo.")
+        return 1
+    scaffold_workspace = _load_scaffold_workspace()
+    scaffold_workspace(project_root, org=org, members=members)
+    print(f"Workspace initialized at {project_root}")
+    print(f"  org:     {org}")
+    print(f"  members: {', '.join(m['dir'] for m in members)}")
+    print("")
+    print("Next: clone the members ->  ./scripts/clone-members.sh")
+    print("Then launch Claude from this directory; every member is in-tree.")
+    return 0
+
+
 def find_template_dir() -> Path:
     script_dir = Path(__file__).resolve().parent
     template_dir = script_dir.parent.parent.parent / "templates"
@@ -287,9 +313,24 @@ def main() -> int:
         help="Refresh CI workflow and review prompts from current plugin templates "
              "without changing config or re-uploading API key.",
     )
+    parser.add_argument("--workspace", action="store_true",
+                        help="Scaffold a multi-repo WORKSPACE repo instead of a single project.")
+    parser.add_argument("--org", default=None, help="GitHub org for the workspace manifest.")
+    parser.add_argument("--member", action="append", default=[], metavar="dir=owner/repo",
+                        help="A member repo (repeatable), e.g. --member engine=acme/engine.")
     args = parser.parse_args()
 
     project_root = Path(args.project_root).resolve()
+
+    if args.workspace:
+        members = []
+        for spec in args.member:
+            if "=" not in spec:
+                print(f"ERROR: --member must be dir=owner/repo, got: {spec}")
+                return 1
+            d, repo = spec.split("=", 1)
+            members.append({"dir": d.strip(), "repo": repo.strip()})
+        return workspace_mode(project_root, args.org, members)
 
     if args.update:
         return update_mode(project_root)
