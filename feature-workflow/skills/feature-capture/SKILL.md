@@ -17,6 +17,8 @@ If `docs/features/` directory does NOT exist, tell the user:
 
 Do NOT create the structure yourself. The init script handles this.
 
+**Multi-repo workspace?** If the root has a `.feature-workspace.yml`, decide scope first: one member → `cd <member>` and capture there; workspace-only → capture here; touches 2+ members → capture a `type: Epic` here with one `repo:id` child per member. See [../shared/workspace.md](../shared/workspace.md).
+
 ---
 
 ## FORBIDDEN - Do Not Do These Things

@@ -10,6 +10,8 @@ End-to-end runbook for taking an `idea.md` entry in `docs/features/<id>/` and la
 
 This skill **does not replace** `feature-plan`, `feature-implement`, `feature-review-plan`, `feature-review-impl`, or `feature-ship`. It calls them in order and adds the wait/classify/auto-advance logic between phases.
 
+**Multi-repo workspace?** If the root has a `.feature-workspace.yml`, a single-member feature autopilots from inside that member (`cd <member>` first). A cross-repo **epic** (children as `repo:id`) dispatches each child into its member — see [epic-dispatch.md](epic-dispatch.md) and [../shared/workspace.md](../shared/workspace.md).
+
 ## When to use
 
 - User says "ship feature X", "autopilot X", "drive X end-to-end"
