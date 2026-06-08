@@ -6,7 +6,21 @@ manifest, not its name. Written by `feature-init --workspace`.
 """
 
 import json
+import re
 from pathlib import Path
+
+# Matches a member entry `- { dir: engine, repo: owner/engine }` in the manifest.
+# The commented contract/deploy examples lack the `, repo:` tail, so they're skipped.
+_MEMBER_RE = re.compile(r"dir:\s*([\w.-]+)\s*,\s*repo:\s*([\w./-]+)")
+
+# `- { id: engine:engine-api, owner: engine, consumers: [app, cli], kind: http }`
+_CONTRACT_RE = re.compile(
+    r"id:\s*([\w:./-]+)\s*,\s*owner:\s*([\w.-]+)\s*,\s*consumers:\s*\[([^\]]*)\]"
+    r"\s*(?:,\s*kind:\s*([\w.-]+))?"
+)
+
+# `- { group: engine-stack, dir: engine }`
+_DEPLOY_RE = re.compile(r"group:\s*([\w.-]+)\s*,\s*dir:\s*([\w.-]+)")
 
 MANIFEST_TEMPLATE = """\
 # .feature-workspace.yml — multi-repo workspace manifest.
@@ -101,6 +115,145 @@ for m in re.finditer(r"dir:\s*([\w.-]+)\s*,\s*repo:\s*([\w./-]+)", text):
   gh repo clone "$repo" "$dir" 2>/dev/null || git clone "git@github.com:$repo.git" "$dir"
 done
 """
+
+
+def is_workspace(root: Path) -> bool:
+    """True if `root` is a multi-repo workspace (carries a manifest)."""
+    return (Path(root) / ".feature-workspace.yml").exists()
+
+
+def load_members(workspace_root: Path) -> list[dict]:
+    """Return the member ``{dir, repo}`` entries from the workspace manifest.
+
+    Returns an empty list when there is no manifest, so callers can treat a
+    plain repo and a workspace uniformly.
+    """
+    manifest = Path(workspace_root) / ".feature-workspace.yml"
+    if not manifest.exists():
+        return []
+    return [
+        {"dir": m.group(1), "repo": m.group(2)}
+        for m in _MEMBER_RE.finditer(manifest.read_text())
+    ]
+
+
+def resolve_target_repo(workspace_root: Path, target: str | None = None) -> dict:
+    """Resolve which repo a feature operation should act on.
+
+    Returns ``{dir, root, repo, is_workspace}`` where ``root`` is the path to
+    cd into / run ``git -C`` against and ``repo`` is the ``owner/name`` slug for
+    ``gh -R`` (``None`` for the workspace's own repo, which is the current dir).
+    Raises ValueError if ``target`` is not the workspace or a known member.
+    """
+    workspace_root = Path(workspace_root)
+    members = {m["dir"]: m["repo"] for m in load_members(workspace_root)}
+    if target in (None, "", ".", str(workspace_root)):
+        return {"dir": ".", "root": workspace_root, "repo": None, "is_workspace": True}
+    if target in members:
+        return {
+            "dir": target,
+            "root": workspace_root / target,
+            "repo": members[target],
+            "is_workspace": False,
+        }
+    raise ValueError(
+        f"'{target}' is not a member of this workspace. Members: {sorted(members)}"
+    )
+
+
+def parse_feature_ref(ref: str) -> tuple[str | None, str]:
+    """Split a feature reference into ``(repo, feature_id)``.
+
+    ``engine:engine-api`` -> ``("engine", "engine-api")`` (a cross-repo epic
+    child); a bare ``engine-api`` -> ``(None, "engine-api")`` (same repo).
+    """
+    if ":" in ref:
+        repo, fid = ref.split(":", 1)
+        return repo.strip(), fid.strip()
+    return None, ref.strip()
+
+
+def format_feature_ref(repo: str | None, feature_id: str) -> str:
+    """Inverse of parse_feature_ref. ``repo`` None -> bare id."""
+    return f"{repo}:{feature_id}" if repo else feature_id
+
+
+def load_contracts(workspace_root: Path) -> list[dict]:
+    """Read the standing contracts from the manifest (commented lines ignored).
+
+    Each entry: ``{id, owner, consumers: [dir, ...], kind}``.
+    """
+    manifest = Path(workspace_root) / ".feature-workspace.yml"
+    if not manifest.exists():
+        return []
+    out: list[dict] = []
+    for line in manifest.read_text().splitlines():
+        if line.lstrip().startswith("#"):
+            continue
+        m = _CONTRACT_RE.search(line)
+        if m:
+            consumers = [c.strip() for c in m.group(3).split(",") if c.strip()]
+            out.append(
+                {"id": m.group(1), "owner": m.group(2), "consumers": consumers, "kind": m.group(4) or ""}
+            )
+    return out
+
+
+def load_deploy_groups(workspace_root: Path) -> list[dict]:
+    """Read ordered deploy groups from the manifest (commented lines ignored).
+
+    Order is preserved as authored — producer-first — so a coordinated deploy
+    walks them top to bottom. Each entry: ``{group, dir}``.
+    """
+    manifest = Path(workspace_root) / ".feature-workspace.yml"
+    if not manifest.exists():
+        return []
+    out: list[dict] = []
+    for line in manifest.read_text().splitlines():
+        if line.lstrip().startswith("#"):
+            continue
+        m = _DEPLOY_RE.search(line)
+        if m:
+            out.append({"group": m.group(1), "dir": m.group(2)})
+    return out
+
+
+def select_deploy_groups(workspace_root: Path, member_dirs: list[str] | None = None) -> list[dict]:
+    """Deploy groups in manifest (producer-first) order, optionally narrowed to
+    a set of member dirs (e.g. the members an epic touched). ``None`` -> all."""
+    groups = load_deploy_groups(workspace_root)
+    if member_dirs is None:
+        return groups
+    keep = set(member_dirs)
+    return [g for g in groups if g["dir"] in keep]
+
+
+def contract_consumers(workspace_root: Path, member_dir: str) -> list[dict]:
+    """Contracts owned by ``member_dir`` that have at least one consumer.
+
+    Drives the contract-edit warning: editing a producer with downstream
+    consumers should prompt coordinating the change as an epic.
+    """
+    return [
+        c for c in load_contracts(workspace_root)
+        if c["owner"] == member_dir and c["consumers"]
+    ]
+
+
+def build_contract_warning(workspace_root: Path, member_dir: str) -> str | None:
+    """Warning text shown when editing a producer member, or None if there's
+    nothing downstream to break."""
+    contracts = contract_consumers(workspace_root, member_dir)
+    if not contracts:
+        return None
+    listed = "; ".join(f"{c['id']} → consumers: {', '.join(c['consumers'])}" for c in contracts)
+    return (
+        f"⚠️ Editing `{member_dir}`, a producer of cross-repo contract(s) [{listed}]. "
+        "Reshaping a contract can break its consumers. If this change alters the "
+        "contract's shape, coordinate it as a cross-repo epic (/feature-capture, "
+        "type: Epic — one child per affected repo) and roll out producer-first with "
+        "an expand/contract migration so consumers are never broken mid-flight."
+    )
 
 
 def _members_block(members: list[dict]) -> str:

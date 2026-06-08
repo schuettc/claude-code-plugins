@@ -12,6 +12,8 @@ You are executing the **SHIP FEATURE** workflow — writing the completion recor
 
 **Before doing anything else**, read `.feature-workflow.yml` in the project root for branch settings. See [../shared/config.md](../shared/config.md) for details.
 
+**Multi-repo workspace?** If the root has a `.feature-workspace.yml`, ship from inside the member repo — `cd <member>` first, so the branch/PR/merge target that member's own remote and config. See [../shared/workspace.md](../shared/workspace.md).
+
 | Setting | Default | Used for |
 |---------|---------|----------|
 | `branch.prefix` | `feature/` | Branch naming: `<prefix><id>` |

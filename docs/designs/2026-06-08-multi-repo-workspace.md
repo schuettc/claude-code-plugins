@@ -244,7 +244,17 @@ way are pointed at the workspace path instead of discovering it later. Guidance,
 
 Each tier is a separate plan → implementation cycle:
 
-- **Phase 1 = Tier 1** (scaffolding + repo-aware config/IDs + aggregated dashboard). Delivers the
-  workspace + correct single-repo behavior from inside it. Validate on a fresh workspace repo.
-- **Phase 2 = Tier 2** (repo-aware autopilot + epic-as-coordinator). Delivers cross-repo epics.
-- **Phase 3 = Tier 3** (contract warning + coordinated deploy). Delivers the guardrails + deploy.
+- **Phase 1 = Tier 1** (scaffolding + repo-aware config/IDs + aggregated dashboard) — ✅ shipped
+  (v9.10.0 scaffolder + v9.11.0 aggregated dashboard). Delivers the workspace + correct single-repo
+  behavior from inside it (a member is a full nested clone: `cd <member>` and the normal flow just works).
+- **Phase 2 = Tier 2** (repo-aware autopilot + epic-as-coordinator) — ✅ shipped (v9.11.0). Cross-repo
+  epics use `repo:id` children; `build_workspace_by_id` feeds the existing wave dispatcher; each child
+  runs inside its member repo.
+- **Phase 3 = Tier 3** (contract warning + coordinated deploy) — ✅ shipped (v9.11.0). Contract-edit
+  warning (post_tool_use, marker-deduped per member) + `/feature-deploy` walking manifest deploy
+  groups producer-first.
+
+> **Validation status.** All layers are unit-tested. The cross-repo *autopilot* and *coordinated
+> deploy* orchestration (subagents into member clones, member-scoped PRs/merges, group-gated releases)
+> should still be exercised end-to-end against a real multi-repo workspace before being relied on for
+> unattended runs — the logic is in place; the live multi-repo round-trip is the remaining proof.
