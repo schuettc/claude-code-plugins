@@ -127,8 +127,24 @@ def setup_reviewer(project_root: Path, reviewer: str, api_key: str | None, templ
     else:
         print(f"WARNING: Script template not found: {script_src}")
 
+    # The OCI reviewer is a direct chat/completions call (no agentic CLI), so it
+    # ships an extra helper that gathers context and calls the model.
+    if reviewer == "oci":
+        oci_src = template_dir / "oci-review.sh"
+        if oci_src.exists():
+            oci_dst = scripts_dir / "oci-review.sh"
+            shutil.copy2(oci_src, oci_dst)
+            oci_dst.chmod(0o755)
+            print("Created .github/scripts/oci-review.sh")
+        else:
+            print(f"WARNING: Script template not found: {oci_src}")
+
     if api_key:
-        secret_name = "GOOGLE_API_KEY" if reviewer == "gemini" else "OPENAI_API_KEY"
+        secret_name = {
+            "gemini": "GOOGLE_API_KEY",
+            "codex": "OPENAI_API_KEY",
+            "oci": "OCI_GENAI_API_KEY",
+        }.get(reviewer, "OPENAI_API_KEY")
         try:
             result = subprocess.run(
                 ["gh", "auth", "status"],
@@ -285,6 +301,16 @@ def update_mode(project_root: Path) -> int:
     else:
         print(f"WARNING: Script template not found: {script_src}")
 
+    if reviewer == "oci":
+        oci_src = template_dir / "oci-review.sh"
+        if oci_src.exists():
+            oci_dst = scripts_dir / "oci-review.sh"
+            shutil.copy2(oci_src, oci_dst)
+            oci_dst.chmod(0o755)
+            print("Refreshed .github/scripts/oci-review.sh")
+        else:
+            print(f"WARNING: Script template not found: {oci_src}")
+
     enable_bot_approvals()
 
     # Always set up dashboard auto-resolve on update
@@ -306,7 +332,7 @@ def main() -> int:
     parser.add_argument("project_root", nargs="?", default=".")
     parser.add_argument("--prefix", default="feature/")
     parser.add_argument("--target", default="dev")
-    parser.add_argument("--reviewer", default="none", choices=["gemini", "codex", "none"])
+    parser.add_argument("--reviewer", default="none", choices=["gemini", "codex", "oci", "none"])
     parser.add_argument("--api-key", default=None)
     parser.add_argument(
         "--update", action="store_true",
@@ -378,7 +404,11 @@ def main() -> int:
     print(f"  PRs target:    {args.target}")
 
     if args.reviewer != "none":
-        secret_name = "GOOGLE_API_KEY" if args.reviewer == "gemini" else "OPENAI_API_KEY"
+        secret_name = {
+            "gemini": "GOOGLE_API_KEY",
+            "codex": "OPENAI_API_KEY",
+            "oci": "OCI_GENAI_API_KEY",
+        }.get(args.reviewer, "OPENAI_API_KEY")
         print("")
         print("  CI Review:     .github/workflows/feature-review.yml")
         print(f"  API Secret:    {secret_name}")

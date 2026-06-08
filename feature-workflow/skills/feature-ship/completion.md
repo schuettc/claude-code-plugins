@@ -150,9 +150,14 @@ ${CLAUDE_PLUGIN_ROOT}/skills/feature-ship/scripts/clear-context.sh
 
 After writing shipped.md (and confirming the hook updated DASHBOARD.md):
 
+The shipped artifacts are documentation — commit them with a Conventional Commits
+`docs(<id>): ...` message. Do NOT use `Ship:`, `plan(...)`, or any other
+non-conventional verb; the `commit-msg` hook will reject them. See
+[../shared/commit-conventions.md](../shared/commit-conventions.md).
+
 ```bash
 git add docs/features/[id]/
-git commit -m "Ship: [feature-name]"
+git commit -m "docs([id]): mark feature as shipped"
 ```
 
 **Output**: Feature marked as completed, statusline cleared, changes committed

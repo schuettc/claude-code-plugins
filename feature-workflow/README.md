@@ -1,10 +1,13 @@
 # Feature Workflow Plugin
 
-**Version:** 9.2.3
+**Version:** 9.9.0
 
 A Claude Code plugin for feature lifecycle management using a directory-based architecture with event-driven hooks. Capture feature ideas, plan implementations, and ship features through a review-gated pipeline — optionally with automated PR reviews from an external AI (Gemini or Codex) via GitHub Actions.
 
 ## What's New
+
+### 9.9.0 — OCI GenAI reviewer
+- **New `oci` reviewer** — `/feature-init --reviewer oci` wires PR review to OCI Generative AI's OpenAI-compatible `chat/completions` endpoint (no agentic CLI). Same label-gated plan/impl lifecycle, prompts, and `post-review.sh` as gemini/codex. Because a single chat call can't explore the repo, `oci-review.sh` gathers the PR diff plus the feature's `idea.md`/`plan.md` and sends them inline. Secret `OCI_GENAI_API_KEY`; optional vars `OCI_GENAI_BASE_URL` / `OCI_GENAI_MODEL` (default `us-ashburn-1` + `openai.gpt-4.1`).
 
 ### 9.8.1 — Suppression discipline
 - **Drive-by static-analysis suppressions now FAIL impl-review** — the reviewer prompt scans diffs for newly-added `// fallow-ignore-*`, `# skylos: ignore`, `# noqa`, `# type: ignore`, `// @ts-ignore`, etc. Without an adjacent `# Why:` justification, they're Blocking findings (FAIL verdict → autopilot enters the respond loop). Legitimate suppressions (false positives, parameterized SQL, deliberately-coalesced state) with written justifications pass.

@@ -1,0 +1,89 @@
+name: Feature Review (OCI GenAI)
+
+# Same review lifecycle as the gemini/codex variants (label-triggered plan/impl
+# review, the review-prompt-*.md prompts, post-review.sh), but the engine is a
+# direct call to OCI Generative AI's OpenAI-compatible chat/completions endpoint
+# instead of an agentic CLI. Because a single chat call can't explore the repo,
+# this workflow GATHERS the context the prompt expects (the PR diff plus the
+# feature's idea.md/plan.md) and sends it inline.
+#
+# Config (set by /feature-init --reviewer oci, or manually):
+#   secret OCI_GENAI_API_KEY            — the OCI GenAI "sk-..." bearer key (required)
+#   var    OCI_GENAI_BASE_URL           — optional; defaults to us-ashburn-1 /openai/v1
+#   var    OCI_GENAI_MODEL              — optional; defaults to openai.gpt-4.1
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  plan-review:
+    if: contains(github.event.pull_request.labels.*.name, 'plan-review') && !contains(github.event.pull_request.labels.*.name, 'impl-review')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Generate review (OCI GenAI)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OCI_GENAI_API_KEY }}
+          BASE_URL: ${{ vars.OCI_GENAI_BASE_URL || 'https://inference.generativeai.us-ashburn-1.oci.oraclecloud.com/openai/v1' }}
+          MODEL: ${{ vars.OCI_GENAI_MODEL || 'openai.gpt-4.1' }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          PROMPT_FILE: .github/review-prompt-plan.md
+        run: |
+          set -uo pipefail
+          bash .github/scripts/oci-review.sh > review.md || echo "_OCI GenAI review unavailable this run._" > review.md
+          [ -s review.md ] || echo "_OCI GenAI review produced no output._" > review.md
+
+      - name: Post review
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REVIEW_KIND: Plan
+        run: |
+          export GEMINI_SUMMARY="$(cat review.md 2>/dev/null)"
+          if [ -n "$GEMINI_SUMMARY" ]; then bash .github/scripts/post-review.sh; else echo "::warning::no review to post"; fi
+
+  impl-review:
+    if: contains(github.event.pull_request.labels.*.name, 'impl-review')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Generate review (OCI GenAI)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OCI_GENAI_API_KEY }}
+          BASE_URL: ${{ vars.OCI_GENAI_BASE_URL || 'https://inference.generativeai.us-ashburn-1.oci.oraclecloud.com/openai/v1' }}
+          MODEL: ${{ vars.OCI_GENAI_MODEL || 'openai.gpt-4.1' }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          PROMPT_FILE: .github/review-prompt-impl.md
+        run: |
+          set -uo pipefail
+          bash .github/scripts/oci-review.sh > review.md || echo "_OCI GenAI review unavailable this run._" > review.md
+          [ -s review.md ] || echo "_OCI GenAI review produced no output._" > review.md
+
+      - name: Post review
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REVIEW_KIND: Implementation
+        run: |
+          export GEMINI_SUMMARY="$(cat review.md 2>/dev/null)"
+          if [ -n "$GEMINI_SUMMARY" ]; then bash .github/scripts/post-review.sh; else echo "::warning::no review to post"; fi

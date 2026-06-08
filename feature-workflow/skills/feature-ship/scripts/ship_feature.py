@@ -107,7 +107,8 @@ Marked as shipped via manual script.
     print("")
     print("Next steps:")
     print(f"  1. Review {shipped_file} and add more details if needed")
-    print(f'  2. Commit the changes: git add docs/features/ && git commit -m "Ship: {feature_name}"')
+    print(f'  2. Commit the changes (Conventional Commits — shipped.md is docs):')
+    print(f'     git add docs/features/ && git commit -m "docs({feature_id}): mark feature as shipped"')
 
     return 0
 

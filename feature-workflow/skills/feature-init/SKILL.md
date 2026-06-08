@@ -68,13 +68,16 @@ If no arguments, ask the user:
 3. **External reviewer** — which AI reviewer should review PRs via GitHub Actions?
    - `gemini` — uses Google's Gemini CLI via `google-github-actions/run-gemini-cli`
    - `codex` — uses OpenAI's Codex CLI via `openai/codex-action`
+   - `oci` — calls OCI Generative AI's OpenAI-compatible `chat/completions` endpoint directly (no agentic CLI). Use when the reviewer must run on an OCI-served model (e.g. `openai.gpt-4.1`) with an OCI GenAI API key.
    - `none` — skip CI review setup (can be added later by re-running init)
    - Default: `none`
 
-4. **API key** (only if reviewer is gemini or codex) — the API key for the chosen reviewer.
+4. **API key** (only if reviewer is gemini, codex, or oci) — the API key for the chosen reviewer.
    - For Gemini: a Google API key from https://aistudio.google.com/apikey
    - For Codex: an OpenAI API key from https://platform.openai.com/api-keys
-   - The key is uploaded as a GitHub repo secret via `gh secret set` — it is never stored locally.
+   - For OCI: an OCI Generative AI API key (`sk-…`) from OCI Console → Analytics & AI → Generative AI → API keys.
+   - The key is uploaded as a GitHub repo secret (`GOOGLE_API_KEY` / `OPENAI_API_KEY` / `OCI_GENAI_API_KEY`) via `gh secret set` — it is never stored locally.
+   - OCI also reads two optional repo **variables**: `OCI_GENAI_BASE_URL` (default `…us-ashburn-1…/openai/v1`) and `OCI_GENAI_MODEL` (default `openai.gpt-4.1`). Set with `gh variable set` if your region/model differs.
 
 ## Step 3: Run Init Script
 

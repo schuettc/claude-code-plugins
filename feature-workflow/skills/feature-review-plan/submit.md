@@ -44,7 +44,10 @@ gh api "repos/{owner}/{repo}/pulls?state=open&per_page=100" \
    ```bash
    git status --porcelain
    ```
-3. If there are changes, commit:
+3. If there are changes, commit. The plan/idea files are docs, so use a
+   Conventional Commits `docs(<id>): ...` message — do NOT use `plan(...)` or
+   any other non-conventional verb; the `commit-msg` hook will reject it. See
+   [../shared/commit-conventions.md](../shared/commit-conventions.md).
    ```bash
    git commit -m "docs(<id>): submit plan for review"
    ```
