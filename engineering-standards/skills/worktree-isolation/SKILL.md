@@ -24,9 +24,21 @@ When the user asks for a change and there is — or might be — parallel work l
 1. **Check where you are.** If the repo has linked worktrees (`git worktree list` shows more than one) and you're in the primary clone, you're on the shared tree. (In a tmux setup the status bar flags this as `⚠ primary`.)
 2. **Isolate the work** by the cheapest sufficient means:
    - **Dispatch an `isolation: "worktree"` subagent** (the Agent tool) to do the change — the harness gives it a clean worktree. Best for a self-contained task.
-   - **Or create a worktree and work there:** `git worktree add .worktrees/<branch> -b <branch> <base>` (base off `dev` if it exists), then operate inside it. Best when you'll iterate interactively.
+   - **Or create a worktree and work there** at the **target repo's** `.worktrees/<branch>`, resolved from that repo's root (not your cwd) and as a **real path** (`pwd -P`):
+     ```bash
+     ROOT="$(cd "$TARGET" && git rev-parse --show-toplevel)"; ROOT="$(cd "$ROOT" && pwd -P)"
+     git -C "$ROOT" worktree add "$ROOT/.worktrees/<branch>" -b <branch> origin/dev
+     ```
+     `$TARGET` is the repo this line of work targets (base off `dev` if it exists). Then operate inside it. Best when you'll iterate interactively.
    - Use **worktree-relative paths**; never reconstruct primary-clone absolute paths inside a worktree (that's how agents drift back out and re-collide).
 3. **Only edit the primary clone directly** when nothing else is live and the change is on the clone's own checked-out branch (e.g. a `dev` doc tweak you're about to commit immediately).
+
+## Where worktrees go (the location rule)
+
+Always `<target-repo-root>/.worktrees/<branch>` — resolved from the **repo the work targets**, not your current directory, and as a **real path** (`pwd -P`). Two reasons this exact form matters:
+
+- **Multi-repo workspaces.** When several repos sit under one coordination root and you may be launched from the root *or* from a member, deriving the path from the target repo's root (`git -C "$TARGET" rev-parse --show-toplevel`) makes it identical either way. Don't build cwd-relative or primary-clone-absolute paths.
+- **Never `/tmp`.** On macOS `/tmp` is a symlink to `/private/tmp`; worktrees under it break tooling that resolves modules in worker threads — vite-node/vitest dies with `Cannot find package …` *before a single test runs*, so suites silently never run and regressions only surface in CI. A worktree under the repo root is already a real path; `pwd -P` is the backstop.
 
 ## Starting parallel work
 

@@ -14,13 +14,13 @@
       "name": "engineering-standards",
       "source": "./engineering-standards",
       "description": "Evergreen engineering standards I hold code to — the judgment layer that AI-slop resistance needs on top of the mechanical quality stack. Project-structure conventions (consistent layout + naming so every repo looks the same), worktree isolation (every line of work in its own tree so parallel work never collides), and GitHub API discipline (zipball over per-file, rate-limit backoff), with automation-auth (GitHub App vs PAT) and hook-escape conventions on the way. Pure advisory skills that fire when the situation matches — no tooling, no setup, safe to leave enabled for a project's whole life. Backed by lessons from real incidents.",
-      "version": "0.1.1"
+      "version": "0.1.2"
     },
     {
       "name": "feature-workflow",
       "source": "./feature-workflow",
-      "description": "Feature lifecycle management with state, search, epic dispatch, and review gates. Capture ideas, plan, and ship as files (idea.md → plan.md → shipped.md) with orthogonal state (active/paused/replaced/abandoned). Single-feature autopilot and parallel-wave epic dispatch — every subagent in its own worktree. Per-feature review override (external Gemini/Codex CI / internal subagent / skip). Auto-generated DASHBOARD.md with Paused, Epics, and Validation Warnings sections. Multi-repo workspaces: an aggregated cross-repo dashboard, cross-repo epics, contract-edit warnings, and coordinated producer-first deploy.",
-      "version": "9.12.1"
+      "description": "Feature lifecycle management with state, search, epic dispatch, and review gates. Capture ideas, plan, and ship as files (idea.md → plan.md → shipped.md) with orthogonal state (active/paused/replaced/abandoned). Single-feature autopilot and parallel-wave epic dispatch — every subagent in its own worktree, with a local CI-parity preflight gate before every push. Per-feature review override (external Gemini/Codex CI / internal subagent / skip). Auto-generated DASHBOARD.md with Paused, Epics, and Validation Warnings sections. Multi-repo workspaces: an aggregated cross-repo dashboard, cross-repo epics, contract-edit warnings, and coordinated producer-first deploy.",
+      "version": "9.13.0"
     },
     {
       "name": "website-deployment",

@@ -55,6 +55,14 @@ branch:
   target: "{target}"    # Base branch for PRs and merges
 
 reviewer: "{reviewer}"  # External reviewer: gemini, codex, or none
+
+# Local CI-parity gate (optional, recommended). The autopilot runs this before
+# every push and only pushes on success — it reproduces your required CI checks
+# locally (build + test + lint) so failures are caught before a CI round-trip.
+# Set it to one command, then uncomment. Examples:
+#   preflight: "npm run preflight"   # JS/TS
+#   preflight: "just preflight"      # cargo / polyglot via a justfile
+# preflight: ""
 """
 
 
