@@ -146,6 +146,7 @@ Exit semantics identical to Step 2 — 0 auto-advances to Step 5, 1 triggers the
 
 Before invoking `feature-ship`, verify:
 
+- [ ] **Preflight gate is green** — run the `preflight:` command from `.feature-workflow.yml` (the local CI-parity gate). See "Preflight gate" below.
 - [ ] Project test command (e.g. `venv/bin/pytest tests/`, `npm test`) is green
 - [ ] Every box in `plan.md` → Implementation Steps is checked
 - [ ] Working tree is clean (`feature-ship` refuses dirty)
@@ -254,6 +255,23 @@ Every time the autopilot dispatches a subagent that may write to the working tre
 There is no opt-out. The autopilot does not check a config flag before isolating. If a project's worktree setup is painfully slow, fix it at the project level (shared venv via `uv`, pnpm content-addressable store, etc.) rather than disabling isolation.
 
 **Beyond autopilot:** this rule only governs subagents *this autopilot dispatches*. Your own ad-hoc/quick changes and other parallel sessions in the same repo aren't covered here — for those, see the **`worktree-isolation`** skill (engineering-standards plugin), which keeps work made *outside* autopilot from colliding in the shared primary clone (the most common source of the very bug this rule prevents).
+
+## Preflight gate (run before every push)
+
+If `.feature-workflow.yml` defines a `preflight:` command, the autopilot MUST run it and see it pass **before any push** — both the impl-review push (Step 4) and the ship push (Step 6). The command reproduces the repo's required CI checks locally (build, typecheck, tests, lint), so a failure is caught here instead of after a CI round-trip.
+
+```bash
+# from the repo root / worktree, before pushing:
+<the preflight: command>      # e.g. npm run preflight   (maxwell)
+                              #      just preflight       (a cargo repo)
+```
+
+- **Green** → proceed with the push.
+- **Fails** → treat it exactly like a failing pre-commit hook: do **not** push. Fix the cause locally, re-run preflight, push only when green. If the failure is a genuine pre-existing / allow-listed condition the gate legitimately can't pass, surface it to the user rather than pushing a red tree.
+
+No `preflight:` key → no local gate; the push relies on CI alone (legacy behavior). `feature-init` scaffolds the key for new repos.
+
+**Why:** pushing a tree that fails the required checks burns a full CI round-trip and can stall the autopilot's review loop on an infrastructural failure unrelated to the review. The gate also catches environment traps that make tests *silently not run* locally — e.g. a worktree under `/tmp`, where vite-node's workers fail module resolution and the suite never executes (see the `worktree-isolation` skill's location rule).
 
 ## Pre-commit Hooks and Static Analysis
 
