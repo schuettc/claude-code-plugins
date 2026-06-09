@@ -1,10 +1,22 @@
 # Feature Workflow Plugin
 
-**Version:** 9.11.0
+**Version:** 9.13.0
 
 A Claude Code plugin for feature lifecycle management using a directory-based architecture with event-driven hooks. Capture feature ideas, plan implementations, and ship features through a review-gated pipeline — optionally with automated PR reviews from an external AI (Gemini or Codex) via GitHub Actions. Scales to **multi-repo workspaces** — coordinate several interconnected repos in one org as if they were one (see [Multi-repo workspaces](#multi-repo-workspaces)).
 
 ## What's New
+
+### 9.13.0 — Preflight gate before push + worktree location rule
+- **Preflight gate** — if `.feature-workflow.yml` defines a `preflight:` command (a local CI-parity gate that reproduces the required checks: build / typecheck / test / lint), `feature-autopilot` runs it before **every push** — both the impl-review push and the ship push — and only pushes on green. Catches a red tree before a CI round-trip. `feature-init` scaffolds a commented `preflight:` key for new repos. No key → CI-only (legacy behavior).
+- **(engineering-standards 0.1.2) worktree location rule** — worktrees go at `<target-repo-root>/.worktrees/<branch>`, derived from the *target* repo's root (not cwd) as a real path (`pwd -P`), **never `/tmp`**. A `/tmp` symlink breaks vite-node worker module resolution, so the suite silently never runs and regressions only surface in CI. Target-root derivation also makes the path identical whether you launch from a workspace root or a member.
+
+### 9.12.1 — Working OCI reviewer template
+- **`oci-review.sh`** — send `max_completion_tokens` (gpt-5.x rejects `max_tokens` with HTTP 400) and raise 2000 → 16000 so reasoning tokens don't starve the output (gpt-5.5 burns ~1.5–2k reasoning tokens; verified live).
+- **`feature-review-oci.yml`** — add the per-PR `concurrency` group the gemini/codex templates already carry, so interleaved label/synchronize events don't post duplicate review comments.
+- **`post-review.sh`** — stop doubling the `## <Kind> Review` heading; the wrapper is added only when the reviewer output doesn't already start with one.
+
+### 9.12.0 — Merge-queue-aware ship
+- **`/feature-ship` Phase 4 detects a `merge_queue` ruleset on the base branch.** No queue → direct REST merge as before (`merge_method` from config). Queue required → `gh pr merge` to enqueue (the queue's own configured method governs; `merge_method` is ignored on this path — keep them aligned), then poll PR state until `MERGED` before cleanup, since the queue merges asynchronously. Fixes the 405 "merge queue required" failure on a queued integration branch (e.g. maxwell's `dev`).
 
 ### 9.11.0 — Multi-repo workspaces: cross-repo epics, contracts, coordinated deploy
 - **Aggregated workspace dashboard** — in a workspace (a root with `.feature-workspace.yml`), the dashboard hook auto-detects the manifest and writes a cross-repo roll-up: per-repo counts plus combined In Progress / Backlog / Epics across the workspace and every member. Editing a member feature also refreshes the workspace aggregate (walk-up in the hook).
