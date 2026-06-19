@@ -162,7 +162,7 @@ After all three axes, apply the fixes to the section. Show the author a before/a
 > - [claim]: [verified / flagged for author confirmation]
 >
 > **Revised section:**
-> ```
+> ```markdown
 > <revised section text>
 > ```
 >
@@ -194,13 +194,9 @@ After all sections have been approved, run one final consistency check across th
 - **Cross-section coherence:** The opening establishes the angle; the close reinforces it. If they diverged during revision, flag the mismatch.
 - **Updated preamble:** If the title changed during revision, update the frontmatter `title` field to match.
 
-Write the final draft back to the same file (full overwrite to capture all approved edits cleanly):
+All per-section `Edit()` calls in Phase 5 have persisted the approved changes to disk. The draft file is now complete with all revisions applied.
 
-```
-Write("<drafts_dir>/<filename>.md", <final draft content>)
-```
-
-Then hand off to `push-draft`:
+Hand off to `push-draft`:
 
 > "All sections reviewed and approved. Draft saved to `<path>`.
 >
