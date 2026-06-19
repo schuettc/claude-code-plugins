@@ -30,8 +30,15 @@ export function buildClient(env: NodeJS.ProcessEnv): GhostClient {
 }
 
 export async function main(env: NodeJS.ProcessEnv = process.env): Promise<void> {
-  const server = buildServer(buildClient(env));
-  await server.connect(new StdioServerTransport());
+  const client = buildClient(env);
+  // Startup diagnostic (stderr → MCP log; never the secret): shows whether creds
+  // resolved and for which site, so a misconfig is visible without guessing.
+  console.error(
+    client.baseUrl
+      ? `ghost-blog-mcp: starting — site ${client.baseUrl}`
+      : "ghost-blog-mcp: starting UNCONFIGURED — no Ghost credentials; run the setup-ghost skill",
+  );
+  await buildServer(client).connect(new StdioServerTransport());
 }
 
 // Run only when invoked directly (not when imported by tests).

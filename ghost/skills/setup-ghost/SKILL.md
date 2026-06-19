@@ -17,7 +17,7 @@ In your Ghost Admin panel:
    - **Admin API Key** — looks like `id:secret` (a colon-separated pair).
    - **API URL** — the base URL of your Ghost site, e.g. `https://yourblog.ghost.io`.
 
-Keep these values ready; you'll enter them through `/plugin configure` in Step 3, which stores the key in your system keychain. Do **not** paste them into `ghost.local.md`, `settings.json`, or any tracked file.
+Keep these values ready; you'll save them to a gitignored credentials file in Step 3. Do **not** paste them into `ghost.local.md`, `settings.json`, or any other tracked file.
 
 ## Step 2: Enable the plugin at project level
 
@@ -84,7 +84,7 @@ Create `.claude/ghost.local.md` using the Write tool with the following content:
 Write(".claude/ghost.local.md", """
 ---
 # Ghost plugin per-project config (non-secret). Copy to .claude/ghost.local.md.
-# Secrets (Ghost API URL + Admin API Key) are set via /plugin configure ghost, NOT here.
+# Secrets (Ghost API URL + Admin API Key) live in .claude/ghost.creds.json (Step 3), NOT here.
 corpus_filter: "status:published"   # NQL filter for the voice-learning corpus
 corpus_limit: 25                     # how many recent posts to learn from
 style_guide_path: ".claude/ghost-style-guide.md"
@@ -131,12 +131,13 @@ git commit -m "chore(ghost): add project ghost config"
 /reload-plugins
 ```
 
-**Call `ghost_site_info`** to confirm the key and URL are wired correctly. The tool returns your site's title, URL, and version. A successful response means the MCP server can reach Ghost and the credentials are valid.
+**Call `ghost_site_info`** to confirm the key and URL are wired correctly. The tool returns your site's title, URL, and version. A successful response means the MCP server can reach Ghost and the credentials are valid. Report the result inline to the user: on success, `✓ Connected to <title> (<url>, Ghost <version>)`; on failure, `✗ <the error>` followed by the matching fix below.
 
-If `ghost_site_info` returns an authentication error:
-- Re-run `/plugin configure ghost` and check the Admin API Key is `id:secret` format, not just the key ID.
-- Confirm the Ghost API URL has no trailing slash and matches your Ghost Admin URL exactly.
-- Make sure the plugin was re-enabled (or Claude Code restarted) after configuring, so the MCP server picks up the new values.
+If `ghost_site_info` returns an authentication or connection error:
+- Open `.claude/ghost.creds.json` and check `GHOST_ADMIN_API_KEY` is the full `id:secret` pair (24 hex chars, a colon, then 64 hex chars), not just the key ID.
+- Confirm `GHOST_API_URL` has no trailing slash and matches your Ghost Admin URL exactly.
+- If the MCP runs from a different working directory than the project root, the server won't find `.claude/ghost.creds.json` — the bundled `.mcp.json` passes `GHOST_CREDENTIALS_FILE=${CLAUDE_PROJECT_DIR}/.claude/ghost.creds.json`, so verify that file actually exists at that path.
+- Restart Claude Code (a genuinely fresh session, not `--resume`) so the MCP server respawns and re-reads the creds file.
 
 **Check the MCP connection** by running:
 

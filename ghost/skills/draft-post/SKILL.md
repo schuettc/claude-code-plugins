@@ -141,6 +141,10 @@ Apply every constraint from the style guide as you write:
 - Always include a language tag: ` ```typescript `, ` ```bash `, etc. Never a bare ` ``` `.
 - Keep lines to ≤70 characters inside code blocks (Ghost's rendering wraps at narrow widths).
 
+**Tables:**
+- Use **HTML inline-styled tables, not Markdown tables.** Ghost renders Markdown tables cramped, with no numeric alignment and poor mobile layout; a top-level `<table>` block is auto-split into its own clean html card. Write the HTML directly in the markdown source.
+- Template — `<table style="border-collapse: collapse; width: 100%; margin: 2em 0; font-size: 0.95em;">`; header `<tr>` gets `border-bottom: 2px solid currentColor`; body `<tr>` gets `border-bottom: 1px solid rgba(128,128,128,0.25)` (drop it on the last row); cells `padding: 0.65em 1em`; numeric columns `text-align: right; font-variant-numeric: tabular-nums`.
+
 **Headings:**
 - Use sentence case (capitalize first word and proper nouns only).
 - No ALL-CAPS headings.
@@ -195,6 +199,10 @@ Fix: Add the correct language tag. Defaults: `typescript`, `javascript`, `bash`,
 **7b. Code fence lines exceeding 70 characters**
 Flag any line inside a fenced code block longer than ~70 characters (Ghost renders code narrow).
 Fix: Break long lines using the language's idiomatic line-continuation style. For shell: `\` continuation. For TypeScript/JavaScript: intermediate variables or line breaks at operators.
+
+**8. Markdown tables**
+Grep: `grep -nE '^\|.*\|.*\|' ` — flags GitHub-style Markdown table rows (and the `|---|---|` separator).
+Fix: Convert to an HTML inline-styled table (see Tables guidance in Phase 4b). Markdown tables render cramped in Ghost and are not split into their own card.
 
 **Fix, don't just report.** The self-audit is a repair pass, not a linting report. When the audit is complete, the draft file should already be clean.
 

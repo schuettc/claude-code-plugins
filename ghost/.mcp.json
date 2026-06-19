@@ -2,7 +2,10 @@
   "mcpServers": {
     "ghost": {
       "command": "npx",
-      "args": ["-y", "ghost-blog-mcp@latest"]
+      "args": ["-y", "ghost-blog-mcp@dev"],
+      "env": {
+        "GHOST_CREDENTIALS_FILE": "${CLAUDE_PROJECT_DIR}/.claude/ghost.creds.json"
+      }
     }
   }
 }
