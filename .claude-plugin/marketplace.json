@@ -39,6 +39,12 @@
       "source": "./quality-workflow",
       "description": "Sister to feature-workflow for code-quality findings. Surfaces, triages, and resolves static-analysis output (skylos for Python, fallow for TS/JS) with the same backlog-and-epic discipline. User-invocable skills: /quality-verify-hook self-tests pre-commit hooks against known-bad fixtures (catches the silently-misconfigured-hook class of bug), /quality-audit produces fingerprinted snapshots + NEW/RESOLVED/PERSISTING delta (suppressed findings excluded from active counts), /quality-unblock triages failing hooks with playbook-driven fix/suppress/defer proposals and refuses bare suppressions. Plus the language-agnostic suppression-discipline standard (every ignore carries an inline rationale). Day-1 playbooks for 13 skylos + 12 fallow rule_ids.",
       "version": "0.3.0"
+    },
+    {
+      "name": "ghost",
+      "source": "./ghost",
+      "description": "Write, revise, and push blog posts to a Ghost site from Claude Code — a Ghost Admin API MCP plus a plan→draft→revise→push skill set.",
+      "version": "0.1.1"
     }
   ]
 }
