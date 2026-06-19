@@ -23,7 +23,7 @@ Keep these values ready; you'll store them in the next step. Do **not** paste th
 
 The `ghost` plugin must be enabled **per project**, not globally. Here is why this matters:
 
-- `/plugin marketplace add ghost` (user-level) makes the plugin available in your Claude Code installation but does **not** activate its skills or MCP server anywhere. It is a one-time prerequisite, not the enablement step.
+- `/plugin marketplace add schuettc/claude-code-plugins` (user-level) makes the plugin available in your Claude Code installation but does **not** activate its skills or MCP server anywhere. It is a one-time prerequisite, not the enablement step.
 - **Enablement happens in the project's `.claude/settings.json`** — the committed, project-scoped settings file. Only projects that opt in get the Ghost skills and MCP server.
 
 > **WARNING: do NOT enable the ghost plugin in `~/.claude/settings.json`.** Doing so activates the Ghost MCP server and skills in every Claude Code session on your machine, regardless of project. The MCP server reads project-specific config that won't exist in other projects, so it will error or misbehave globally.
@@ -33,12 +33,12 @@ Add `ghost` to `enabledPlugins` in the **project's** `.claude/settings.json`:
 ```json
 {
   "enabledPlugins": {
-    "ghost@marketplace": true
+    "ghost@schuettc-claude-code-plugins": true
   }
 }
 ```
 
-If `enabledPlugins` already exists, add `"ghost@marketplace": true` to it. This file is committed to the repo — it's how the whole team (or just you, on this project) gets the plugin.
+If `enabledPlugins` already exists, add `"ghost@schuettc-claude-code-plugins": true` to it. This file is committed to the repo — it's how the whole team (or just you, on this project) gets the plugin.
 
 ## Step 3: Store secrets in settings.local.json
 
