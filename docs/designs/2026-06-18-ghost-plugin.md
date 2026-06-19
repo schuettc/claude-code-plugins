@@ -77,6 +77,9 @@ pattern instead.
 ```
 
 - Transport: **stdio** (local subprocess).
+- This `.mcp.json` is **bundled in the plugin**, so it activates only where the
+  plugin is enabled — see §5.1 (project-level-only enablement, a hard
+  requirement). It does not register the server globally.
 - The npm package carries its own semver, kept in lockstep with the plugin
   version. The repo's `release` skill gains an `npm publish` step.
 
@@ -245,12 +248,17 @@ missing:
 - **Acquire the key** — walk the author through Ghost Admin → Settings →
   Advanced → Integrations → *Add custom integration*, then copy the **Admin API
   Key** (`id:secret`) and **API URL**.
-- **Place the secret in env, never in config** (shell profile / `.env` the
-  author manages); explain why it stays out of the repo.
+- **Enable the plugin at PROJECT level only** (§5.1) — write `enabledPlugins`
+  into the project's `.claude/settings.json`, and explicitly warn against
+  enabling in `~/.claude/settings.json` (which would activate the skills + MCP
+  globally). This is a hard requirement.
+- **Place the secret in `.claude/settings.local.json`** (`env` block, gitignored)
+  or the shell — never in committed config. Explain why it stays out of the repo.
 - **Write the non-secret config** `.claude/ghost.local.md` (corpus source,
   default tags, style-guide path, drafts dir).
-- **Verify** with `ghost_site_info`, then point to `define-voice` /
-  `build-style-guide` as the next step.
+- **Verify** with `ghost_site_info` (and remind the author they can run `/mcp`
+  to confirm the server is connected in this project but not elsewhere), then
+  point to `define-voice` / `build-style-guide` as the next step.
 
 ### 4.7 Draft-only policy
 
@@ -284,11 +292,34 @@ MCP tools.
   plugin-settings pattern — YAML frontmatter + markdown): corpus source,
   style-guide path, default tags, default visibility / "early-access" behavior,
   local drafts directory. Written by `setup-ghost` (§4.6) on first run.
-- **Secret** (Ghost Admin key) stays in env (`GHOST_ADMIN_API_KEY`,
-  `GHOST_API_URL`), passed through `.mcp.json`. Never in config, never committed.
+- **Secret** (Ghost Admin key) lives in the project's
+  `.claude/settings.local.json` `env` block (gitignored) or the shell, and is
+  expanded into the bundled `.mcp.json` via `${GHOST_ADMIN_API_KEY}` /
+  `${GHOST_API_URL}`. Never in committed config, never logged.
 - The old subaud paywall logic (auto `early-access` tag + `visibility: paid`)
   becomes **config-driven defaults the `push-draft` skill applies** — not
   hardcoded anywhere in the MCP.
+
+### 5.1 Enablement scope — project-level only (hard requirement)
+
+The plugin's skills **and** its bundled MCP must activate only in projects that
+opt in (e.g. `ghost-site`), never globally for the user.
+
+- **Mechanism:** Claude Code scopes a plugin's bundled components (skills,
+  agents, hooks, and its `.mcp.json` MCP server) **atomically to the plugin's
+  enablement scope.** A plugin's `.mcp.json` does *not* register globally; it
+  activates exactly where the plugin is enabled.
+- **Therefore:** enable the `ghost` plugin **only** in the consuming repo's
+  `.claude/settings.json` (`enabledPlugins`), committed to that repo. Do **not**
+  add it to `~/.claude/settings.json`.
+- **Marketplace add (`/plugin marketplace add`) is user-level** and only makes
+  the plugin *available*; it enables nothing. Per-project enablement is the
+  scoping step.
+- **Secrets** go in the consuming repo's `.claude/settings.local.json` (`env`,
+  gitignored), expanded into the bundled `.mcp.json`.
+- **`setup-ghost` enforces and verifies this** (§4.6): it writes project
+  settings, warns against user-level enablement, and has the author confirm via
+  `/mcp` that the server is connected here and absent in other projects.
 
 ---
 
