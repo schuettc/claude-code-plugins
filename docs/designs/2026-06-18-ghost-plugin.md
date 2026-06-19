@@ -292,10 +292,17 @@ MCP tools.
   plugin-settings pattern — YAML frontmatter + markdown): corpus source,
   style-guide path, default tags, default visibility / "early-access" behavior,
   local drafts directory. Written by `setup-ghost` (§4.6) on first run.
-- **Secret** (Ghost Admin key) lives in the project's
-  `.claude/settings.local.json` `env` block (gitignored) or the shell, and is
-  expanded into the bundled `.mcp.json` via `${GHOST_ADMIN_API_KEY}` /
-  `${GHOST_API_URL}`. Never in committed config, never logged.
+- **Secret** (Ghost Admin key) and the API URL are declared as the plugin's
+  **`userConfig`** fields in `plugin.json` and referenced in the bundled
+  `.mcp.json` env as `${user_config.ghostAdminApiKey}` /
+  `${user_config.ghostApiUrl}`. Claude Code prompts for them on enable (or
+  `setup-ghost` sets them via `/plugin configure`); the `sensitive` key is
+  stored in the OS keychain, never in a settings file or the repo.
+  **Do NOT use raw `${ENV_VAR}` interpolation** — it resolves against the
+  session's process env at MCP-spawn time and silently breaks on session resume
+  (see the credential-wiring standard memory). The server still reads
+  `GHOST_API_URL` / `GHOST_ADMIN_API_KEY`; `userConfig` is just how they're
+  populated.
 - The old subaud paywall logic (auto `early-access` tag + `visibility: paid`)
   becomes **config-driven defaults the `push-draft` skill applies** — not
   hardcoded anywhere in the MCP.
@@ -315,8 +322,9 @@ opt in (e.g. `ghost-site`), never globally for the user.
 - **Marketplace add (`/plugin marketplace add`) is user-level** and only makes
   the plugin *available*; it enables nothing. Per-project enablement is the
   scoping step.
-- **Secrets** go in the consuming repo's `.claude/settings.local.json` (`env`,
-  gitignored), expanded into the bundled `.mcp.json`.
+- **Secrets** are provided via the plugin's `userConfig` (keychain-stored for
+  `sensitive` fields) and injected into the bundled `.mcp.json` env as
+  `${user_config.*}` — not a `settings.local.json` env block.
 - **`setup-ghost` enforces and verifies this** (§4.6): it writes project
   settings, warns against user-level enablement, and has the author confirm via
   `/mcp` that the server is connected here and absent in other projects.
