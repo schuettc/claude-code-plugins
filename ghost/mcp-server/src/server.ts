@@ -73,5 +73,54 @@ export function buildServer(client: GhostClient): McpServer {
     async ({ filter, limit }) => json(await client.listTags({ filter, limit })),
   );
 
+  const writeFields = {
+    type: typeArg,
+    title: z.string().optional(),
+    slug: z.string().optional(),
+    markdown: z.string().optional().describe("Markdown body; built into card-split lexical."),
+    html: z.string().optional().describe("HTML body; sent with source:html. Use markdown unless you have raw HTML."),
+    tags: z.array(z.string()).optional().describe("Tag slugs; attached inline, auto-created if missing."),
+    authors: z.array(z.string()).optional().describe("Author emails or slugs."),
+    status: z.enum(["draft", "published", "scheduled"]).optional(),
+    visibility: z.enum(["public", "members", "paid"]).optional(),
+    published_at: z.string().optional().describe("ISO date; with status=scheduled, schedules the post."),
+    feature_image: z.string().optional(),
+    custom_excerpt: z.string().optional(),
+    meta_title: z.string().optional(),
+    meta_description: z.string().optional(),
+  };
+
+  server.registerTool(
+    "ghost_post_create",
+    {
+      title: "Create a Ghost post/page",
+      description:
+        "Create a post or page from Markdown (built into card-split lexical) or HTML. Returns the public and editor URLs.",
+      inputSchema: writeFields,
+    },
+    async (args) => json(await client.createPost({ ...args, type: args.type as PostType })),
+  );
+
+  server.registerTool(
+    "ghost_post_update",
+    {
+      title: "Update a Ghost post/page",
+      description:
+        "Update a post or page in place by id or slug. Read-then-edit (handles updated_at) and syncs title/tags/excerpt/meta, not just the body.",
+      inputSchema: { ...writeFields, id: z.string().optional() },
+    },
+    async (args) => json(await client.updatePost({ ...args, type: args.type as PostType })),
+  );
+
+  server.registerTool(
+    "ghost_image_upload",
+    {
+      title: "Upload an image to Ghost",
+      description: "Upload a local image file to Ghost storage and return its CDN url (e.g. for a feature image).",
+      inputSchema: { path: z.string().describe("Absolute path to the image file.") },
+    },
+    async ({ path }) => json(await client.uploadImage(path)),
+  );
+
   return server;
 }

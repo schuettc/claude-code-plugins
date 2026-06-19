@@ -27,12 +27,13 @@ async function connect(client: GhostClient) {
 }
 
 describe("read tools", () => {
-  it("registers the four read tools", async () => {
+  it("registers the four read tools (among seven total)", async () => {
     const mcp = await connect(fakeClient());
-    const names = (await mcp.listTools()).tools.map((t) => t.name).sort();
+    const names = (await mcp.listTools()).tools.map((t) => t.name);
     expect(names).toEqual(
-      ["ghost_post_get", "ghost_post_list", "ghost_site_info", "ghost_tag_list"].sort(),
+      expect.arrayContaining(["ghost_post_get", "ghost_post_list", "ghost_site_info", "ghost_tag_list"]),
     );
+    expect(names).toHaveLength(7);
   });
 
   it("ghost_site_info returns site json", async () => {
