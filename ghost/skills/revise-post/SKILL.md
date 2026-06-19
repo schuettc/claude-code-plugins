@@ -61,15 +61,45 @@ If the style guide does not exist, continue the revision but warn the author:
 
 ---
 
-## Phase 3: Load the anti-pattern checklist
+## Phase 3: Anti-pattern checklist (inlined)
 
-Open the shared anti-pattern list:
+The following anti-patterns govern the voice axis in Phase 5. Keep them active throughout revision.
 
-```
-Read("${CLAUDE_PLUGIN_ROOT}/skills/draft-post/anti-patterns.md")
-```
+**1a. ALL-CAPS headings**
+Grep: `grep -nE '^#{1,6} [A-Z][A-Z ]{3,}$'`
+Fix: Convert to sentence case — capitalize only the first word and any proper nouns.
 
-Keep this list active for the voice axis in Phase 4. Do not duplicate its contents here — reference it directly each revision session.
+**1b. Question-only headings**
+Grep: `grep -nE '^#{1,6} .+\?$'`
+Fix: Rewrite as a declarative or partially declarative heading.
+
+**2. Editorial restatements**
+Grep: `grep -niE '(in other words|to put it simply|what i mean is|what i(''m| am) saying is|let me rephrase|put another way)'`
+Fix: Delete the restatement and revise the sentence it was clarifying.
+
+**3. Hedge words**
+Grep: `grep -niE '\b(just|simply|basically|obviously|of course|clearly|needless to say)\b'`
+Fix: Delete the hedge word; rewrite the claim more precisely if needed.
+
+**4. AI-flavored transitions and filler phrases**
+Grep: `grep -niE '(in conclusion|in summary|to summarize|it(''s| is) worth noting|it(''s| is) important to (note|remember|understand)|delve into|certainly|absolutely|moreover,|furthermore,|additionally,)'`
+Fix: Delete the phrase; restructure the sentence or paragraph to flow without it.
+
+**5. Cleft and focus-frame constructions**
+Grep: `grep -niE '(what (this|that) means is|the thing about .{1,40} is|what(''s| is) (interesting|important|notable) (here|about this) is|the (point|key|takeaway) (here|is that))'`
+Fix: Delete the frame; state the point directly.
+
+**6. Cute closers**
+Grep: `grep -niE '(happy coding|until next time|stay curious|hope this helps|happy (building|shipping|hacking)|that(''s| is) a wrap|catch you (next time|later)|keep (coding|building|hacking))'`
+Fix: Delete the phrase; replace with a closing line that reinforces the post's main point.
+
+**7a. Missing language tag on code fence**
+Grep: `grep -nP '^` + "```" + `\s*$'`
+Fix: Add the correct language tag (`typescript`, `javascript`, `bash`, `json`, `yaml`, `text`).
+
+**7b. Code fence lines exceeding 70 characters**
+Check: `awk '/^` + "```" + `/{inside=!inside} inside && length($0)>70{print NR": "length($0)" chars: "$0}' <path-to-draft>`
+Fix: Break long lines using the language's idiomatic line-continuation style.
 
 ---
 
@@ -112,7 +142,7 @@ For each section in order, run all three axes, then wait for author approval bef
 
 Check and fix all formatting issues in the section:
 
-- **Code line length:** Every line inside a code fence must be ≤70 characters. Use the awk check from the anti-pattern list for detection. Break long lines using the language's idiomatic line-continuation style (`\` for shell, intermediate variables for TypeScript/JavaScript).
+- **Code line length:** Every line inside a code fence must be ≤70 characters. Use the awk check from Phase 3 (pattern 7b) for detection. Break long lines using the language's idiomatic line-continuation style (`\` for shell, intermediate variables for TypeScript/JavaScript).
 - **Code fence language tags:** Every fence must have a language tag (` ```typescript `, ` ```bash `, etc.). Never leave a bare ` ``` `.
 - **Dense paragraphs:** If a paragraph runs longer than ~5 sentences and enumerates distinct items, convert the items to a bulleted or numbered list. Do not list-ify flowing narrative prose.
 - **Table/card candidates:** If the section compares two or more things across the same attributes, convert to a Markdown table. If the section has a standalone callout or tip, use a blockquote (`>`).
@@ -120,7 +150,7 @@ Check and fix all formatting issues in the section:
 
 #### Axis 2 — Voice
 
-Run every anti-pattern from `${CLAUDE_PLUGIN_ROOT}/skills/draft-post/anti-patterns.md` against the section text:
+Run every anti-pattern from the checklist loaded in Phase 3 against the section text:
 
 1. Forbidden heading styles (ALL-CAPS, question-only) — already caught in Axis 1; confirm clean.
 2. Editorial restatements ("in other words", "to put it simply", etc.) — delete the restatement, rewrite the original sentence.
@@ -211,7 +241,7 @@ Do not call any Ghost MCP write tools. The draft stays local until `/ghost:push-
 - **Local only.** No Ghost MCP calls are made — all reads and writes target `<drafts_dir>/<filename>.md` on the local filesystem only.
 - **Three axes are mandatory.** Do not skip or abbreviate any axis, even for short sections. A section that passes all three axes quickly still needs to be confirmed.
 - **Accuracy axis forbids fabrication.** If a command, flag, API name, or factual claim cannot be verified, flag it to the author. Do not guess and move on.
-- **Anti-patterns are in the shared list.** Do not duplicate the checklist here — always load it from `${CLAUDE_PLUGIN_ROOT}/skills/draft-post/anti-patterns.md` at the start of each session.
+- **Anti-patterns are inlined in Phase 3.** All checks are self-contained in this skill — no external file load required.
 - **Author approval is per-section.** Never auto-advance past a section without an explicit approval signal.
 - **If `ghost.local.md` is missing:** use defaults (`drafts_dir: blog-posts/drafts`, `style_guide_path: .claude/ghost-style-guide.md`) and note it.
 - **Prerequisites:** `/ghost:setup-ghost` (to configure the project), `/ghost:draft-post` (to produce the draft being revised).

@@ -152,17 +152,49 @@ Write the full draft before continuing to Phase 5. Do not truncate.
 
 ## Phase 5: Self-audit against anti-patterns
 
-Once the draft is written, run the self-audit. Open the anti-pattern checklist:
-
-```
-Read("${CLAUDE_PLUGIN_ROOT}/skills/draft-post/anti-patterns.md")
-```
-
-Work through each pattern in the checklist. For each one:
+Once the draft is written, run the self-audit. Work through each pattern below. For each one:
 
 1. Search the draft for the pattern (mentally or by scanning the text).
 2. If any instance is found, **fix it in the file** — do not just report it.
 3. After fixing, note the fix briefly.
+
+**Anti-pattern checklist** — run all of the following in order:
+
+**1a. ALL-CAPS headings**
+Grep: `grep -nE '^#{1,6} [A-Z][A-Z ]{3,}$'`
+Fix: Convert to sentence case — capitalize only the first word and any proper nouns.
+
+**1b. Question-only headings**
+Grep: `grep -nE '^#{1,6} .+\?$'`
+Fix: Rewrite as a declarative or partially declarative heading. Example: "Why this approach breaks at scale" instead of "Why does this break at scale?"
+
+**2. Editorial restatements**
+Grep: `grep -niE '(in other words|to put it simply|what i mean is|what i(''m| am) saying is|let me rephrase|put another way)'`
+Fix: Delete the restatement and revise the sentence it was clarifying so it stands on its own.
+
+**3. Hedge words**
+Grep: `grep -niE '\b(just|simply|basically|obviously|of course|clearly|needless to say)\b'`
+Fix: Delete the hedge word. If the sentence still sounds uncertain, rewrite the claim more precisely.
+
+**4. AI-flavored transitions and filler phrases**
+Grep: `grep -niE '(in conclusion|in summary|to summarize|it(''s| is) worth noting|it(''s| is) important to (note|remember|understand)|delve into|certainly|absolutely|moreover,|furthermore,|additionally,)'`
+Fix: Delete the phrase and restructure the sentence or paragraph to flow without it.
+
+**5. Cleft and focus-frame constructions**
+Grep: `grep -niE '(what (this|that) means is|the thing about .{1,40} is|what(''s| is) (interesting|important|notable) (here|about this) is|the (point|key|takeaway) (here|is that))'`
+Fix: Delete the frame and state the point directly. "What this means is the cache is invalidated" → "The cache is invalidated."
+
+**6. Cute closers**
+Grep: `grep -niE '(happy coding|until next time|stay curious|hope this helps|happy (building|shipping|hacking)|that(''s| is) a wrap|catch you (next time|later)|keep (coding|building|hacking))'`
+Fix: Delete the phrase. Replace with a closing line that reinforces the post's main point, poses an open question, or points to a logical next step.
+
+**7a. Missing language tag on code fence**
+Grep: `grep -nP '^` + "```" + `\s*$'`
+Fix: Add the correct language tag. Defaults: `typescript`, `javascript`, `bash`, `json`, `yaml`, `text`.
+
+**7b. Code fence lines exceeding 70 characters**
+Check: `awk '/^` + "```" + `/{inside=!inside} inside && length($0)>70{print NR": "length($0)" chars: "$0}' <path-to-draft>`
+Fix: Break long lines using the language's idiomatic line-continuation style. For shell: `\` continuation. For TypeScript/JavaScript: intermediate variables or line breaks at operators.
 
 **Fix, don't just report.** The self-audit is a repair pass, not a linting report. When the audit is complete, the draft file should already be clean.
 
