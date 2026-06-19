@@ -72,7 +72,7 @@ Parse the frontmatter to extract:
 ### 2a. Fetch the live post
 
 ```
-ghost_post_get(slug="<slug>", fields="id,slug,title,lexical,updated_at,url,editorUrl")
+ghost_post_get(slug="<slug>")
 ```
 
 Capture:
@@ -125,10 +125,10 @@ If the draft frontmatter contains a `feature_image` field, check whether it is a
 **If local path:**
 
 ```
-ghost_image_upload(file_path="<feature_image path>", purpose="image")
+ghost_image_upload(path="<feature image local path>")
 ```
 
-The tool returns a hosted URL. Record it — you will pass it as `feature_image` in Phase 4.
+The tool returns `{url}`. Record the returned url — you will pass it as `feature_image` in Phase 4.
 
 **If already an https:// URL** — use it as-is; no upload needed.
 
@@ -175,7 +175,7 @@ ghost_post_create(
   title="<title>",
   markdown="<body content below frontmatter>",
   status="draft",
-  tags=[{"slug": "<slug1>"}, {"slug": "<slug2>"}, ...],
+  tags=["<slug1>", "<slug2>", ...],
   visibility="<resolved visibility>",
   feature_image="<hosted URL or omit>"
 )
@@ -189,7 +189,7 @@ ghost_post_update(
   title="<title>",
   markdown="<body content below frontmatter>",
   status="draft",
-  tags=[{"slug": "<slug1>"}, {"slug": "<slug2>"}, ...],
+  tags=["<slug1>", "<slug2>", ...],
   visibility="<resolved visibility>",
   feature_image="<hosted URL or omit>"
 )
@@ -269,7 +269,7 @@ If the author indicates they are not satisfied with how the post turned out (e.g
 
 - **Draft-only invariant.** `status: draft` on every push. The Ghost UI is where the author publishes. This skill never publishes, never schedules.
 - **Pull-guard always precedes an update.** Never update an existing post without first fetching and diffing the live version. The local file is the source of truth for the author's intent, but in-editor changes must not be silently discarded.
-- **Tags resolved via canonical slug.** Always call `ghost_tag_list` to resolve tag names to slugs before pushing. Never pass a raw tag name to the API — Ghost matches on slug.
+- **Tags resolved via canonical slug.** Always call `ghost_tag_list` to resolve tag names to slugs before pushing. Pass the resulting slugs as a flat array of strings: `tags=["slug1", "slug2"]`. The server maps strings→`{slug}` internally — do NOT pass objects.
 - **Link verification does not auto-follow URLs.** Report links for author review. The no-internal-docs rule is a hard stop: ask before linking internal planning/design artifacts.
 - **Style guide feedback is conditional.** Only invoke `build-style-guide` when the author approves the pushed result as a good example of their voice.
 - **If `ghost.local.md` is missing:** use defaults (`drafts_dir: blog-posts/drafts`, `default_tags: []`, `default_visibility: public`, `early_access.enabled: false`) and note it.

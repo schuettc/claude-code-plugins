@@ -189,11 +189,11 @@ Grep: `grep -niE '(happy coding|until next time|stay curious|hope this helps|hap
 Fix: Delete the phrase. Replace with a closing line that reinforces the post's main point, poses an open question, or points to a logical next step.
 
 **7a. Missing language tag on code fence**
-Grep: `grep -nP '^` + "```" + `\s*$'`
+Flag any fenced code block whose opening fence has no language tag (a bare triple-backtick with nothing after it).
 Fix: Add the correct language tag. Defaults: `typescript`, `javascript`, `bash`, `json`, `yaml`, `text`.
 
 **7b. Code fence lines exceeding 70 characters**
-Check: `awk '/^` + "```" + `/{inside=!inside} inside && length($0)>70{print NR": "length($0)" chars: "$0}' <path-to-draft>`
+Flag any line inside a fenced code block longer than ~70 characters (Ghost renders code narrow).
 Fix: Break long lines using the language's idiomatic line-continuation style. For shell: `\` continuation. For TypeScript/JavaScript: intermediate variables or line breaks at operators.
 
 **Fix, don't just report.** The self-audit is a repair pass, not a linting report. When the audit is complete, the draft file should already be clean.

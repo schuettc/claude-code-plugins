@@ -79,10 +79,10 @@ Capture the list. If no posts are returned, note "no published posts found" and 
 For each post in the list (up to `corpus_limit`), fetch the full content:
 
 ```
-ghost_post_get(id="<post_id>", fields="title,html,plaintext,published_at,url")
+ghost_post_get(id="<post_id>")
 ```
 
-Prefer `plaintext` for analysis; fall back to `html` if `plaintext` is absent.
+Analyze the returned `html` (this tool returns html + lexical; there is no plaintext field).
 
 Work through all posts before moving to Phase 3. This is the most time-consuming step — process them in order, extracting style signals as you go.
 
@@ -252,7 +252,7 @@ This phase applies when `build-style-guide` is invoked by `/ghost:push-draft` af
 The caller (push-draft or the author) provides the post ID or title. Fetch it:
 
 ```
-ghost_post_get(id="<new_post_id>", fields="title,html,plaintext,published_at,url")
+ghost_post_get(id="<new_post_id>")
 ```
 
 ### 5b. Check provenance log
