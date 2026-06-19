@@ -139,7 +139,7 @@ Combine two sources:
    - AI-flavored transitions: "In conclusion", "It's worth noting that", "It's important to remember", "Delve into", "Certainly"
    - Cleft / focus-frames: "What this means is…", "The thing about X is…", "What's interesting here is…"
    - Cute closers: "Happy coding!", "Until next time!", "Stay curious!", "Hope this helps!"
-   - Code-fence width: code blocks without a language tag, or lines exceeding 80 columns
+   - Code-fence width: code blocks without a language tag, or lines exceeding ~70 columns (Ghost renders narrow)
 
 List each anti-pattern as a short bullet with a concrete example of what to avoid.
 
@@ -164,7 +164,7 @@ Add one row per post fetched. If no corpus was available, note that.
 
 Write the complete four-section document to `<style_guide_path>`.
 
-Use the template structure from `ghost/skills/build-style-guide/style-guide-template.md` as the skeleton. Update the frontmatter:
+Use the template structure from `${CLAUDE_PLUGIN_ROOT}/skills/build-style-guide/style-guide-template.md` as the skeleton. Update the frontmatter:
 
 - `last_updated`: today's date (ISO 8601)
 - `sources_count`: total number of posts folded in across all runs (from the provenance log)

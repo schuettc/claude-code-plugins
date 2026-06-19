@@ -66,7 +66,7 @@ When populated, this section lists specific forbidden patterns, e.g.:
 - AI-flavored transitions ("In conclusion", "It's worth noting", "Delve into")
 - Cleft / focus-frames ("What this means is...", "The thing about X is...")
 - Cute closers ("Happy coding!", "Until next time!", "Stay curious!")
-- Code-fence width (e.g., never exceed 80 cols without a language tag)
+- Code-fence width (~70 cols for Ghost; always include a language tag)
 - Any author-stated avoidances from the interview
 -->
 
