@@ -1,0 +1,72 @@
+# Publish ghost-blog-mcp to the `dev` npm dist-tag on every push to `dev`
+# that changes the package (and only when its version is new).
+#
+# Tokenless — uses npm OIDC Trusted Publishing (no NPM_TOKEN secret). This
+# requires a ONE-TIME setup on npmjs.com: configure a trusted publisher for the
+# `ghost-blog-mcp` package pointing at:
+#   repository: schuettc/claude-code-plugins
+#   workflow:   .github/workflows/publish-ghost-mcp-dev.yml
+# Until that's configured, the publish step will fail with an auth error.
+#
+# Promotion to prod (@dev -> @latest) is a deliberate MANUAL step — see
+# ghost/docs/releasing.md. It is intentionally not automated here.
+
+name: Publish ghost-blog-mcp (dev)
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "ghost/mcp-server/**"
+      - ".github/workflows/publish-ghost-mcp-dev.yml"
+
+concurrency:
+  group: publish-ghost-mcp-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # required for OIDC trusted publishing
+
+jobs:
+  publish-dev:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ghost/mcp-server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Use latest npm (OIDC trusted publishing needs npm >= 11.5)
+        run: npm install -g npm@latest
+
+      - name: Install
+        run: npm ci
+
+      - name: Build, typecheck, test
+        run: |
+          npm run build
+          npm run typecheck
+          npm test
+
+      - name: Skip if this version is already published
+        id: guard
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "ghost-blog-mcp@$VERSION" version >/dev/null 2>&1; then
+            echo "ghost-blog-mcp@$VERSION already published — skipping publish."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to @dev
+        if: steps.guard.outputs.publish == 'true'
+        run: npm publish --tag dev --provenance

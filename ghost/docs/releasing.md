@@ -78,20 +78,28 @@ git push
 
 ---
 
-## Future: automate with OIDC (no tokens)
+## Automation
 
-Mirror `mixcraft-app`'s GitHub Actions **Trusted Publishing** (OIDC) so CI
-publishes without an `NPM_TOKEN`:
+**Dev publish is automated** via `.github/workflows/publish-ghost-mcp-dev.yml`
+(OIDC Trusted Publishing — no `NPM_TOKEN`). On every push to `dev` that touches
+`ghost/mcp-server/**`, it builds/typechecks/tests and, **if the version in
+`package.json` is new**, runs `npm publish --tag dev --provenance`. So the dev
+release becomes: bump the version on a `feat/*` branch, merge to `dev`, and CI
+publishes `@dev`. (The manual `npm publish --tag dev` above is the local
+fallback; `--provenance` only works from CI.)
 
-- **`publish-dev`** — on push to `dev` touching `ghost/mcp-server/**`:
-  build/typecheck/test, then `npm publish --tag dev --provenance`.
-- **`publish-prod`** — on a GitHub Release: `npm dist-tag add ghost-blog-mcp@<v> latest`.
+**One-time setup (npmjs.com):** configure a *trusted publisher* for the
+`ghost-blog-mcp` package → repository `schuettc/claude-code-plugins`, workflow
+`.github/workflows/publish-ghost-mcp-dev.yml`. Until that's done the publish
+step fails with an auth error. (npm CLI ≥ 11.5 is required for tokenless OIDC;
+the workflow upgrades npm before publishing.)
 
-Both need `permissions: { id-token: write, contents: read }` and a trusted
-publisher configured for `ghost-blog-mcp` on npmjs.com (repo
-`schuettc/claude-code-plugins` + the workflow filename). `--provenance` only
-works from CI, not a local `npm publish`.
+**Prod promotion stays manual — on purpose.** Moving `@latest` is the "ship to
+prod" gate and should be a deliberate human action, so it is *not* automated:
+run `npm dist-tag add ghost-blog-mcp@<version> latest` yourself (see "Promote to
+prod" above). It also sidesteps a limitation: OIDC trusted publishing authorises
+`npm publish`, not `dist-tag` operations, so automating promotion would require a
+classic token — which we avoid.
 
 The repo's `/release` skill is currently scoped to `feature-workflow`; until it's
-generalised to take a plugin parameter + npm-publish step, use the manual flow
-above.
+generalised to take a plugin parameter + npm-publish step, use this document.
