@@ -9,7 +9,7 @@
 // of the gate" class of bug.
 import { describe, it, expect, afterEach } from "vitest";
 import { fileURLToPath } from "node:url";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -82,6 +82,32 @@ describe("server startup over stdio (real entry point)", () => {
     // startServer replaces env entirely, so the child gets NO GHOST_API_URL /
     // GHOST_ADMIN_API_KEY — only the file path.
     const c = await startServer({ GHOST_CREDENTIALS_FILE: file });
+    const names = (await c.listTools()).tools.map((t) => t.name).sort();
+    expect(names).toEqual([...EXPECTED_TOOLS].sort());
+  }, 20000);
+
+  it("boots when invoked through a symlink (npx / global-bin install)", async () => {
+    // The field bug: npx and `npm i -g` run the package's bin via a .bin
+    // symlink, so process.argv[1] is the symlink path while import.meta.url is
+    // the real file. A naive `import.meta.url === file://${argv[1]}` entry
+    // guard fails to match, main() never runs, and the process exits 0 — the
+    // MCP shows as "failed". This spawns the entry point through a symlink to
+    // reproduce that exact invocation; it must still boot and serve its tools.
+    const link = join(
+      mkdtempSync(join(tmpdir(), "ghost-bin-")),
+      "ghost-entry.ts",
+    );
+    symlinkSync(join(ROOT, "src/index.ts"), link);
+    const transport = new StdioClientTransport({
+      command: "node",
+      args: ["--import", "tsx", link],
+      cwd: ROOT,
+      env: { PATH: process.env.PATH ?? "", ...VALID_ENV },
+      stderr: "pipe",
+    });
+    const c = new Client({ name: "symlink-test", version: "0" });
+    await c.connect(transport);
+    client = c;
     const names = (await c.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual([...EXPECTED_TOOLS].sort());
   }, 20000);

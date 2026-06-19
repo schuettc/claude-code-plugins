@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadConfig, GhostConfigError } from "./config.js";
 import {
@@ -41,8 +43,24 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<void> 
   await buildServer(client).connect(new StdioServerTransport());
 }
 
-// Run only when invoked directly (not when imported by tests).
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run main() only when this file IS the process entry point — not when a test
+// imports buildClient/main. The comparison resolves real paths on BOTH sides:
+// under npx or `npm i -g`, the bin is invoked through a .bin symlink, so
+// process.argv[1] is the symlink while import.meta.url is the real file. A naive
+// `import.meta.url === file://${argv[1]}` compare fails to match there, main()
+// never runs, and the server silently exits 0 (the MCP shows as "failed").
+// realpathSync collapses every symlink permutation so the comparison holds.
+function isEntryPoint(): boolean {
+  const argv1 = process.argv[1];
+  if (!argv1) return false;
+  try {
+    return realpathSync(argv1) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint()) {
   main().catch((e) => {
     console.error(e);
     process.exit(1);
