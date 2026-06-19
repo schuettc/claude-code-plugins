@@ -66,6 +66,12 @@ describe("write tools", () => {
     );
   });
 
+  it("ghost_post_update rejects when neither id nor slug is given", async () => {
+    const mcp = await connect(fakeClient());
+    const res: any = await mcp.callTool({ name: "ghost_post_update", arguments: { markdown: "x" } });
+    expect(res.isError).toBe(true);
+  });
+
   it("ghost_image_upload returns the url", async () => {
     const client = fakeClient();
     const mcp = await connect(client);

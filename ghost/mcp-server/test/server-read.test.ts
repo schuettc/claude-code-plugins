@@ -48,4 +48,10 @@ describe("read tools", () => {
     await mcp.callTool({ name: "ghost_post_get", arguments: { slug: "hello" } });
     expect(client.getPost).toHaveBeenCalledWith({ slug: "hello", id: undefined, type: "post" });
   });
+
+  it("ghost_post_get rejects when neither id nor slug is given", async () => {
+    const mcp = await connect(fakeClient());
+    const res: any = await mcp.callTool({ name: "ghost_post_get", arguments: {} });
+    expect(res.isError).toBe(true);
+  });
 });

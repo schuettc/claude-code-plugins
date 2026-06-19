@@ -55,8 +55,12 @@ export function buildServer(client: GhostClient): McpServer {
         slug: z.string().optional(),
       },
     },
-    async ({ type, id, slug }) =>
-      json(await client.getPost({ type: type as PostType, id, slug })),
+    async ({ type, id, slug }) => {
+      if (!id && !slug) {
+        return { isError: true, content: [{ type: "text" as const, text: "Provide id or slug." }] };
+      }
+      return json(await client.getPost({ type: type as PostType, id, slug }));
+    },
   );
 
   server.registerTool(
@@ -109,7 +113,12 @@ export function buildServer(client: GhostClient): McpServer {
         "Update a post or page in place by id or slug. Read-then-edit (handles updated_at) and syncs title/tags/excerpt/meta, not just the body.",
       inputSchema: { ...writeFields, id: z.string().optional() },
     },
-    async (args) => json(await client.updatePost({ ...args, type: args.type as PostType })),
+    async (args) => {
+      if (!args.id && !args.slug) {
+        return { isError: true, content: [{ type: "text" as const, text: "Provide id or slug to identify the post." }] };
+      }
+      return json(await client.updatePost({ ...args, type: args.type as PostType }));
+    },
   );
 
   server.registerTool(
