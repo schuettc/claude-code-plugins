@@ -1,10 +1,14 @@
 {
   "name": "ghost-blog-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for the Ghost Admin API",
   "type": "module",
-  "bin": { "ghost-blog-mcp": "dist/index.js" },
-  "files": ["dist"],
+  "bin": {
+    "ghost-blog-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -12,7 +16,9 @@
     "dev": "tsx src/index.ts",
     "prepublishOnly": "npm run build && npm run typecheck && npm test"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@tryghost/admin-api": "^1.13.10",

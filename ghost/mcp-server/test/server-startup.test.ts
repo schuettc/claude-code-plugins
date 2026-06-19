@@ -9,6 +9,9 @@
 // of the gate" class of bug.
 import { describe, it, expect, afterEach } from "vitest";
 import { fileURLToPath } from "node:url";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
@@ -57,6 +60,28 @@ async function startServer(env: Record<string, string>): Promise<Client> {
 describe("server startup over stdio (real entry point)", () => {
   it("boots with valid env and serves all 7 tools", async () => {
     const c = await startServer(VALID_ENV);
+    const names = (await c.listTools()).tools.map((t) => t.name).sort();
+    expect(names).toEqual([...EXPECTED_TOOLS].sort());
+  }, 20000);
+
+  it("boots from a creds FILE with NO env creds (bulletproof delivery)", async () => {
+    // The exact deployment failure we kept hitting: Claude doesn't pass GHOST_*
+    // env into the MCP child. With a creds file the server loads them itself and
+    // serves normally — zero dependency on env interpolation / userConfig.
+    const file = join(
+      mkdtempSync(join(tmpdir(), "ghost-creds-")),
+      "ghost.creds.json",
+    );
+    writeFileSync(
+      file,
+      JSON.stringify({
+        GHOST_API_URL: VALID_ENV.GHOST_API_URL,
+        GHOST_ADMIN_API_KEY: VALID_ENV.GHOST_ADMIN_API_KEY,
+      }),
+    );
+    // startServer replaces env entirely, so the child gets NO GHOST_API_URL /
+    // GHOST_ADMIN_API_KEY — only the file path.
+    const c = await startServer({ GHOST_CREDENTIALS_FILE: file });
     const names = (await c.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual([...EXPECTED_TOOLS].sort());
   }, 20000);

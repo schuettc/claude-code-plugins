@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { loadConfig, GhostConfigError } from "../src/config.js";
 
 // A valid Ghost Admin API key is 24 hex chars : 64 hex chars.
@@ -47,5 +50,40 @@ describe("loadConfig", () => {
         GHOST_ADMIN_API_KEY: "64ab12cd34ef:0011223344556677889900aabbccddee",
       }),
     ).toThrow(GhostConfigError);
+  });
+
+  it("reads creds from a JSON file when env is missing (the bulletproof path)", () => {
+    const file = join(
+      mkdtempSync(join(tmpdir(), "ghost-creds-")),
+      "ghost.creds.json",
+    );
+    writeFileSync(
+      file,
+      JSON.stringify({
+        GHOST_API_URL: "https://file.ghost.io",
+        GHOST_ADMIN_API_KEY: KEY,
+      }),
+    );
+    expect(loadConfig({ GHOST_CREDENTIALS_FILE: file })).toEqual({
+      url: "https://file.ghost.io",
+      adminKey: KEY,
+    });
+  });
+
+  it("prefers env over the creds file", () => {
+    const file = join(
+      mkdtempSync(join(tmpdir(), "ghost-creds-")),
+      "ghost.creds.json",
+    );
+    writeFileSync(
+      file,
+      JSON.stringify({
+        GHOST_API_URL: "https://file.ghost.io",
+        GHOST_ADMIN_API_KEY: KEY,
+      }),
+    );
+    expect(loadConfig({ ...VALID, GHOST_CREDENTIALS_FILE: file }).url).toBe(
+      "https://example.ghost.io",
+    );
   });
 });
