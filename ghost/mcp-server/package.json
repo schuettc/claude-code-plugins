@@ -3,6 +3,12 @@
   "version": "0.1.1",
   "description": "MCP server for the Ghost Admin API",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/schuettc/claude-code-plugins.git",
+    "directory": "ghost/mcp-server"
+  },
+  "homepage": "https://github.com/schuettc/claude-code-plugins/tree/main/ghost",
   "bin": {
     "ghost-blog-mcp": "dist/index.js"
   },
