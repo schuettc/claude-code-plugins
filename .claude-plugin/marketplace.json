@@ -8,7 +8,7 @@
       "name": "project-workflow",
       "source": "./project-workflow",
       "description": "One-shot setup for a new repo's standards: feat → dev → main promotion model with a PR CI gate, GitHub repo setup (branch protection, deploy environments, required reviewers, environment-scoped OIDC), and the language-agnostic quality stack (lefthook hooks + a shared justfile, run identically in CI). The /project-init skill detects current state and applies only the missing patterns — on new repos and existing ones alike, plus an on-ramp for multi-repo workspaces (scaffold a coordination repo via feature-init --workspace). Setup-only and disposable: the evergreen standards live in the engineering-standards and quality-workflow plugins, pulled in as dependencies. Backed by lessons from real incidents.",
-      "version": "0.2.0"
+      "version": "0.2.1"
     },
     {
       "name": "engineering-standards",
