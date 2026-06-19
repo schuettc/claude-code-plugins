@@ -118,8 +118,10 @@ grep -nP '^```\s*$'
 
 **Grep:**
 ```
-awk '/^```/{inside=!inside} inside && length($0)>70{print NR": "length($0)" chars: "$0}' <draft-file>
+awk '/^```/{inside=!inside} inside && length($0)>70{print NR": "length($0)" chars: "$0}' <path-to-draft>
 ```
+
+(Substitute `<path-to-draft>` with the draft file path from draft-post Phase 4.)
 
 **Why:** Ghost's default content width renders code blocks at a narrower viewport than desktop terminals. Lines over ~70 characters trigger horizontal scrollbars or force awkward wrapping, degrading the reading experience on mobile and Ghost's default theme.
 

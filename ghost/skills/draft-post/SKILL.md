@@ -104,6 +104,10 @@ Example: `blog-posts/drafts/2026-06-19-shipping-faster-with-preflight-checks.md`
 
 Write the complete draft to the filename derived above. The draft file must use this structure:
 
+```
+Write("<drafts_dir>/<filename>.md", <full draft content>)
+```
+
 ```markdown
 ---
 title: "<working title>"
@@ -151,7 +155,7 @@ Write the full draft before continuing to Phase 5. Do not truncate.
 Once the draft is written, run the self-audit. Open the anti-pattern checklist:
 
 ```
-Read("ghost/skills/draft-post/anti-patterns.md")
+Read("${CLAUDE_PLUGIN_ROOT}/skills/draft-post/anti-patterns.md")
 ```
 
 Work through each pattern in the checklist. For each one:
