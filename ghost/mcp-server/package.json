@@ -9,7 +9,8 @@
     "build": "tsc",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build && npm test"
   },
   "engines": { "node": ">=20" },
   "dependencies": {
