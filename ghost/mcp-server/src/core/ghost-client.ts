@@ -202,3 +202,22 @@ export function createGhostClient(config: GhostConfig): GhostClient {
   }) as unknown as GhostApiLike;
   return ghostClientFromApi(api, config.url);
 }
+
+// A GhostClient with no real credentials: every operation rejects with an
+// actionable message. Used when startup config is missing so the MCP server
+// still CONNECTS (instead of hard-exiting into an opaque "-32000 connection
+// closed") and surfaces a diagnosable error at tool-call time — e.g.
+// ghost_site_info returns the "run setup-ghost" message instead of a dead link.
+export function unconfiguredClient(message: string): GhostClient {
+  const fail = (): Promise<never> => Promise.reject(new Error(message));
+  return {
+    baseUrl: "",
+    siteInfo: fail,
+    listPosts: fail,
+    getPost: fail,
+    listTags: fail,
+    createPost: fail,
+    updatePost: fail,
+    uploadImage: fail,
+  };
+}

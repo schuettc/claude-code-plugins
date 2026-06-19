@@ -25,10 +25,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): GhostConfig {
       `GHOST_API_URL must be an http(s) URL, got: ${url}`,
     );
   }
-  if (!/^[0-9a-f]+:[0-9a-f]+$/i.test(adminKey)) {
+  if (!/^[0-9a-f]{24}:[0-9a-f]{64}$/i.test(adminKey)) {
     throw new GhostConfigError(
-      "GHOST_ADMIN_API_KEY must be in id:secret hex form (copy the Admin API " +
-        "Key from your Ghost custom integration).",
+      "GHOST_ADMIN_API_KEY must be id:secret form — 24 hex chars, a colon, then " +
+        "64 hex chars. Copy the Admin API Key from your Ghost custom integration " +
+        "(run the setup-ghost skill).",
     );
   }
   return { url, adminKey };
