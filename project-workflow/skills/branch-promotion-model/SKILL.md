@@ -18,7 +18,7 @@ feature/<id>  →  PR into dev  →  merge fires Deploy Dev
 ```
 
 - `dev` is the integration branch. Feature PRs target `dev`, not `main`.
-- `main` is production. The only PRs to `main` are `dev → main` promotion PRs.
+- `main` is production. The only PRs to `main` are `dev → main` promotion PRs. After each promotion merges, **back-merge `main` into `dev`** (`git merge --ff-only origin/main`) so the two never drift — see "When promoting `dev → main`" below.
 - `Deploy Dev` workflow trigger: `on: push: branches: [dev]`.
 - `Deploy Prod` workflow trigger: `on: push: branches: [main]`.
 - Keep `workflow_dispatch` on both as a manual escape hatch, **not** as the normal trigger.
@@ -48,6 +48,31 @@ The cost is one extra PR cycle per feature. Worth it.
    - `ci.yml` triggers on `pull_request: [dev, main]` — the **server-side gate**. The promotion soak only catches what's deployed; `ci.yml` is what blocks a red PR from merging in the first place. It's the enforceable third leg alongside the lefthook commit/push hooks (which have an escape path — `--no-verify`, or not running `lefthook install` — see `quality-stack-setup`).
    - All keep `workflow_dispatch` for manual reruns.
 3. Enforce it server-side — this is what separates the promotion model from a naming convention. See the `github-repo-setup` skill for the exact `gh` commands: branch protection on `main` (PR required, `ci` a *required* status check, no direct push), `dev`/`prod` deploy environments, and **required reviewers on `prod`** — the literal mechanism behind "every prod deploy is a chosen moment." Without protection, nothing stops a direct push to `main` that skips the soak entirely.
+
+### When promoting `dev → main` (every promotion)
+
+Open the promotion PR (`dev` base `main`), let CI + required reviewers gate it, and merge. **Then immediately back-merge `main` into `dev`** — this is not optional cleanup, it's the closing half of the promotion:
+
+```bash
+git checkout dev
+git fetch origin
+git merge --ff-only origin/main   # always a clean fast-forward — see below
+git push origin dev
+```
+
+**Why this step exists.** GitHub's "Create a merge commit" (the default, `--no-ff`) writes a merge commit onto `main` whose parents are (old `main` tip, `dev` tip). That merge commit lives on `main` and never on `dev`, so it accumulates — one bubble per promotion:
+
+```
+git log origin/dev..origin/main   → N merge bubbles (grows every promotion)
+git log origin/main..origin/dev   → 0
+git diff origin/dev origin/main   → empty (trees are identical)
+```
+
+Content is always in sync; the *commit graph* drifts, and `dev is N behind main` is a recurring, confusing-but-cosmetic readout. The back-merge drives it permanently to zero.
+
+**Why the `--ff-only` always succeeds.** The promotion merge commit's *second parent* is `dev`'s tip, so `dev` is already an ancestor of `main`. `dev` can only move *forward* to that merge commit — no new merge commit, no conflict possible. After the push, `git rev-parse dev main` are identical and `dev..main` is 0 until the next feature lands. If `--ff-only` ever *refuses*, that's a real signal (a direct commit landed on `main` outside the promotion PR) — investigate, don't `--no-ff` over it.
+
+> Don't try to fix this at the source by fast-forwarding the promotion itself (`git merge --ff-only dev` into `main`): GitHub's merge button can't do ff-only, it fights branch protection on `main`, and "Rebase and merge" rewrites commit hashes so the two diverge again. Back-merging is the only approach that keeps the PR-based, protected promotion flow *and* keeps the graphs identical.
 
 ### When migrating an existing repo from "merge to main = both envs"
 
