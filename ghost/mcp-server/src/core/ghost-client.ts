@@ -131,7 +131,7 @@ export function ghostClientFromApi(
   const resource = (type: PostType = "post") =>
     type === "page" ? api.pages : api.posts;
 
-  return {
+  const client: GhostClient = {
     baseUrl,
 
     async siteInfo() {
@@ -170,7 +170,7 @@ export function ghostClientFromApi(
     },
 
     async updatePost(input: PostInput) {
-      const existing = await this.getPost({
+      const existing = await client.getPost({
         id: input.id as string | undefined,
         slug: input.slug,
         type: input.type,
@@ -191,6 +191,7 @@ export function ghostClientFromApi(
       return api.images.upload({ file: filePath });
     },
   };
+  return client;
 }
 
 export function createGhostClient(config: GhostConfig): GhostClient {
