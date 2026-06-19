@@ -2,7 +2,7 @@
   "mcpServers": {
     "ghost": {
       "command": "npx",
-      "args": ["-y", "@schuettc/ghost-mcp@latest"],
+      "args": ["-y", "ghost-blog-mcp@latest"],
       "env": {
         "GHOST_API_URL": "${GHOST_API_URL}",
         "GHOST_ADMIN_API_KEY": "${GHOST_ADMIN_API_KEY}"

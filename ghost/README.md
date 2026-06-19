@@ -39,7 +39,7 @@ The plugin bundles a Ghost Admin API MCP server (auto-fetched via `npx ghost-mcp
 
 ## Bundled MCP
 
-The plugin ships a `.mcp.json` that points at `@schuettc/ghost-mcp@latest` (fetched automatically via `npx -y`). No separate install step is needed. The server exposes 7 tools covering post CRUD, tag management, and site metadata.
+The plugin ships a `.mcp.json` that points at `ghost-blog-mcp@latest` (fetched automatically via `npx -y`). No separate install step is needed. The server exposes 7 tools covering post CRUD, tag management, and site metadata.
 
 Two env vars are required at runtime (set per-project — see below):
 

@@ -14,7 +14,7 @@ Set two environment variables (the `setup-ghost` skill automates this):
 
 ## Run
 
-    npx -y @schuettc/ghost-mcp@latest
+    npx -y ghost-blog-mcp@latest
 
 ## Tools
 

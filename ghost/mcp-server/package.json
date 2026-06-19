@@ -1,11 +1,10 @@
 {
-  "name": "@schuettc/ghost-mcp",
+  "name": "ghost-blog-mcp",
   "version": "0.1.0",
   "description": "MCP server for the Ghost Admin API",
   "type": "module",
-  "bin": { "ghost-mcp": "dist/index.js" },
+  "bin": { "ghost-blog-mcp": "dist/index.js" },
   "files": ["dist"],
-  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
