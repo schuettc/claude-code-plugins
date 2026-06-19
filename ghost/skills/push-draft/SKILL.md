@@ -109,8 +109,10 @@ Fold the in-editor changes into the LOCAL file first:
    Edit("<drafts_dir>/<filename>.md", <old body>, <merged body>)
    ```
 
-4. Confirm the merge before continuing:
-   > "Merge complete. Local file updated. Ready to push the merged version."
+4. Pause and ask the author to review before continuing:
+   > "Merge complete — I've folded the live Ghost edits into your local draft. Please review the updated file above, then tell me to continue when you're ready."
+   
+   Do not proceed to the next phase (feature image / push) until the author explicitly confirms.
 
 **Never push to Ghost without first resolving this diff.** The pull-guard ensures you never silently clobber an in-editor edit.
 
@@ -242,7 +244,7 @@ For each link:
    
    Wait for the author's explicit decision before proceeding on any internal-doc link.
 
-2. **Public outbound links** — note each one. Do not follow or validate URLs automatically. Flag any that look suspicious (e.g. localhost, IP addresses, placeholder text):
+2. **Public outbound links** — note each one. Do not follow or validate URLs automatically. Do not make any HTTP requests to validate links — link verification is author-side review only (you flag suspicious or internal links; the author decides). Flag any that look suspicious (e.g. localhost, IP addresses, placeholder text):
    > "Outbound links found: <count>. Please verify these are current and correct before publishing: <list>"
 
 ---
