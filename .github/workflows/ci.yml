@@ -62,3 +62,26 @@ jobs:
       - name: Test — quality-workflow
         run: python -m pytest -q
         working-directory: quality-workflow
+
+  ghost-mcp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ghost/mcp-server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install
+        run: npm ci
+
+      - name: Build, typecheck, test
+        run: |
+          npm run build
+          npm run typecheck
+          npm test

@@ -1,0 +1,40 @@
+{
+  "name": "ghost-blog-mcp",
+  "version": "0.1.2",
+  "description": "MCP server for the Ghost Admin API",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/schuettc/claude-code-plugins.git",
+    "directory": "ghost/mcp-server"
+  },
+  "homepage": "https://github.com/schuettc/claude-code-plugins/tree/main/ghost",
+  "bin": {
+    "ghost-blog-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build && npm run typecheck && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@tryghost/admin-api": "^1.13.10",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "license": "MIT"
+}
