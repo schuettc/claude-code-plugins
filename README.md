@@ -26,6 +26,7 @@ Then install any plugin:
 | [quality-workflow](./quality-workflow) | Sister to feature-workflow for static-analysis findings. Surfaces, triages, and resolves skylos (Py) / fallow (TS) output. `/quality-verify-hook` self-tests pre-commit hooks against known-bad fixtures (catches the silently-misconfigured-hook class of bug). `/quality-audit` produces fingerprinted snapshots + diff (active counts only). `/quality-unblock` triages failing hooks; refuses bare suppressions. Plus the language-agnostic `suppression-discipline` standard | 0.3.0 |
 | [website-deployment](./website-deployment) | Guided workflow to deploy Node.js/Express apps to AWS serverless (S3 + CloudFront + Lambda + API Gateway + CDK). Analyzes your app, scaffolds infra, and deploys with step-by-step explanations | 1.0.0 |
 | [sprint-planner](./sprint-planner) | Sprint planning and team coordination for small teams (2-6 devs). Triage backlogs by deadline, assign work with self-service specs, audit specs for completeness, and generate team communication. Pairs with feature-workflow | 0.1.0 |
+| [ghost](./ghost) | Draft, revise, and push blog posts to a Ghost site from Claude Code. Learns your writing voice from your published posts (or a short interview) into a living style guide, drafts in it, revises section by section against an anti-patterns list, and pushes to Ghost as a **draft** — publishing stays a manual action in Ghost. Bundles the `ghost-blog-mcp` Admin API MCP server | 0.1.2 |
 
 ## Bringing a project up to standard
 
@@ -115,6 +116,29 @@ Sprint planning and team coordination for small teams (2-6 devs) with mixed expe
 ```
 
 See [sprint-planner/README.md](./sprint-planner/README.md) for the full workflow and design principles.
+
+## Plugin: ghost
+
+Draft, revise, and push blog posts to a Ghost site — directly from Claude Code. The plugin learns your writing voice from your published posts (or a short interview when you're starting out), keeps it in a living style guide, and drafts in that voice — then revises section by section and pushes to Ghost as a **draft**. Publishing stays a deliberate human action in the Ghost UI.
+
+**Setup:**
+- `/ghost:setup-ghost` — connect your Ghost site (writes a gitignored `.claude/ghost.creds.json` and verifies the MCP connection). Run once per repo.
+- `/ghost:build-style-guide` — learn your voice from your published posts, or `/ghost:define-voice` to seed it from a short interview when you don't have a corpus yet.
+
+**Draft → revise → push:**
+- `/ghost:draft-post` — plan an angle and draft a full post in your voice, self-audited against the anti-patterns.
+- `/ghost:revise-post` — walk the draft section by section (formatting, voice, accuracy).
+- `/ghost:push-draft` — push to Ghost as a draft via the Admin API. Never publishes.
+- `/ghost:write-post` — run the whole flow (draft → revise → push) in one guided pass.
+
+**Bundled MCP:** the `ghost-blog-mcp` Ghost Admin API server, fetched automatically via `npx` — 7 tools covering post/page CRUD, tags, images, and site metadata.
+
+**Install:**
+```bash
+/plugin install ghost@schuettc-claude-code-plugins
+```
+
+See [ghost/README.md](./ghost/README.md) for the full skill reference and credential setup.
 
 ## Cloning This Repo? Start Here
 
