@@ -2,7 +2,7 @@
 
 Write, revise, and push blog posts to a Ghost site — directly from Claude Code.
 
-The plugin bundles a Ghost Admin API MCP server (auto-fetched via `npx ghost-mcp`) and a set of skills that guide you from planning an article all the way to pushing a draft into Ghost. **Publishing is always a deliberate human action inside Ghost** — the plugin creates and updates drafts only.
+The plugin bundles a Ghost Admin API MCP server (auto-fetched via `npx ghost-blog-mcp`) and a set of skills that guide you from planning an article all the way to pushing a draft into Ghost. **Publishing is always a deliberate human action inside Ghost** — the plugin creates and updates drafts only.
 
 ---
 
@@ -33,7 +33,7 @@ The plugin bundles a Ghost Admin API MCP server (auto-fetched via `npx ghost-mcp
 
 | Skill | Invocation | Purpose |
 |-------|-----------|---------|
-| write-post | `/ghost:write-post` | End-to-end orchestrator: define-voice → draft-post → revise-post → push-draft, with human review gates between phases. |
+| write-post | `/ghost:write-post` | End-to-end orchestrator: draft-post → revise-post → push-draft, with human review gates between phases. A preflight checks the Ghost connection and style guide first, routing you to setup-ghost / build-style-guide (or define-voice) if either is missing. |
 
 ---
 
@@ -41,12 +41,14 @@ The plugin bundles a Ghost Admin API MCP server (auto-fetched via `npx ghost-mcp
 
 The plugin ships a `.mcp.json` that points at `ghost-blog-mcp@latest` (fetched automatically via `npx -y`). No separate install step is needed. The server exposes 7 tools covering post CRUD, tag management, and site metadata.
 
-Two env vars are required at runtime (set per-project — see below):
+Credentials live in a gitignored file, not environment variables. The `setup-ghost` skill writes `.claude/ghost.creds.json` holding the two values below, and the bundled `.mcp.json` passes that path to the server via `GHOST_CREDENTIALS_FILE`. Run `/ghost:setup-ghost` once per repo to create the file and verify the connection.
 
-| Variable | Description |
+| Key | Description |
 |----------|-------------|
 | `GHOST_API_URL` | Your Ghost site URL, e.g. `https://myblog.com` |
-| `GHOST_ADMIN_API_KEY` | Admin API key from Ghost → Settings → Integrations |
+| `GHOST_ADMIN_API_KEY` | Admin API key from Ghost → Settings → Advanced → Integrations |
+
+The server also reads these two as environment variables as a fallback when `GHOST_CREDENTIALS_FILE` is unset.
 
 ---
 
