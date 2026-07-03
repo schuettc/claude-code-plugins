@@ -1,27 +1,29 @@
-# Publish ghost-blog-mcp to the `dev` npm dist-tag on every push to `dev`
-# that changes the package (and only when its version is new).
+# Publish ghost-blog-mcp to npm via OIDC trusted publishing, on a pushed tag
+# matching `ghost-mcp-v*` (e.g. ghost-mcp-v0.1.4). The tag's version must match
+# ghost/mcp-server/package.json.
 #
-# Tokenless — uses npm OIDC Trusted Publishing (no NPM_TOKEN secret). This
-# requires a ONE-TIME setup on npmjs.com: configure a trusted publisher for the
-# `ghost-blog-mcp` package pointing at:
+# The dist-tag is chosen by VERSION SHAPE (mirrors @learning-with-court/cli):
+#   - a prerelease (contains "-", e.g. 0.1.4-dev.0) publishes to `dev`
+#   - a clean release (e.g. 0.1.4)                  publishes to `latest`
+# Each version is published exactly once, to the right tag — so there is no
+# manual `npm dist-tag add` and no OTP. `@latest` == the current clean release
+# tested via `@dev`; promoting is just tagging a clean version.
+#
+# Tokenless — npm OIDC Trusted Publishing (no NPM_TOKEN). This needs a ONE-TIME
+# setup on npmjs.com: a trusted publisher for `ghost-blog-mcp` pointing at
 #   repository: schuettc/claude-code-plugins
 #   workflow:   .github/workflows/publish-ghost-mcp-dev.yml
-# Until that's configured, the publish step will fail with an auth error.
-#
-# Promotion to prod (@dev -> @latest) is a deliberate MANUAL step — see
-# ghost/docs/releasing.md. It is intentionally not automated here.
+# (Keeping this filename preserves that trust config.)
 
-name: Publish ghost-blog-mcp (dev)
+name: Publish ghost-blog-mcp
 
 on:
   push:
-    branches: [dev]
-    paths:
-      - "ghost/mcp-server/**"
-      - ".github/workflows/publish-ghost-mcp-dev.yml"
+    tags:
+      - "ghost-mcp-v*"
 
 concurrency:
-  group: publish-ghost-mcp-dev
+  group: publish-ghost-mcp
   cancel-in-progress: false
 
 permissions:
@@ -29,7 +31,7 @@ permissions:
   id-token: write # required for OIDC trusted publishing
 
 jobs:
-  publish-dev:
+  publish:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -47,6 +49,15 @@ jobs:
       - name: Use latest npm (OIDC trusted publishing needs npm >= 11.5)
         run: npm install -g npm@latest
 
+      - name: Verify tag matches package.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#ghost-mcp-v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag ($TAG_VERSION) does not match package.json ($PKG_VERSION)"
+            exit 1
+          fi
+
       - name: Install
         run: npm ci
 
@@ -56,17 +67,16 @@ jobs:
           npm run typecheck
           npm test
 
-      - name: Skip if this version is already published
-        id: guard
+      - name: Publish (dist-tag by version shape)
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          case "$VERSION" in
+            *-*) NPM_TAG=dev ;;
+            *)   NPM_TAG=latest ;;
+          esac
           if npm view "ghost-blog-mcp@$VERSION" version >/dev/null 2>&1; then
-            echo "ghost-blog-mcp@$VERSION already published — skipping publish."
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "ghost-blog-mcp@$VERSION already published — skipping."
+            exit 0
           fi
-
-      - name: Publish to @dev
-        if: steps.guard.outputs.publish == 'true'
-        run: npm publish --tag dev --provenance
+          echo "Publishing ghost-blog-mcp@$VERSION to dist-tag '$NPM_TAG'"
+          npm publish --tag "$NPM_TAG" --provenance
