@@ -7,99 +7,83 @@ The plugin has two versioned artifacts that move together:
 - the **plugin** itself (`ghost/.claude-plugin/plugin.json` + the `ghost` entry
   in `.claude-plugin/marketplace.json`).
 
-Releases follow a **dev → prod** flow using npm **dist-tags**, mirroring the
-repo's `feat → dev → main` promotion model: you publish to the `dev` tag,
-test against it, then *promote the exact same artifact* to `latest`.
+Releases are **CI-published on a pushed tag**, via OIDC trusted publishing — no
+`NPM_TOKEN`, no local `npm publish`, no `npm dist-tag`, no OTP. The dist-tag is
+chosen by **version shape**, mirroring `@learning-with-court/cli`:
+
+- a **prerelease** version (contains `-`, e.g. `0.1.5-dev.0`) publishes to
+  **`@dev`** — the test channel;
+- a **clean** version (e.g. `0.1.5`) publishes to **`@latest`** — prod.
+
+Each version is published exactly once, to the right tag. There is no
+"promote": shipping to prod is just tagging a clean version. `@latest` is
+whatever clean release is current; `@dev` is the last prerelease.
 
 ```
-publish ──► ghost-blog-mcp@dev ──(test in ghost-site)──► promote ──► ghost-blog-mcp@latest
+tag ghost-mcp-v0.1.5-dev.0 ─► CI ─► ghost-blog-mcp@dev ──(test in ghost-site)
+tag ghost-mcp-v0.1.5       ─► CI ─► ghost-blog-mcp@latest  (prod)
 ```
-
-- **`@dev`** — what `ghost-site` (and any dev consumer) points at to test a build.
-- **`@latest`** — what the shipped plugin's `.mcp.json` points at; what prod gets.
 
 The bundled `ghost/.mcp.json` always references `@latest`. Dev testing opts into
-`@dev` via a **project-level `.mcp.json` override** in the consuming repo, so the
-shipped file never has to flip between branches. See `enable-in-a-project.md`.
+`@dev` (or an exact version) via a **project-level `.mcp.json` override** in the
+consuming repo, so the shipped file never has to change. See `enable-in-a-project.md`.
 
 ---
 
-## Dev release (publish to `@dev`)
+## Dev build (publish to `@dev`)
 
 ```bash
 cd ghost/mcp-server
-npm version patch          # or minor / major — updates package.json + git tag
-npm publish --tag dev      # prepublishOnly runs build + typecheck + test first
-```
-
-This publishes `ghost-blog-mcp@<version>` under the `dev` dist-tag only —
-`@latest` is untouched, so nothing prod-facing changes.
-
-Verify:
-
-```bash
-npm view ghost-blog-mcp dist-tags     # dev: <version>
-```
-
-(A brand-new version can take a couple of minutes to be readable; the publish
-itself is confirmed by the `+ ghost-blog-mcp@<version>` line and by
-`npm access list packages`.)
-
-Test it: in `ghost-site`, the project `.mcp.json` points at `ghost-blog-mcp@dev`
-(see `enable-in-a-project.md`), then run `/ghost:setup-ghost` and exercise the
-flow against a real Ghost site.
-
-## Promote to prod (move `@latest`)
-
-Once the `@dev` build passes testing, promote the **exact same version** — no
-rebuild, no republish:
-
-```bash
-npm dist-tag add ghost-blog-mcp@<version> latest
-```
-
-Now `@latest` and `@dev` point at the same version. Prod consumers (the shipped
-plugin's `.mcp.json`) pick it up via `npx -y ghost-blog-mcp@latest`.
-
-## Bump the plugin to match
-
-Keep the plugin version in lockstep with the npm release, in **both** files:
-
-- `ghost/.claude-plugin/plugin.json` → `"version": "X.X.X"`
-- `.claude-plugin/marketplace.json` → `"version": "X.X.X"` in the `ghost` entry
-
-Commit and push (feat → dev → main per the repo's promotion model):
-
-```bash
-git add ghost/.claude-plugin/plugin.json .claude-plugin/marketplace.json ghost/mcp-server/package.json
-git commit -m "chore(ghost): release vX.X.X"
+npm version prerelease --preid dev --no-git-tag-version   # e.g. 0.1.5-dev.0
+V=$(node -p "require('./package.json').version")
+git commit -am "chore(ghost): ghost-blog-mcp $V"
 git push
+git tag "ghost-mcp-v$V" && git push origin "ghost-mcp-v$V"   # triggers CI → @dev
 ```
+
+Test it: in `ghost-site`, point the project `.mcp.json` at `ghost-blog-mcp@$V`
+(pinning the exact version beats `@dev`, which npx may cache), restart so the MCP
+respawns, and exercise the flow against a real Ghost site.
+
+## Prod release (publish to `@latest`)
+
+Once the dev build passes, cut a **clean** version and take it through
+`feat → dev → main`, then tag it from `main`:
+
+```bash
+cd ghost/mcp-server
+npm version patch --no-git-tag-version        # or minor / major — clean version
+```
+
+Bump the plugin in lockstep in **both**:
+
+- `ghost/.claude-plugin/plugin.json` → `"version": "X.Y.Z"`
+- `.claude-plugin/marketplace.json` → `"version": "X.Y.Z"` in the `ghost` entry
+
+Commit, promote `dev → main`, then tag the release commit on `main`:
+
+```bash
+git commit -am "chore(ghost): release X.Y.Z"
+# open PR to dev, merge, promote dev → main
+git tag "ghost-mcp-vX.Y.Z" && git push origin "ghost-mcp-vX.Y.Z"   # CI → @latest
+```
+
+CI verifies the tag matches `package.json`, builds/typechecks/tests, and
+publishes to `@latest`. Prod consumers pick it up via `npx -y ghost-blog-mcp@latest`.
 
 ---
 
 ## Automation
 
-**Dev publish is automated** via `.github/workflows/publish-ghost-mcp-dev.yml`
-(OIDC Trusted Publishing — no `NPM_TOKEN`). On every push to `dev` that touches
-`ghost/mcp-server/**`, it builds/typechecks/tests and, **if the version in
-`package.json` is new**, runs `npm publish --tag dev --provenance`. So the dev
-release becomes: bump the version on a `feat/*` branch, merge to `dev`, and CI
-publishes `@dev`. (The manual `npm publish --tag dev` above is the local
-fallback; `--provenance` only works from CI.)
+Publishing is handled by `.github/workflows/publish-ghost-mcp.yml`
+(filename on disk: `publish-ghost-mcp-dev.yml` — kept to preserve the trusted-publisher
+config). It triggers on `ghost-mcp-v*` tags, verifies the tag matches
+`package.json`, builds/tests, and runs `npm publish --tag <dev|latest>` with the
+dist-tag chosen by version shape. Tokenless via OIDC.
 
-**One-time setup (npmjs.com):** configure a *trusted publisher* for the
-`ghost-blog-mcp` package → repository `schuettc/claude-code-plugins`, workflow
-`.github/workflows/publish-ghost-mcp-dev.yml`. Until that's done the publish
-step fails with an auth error. (npm CLI ≥ 11.5 is required for tokenless OIDC;
-the workflow upgrades npm before publishing.)
-
-**Prod promotion stays manual — on purpose.** Moving `@latest` is the "ship to
-prod" gate and should be a deliberate human action, so it is *not* automated:
-run `npm dist-tag add ghost-blog-mcp@<version> latest` yourself (see "Promote to
-prod" above). It also sidesteps a limitation: OIDC trusted publishing authorises
-`npm publish`, not `dist-tag` operations, so automating promotion would require a
-classic token — which we avoid.
-
-The repo's `/release` skill is currently scoped to `feature-workflow`; until it's
-generalised to take a plugin parameter + npm-publish step, use this document.
+**One-time setup (npmjs.com):** a *trusted publisher* for `ghost-blog-mcp` →
+repository `schuettc/claude-code-plugins`, workflow
+`.github/workflows/publish-ghost-mcp-dev.yml`. Until that's set the publish step
+fails with an auth error. (npm CLI ≥ 11.5 is required for tokenless OIDC; the
+workflow upgrades npm first.)
+</content>
