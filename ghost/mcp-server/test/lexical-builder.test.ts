@@ -35,4 +35,35 @@ describe("buildLexical", () => {
     const root = JSON.parse(buildLexical("Hi.").lexical).root;
     expect(root).toMatchObject({ type: "root", version: 1, indent: 0 });
   });
+
+  it("ignores <!-- card --> inside inline code", () => {
+    const r = buildLexical("An explicit `<!-- card -->` marker in prose.");
+    expect(r.cardCount).toBe(1);
+    expect(r.cardSummary).toBe("markdown");
+  });
+
+  it("ignores <table> and <!-- card --> inside a fenced block", () => {
+    const md =
+      "Before.\n\n```html\n<table><tr><td>x</td></tr></table>\n" +
+      "<!-- card -->\n```\n\nAfter.";
+    const r = buildLexical(md);
+    expect(r.cardCount).toBe(1);
+    expect(r.cardSummary).toBe("markdown");
+  });
+
+  it("keeps a real <table> but ignores one shown in inline code", () => {
+    const md =
+      "Shown: `<table><tr><td>x</td></tr></table>`.\n\n" +
+      "<table><tr><td>y</td></tr></table>\n\nEnd.";
+    const r = buildLexical(md);
+    expect(r.cardSummary).toBe("markdown, html, markdown");
+    expect(r.cardCount).toBe(3);
+  });
+
+  it("restores code verbatim without mangling nearby numbers", () => {
+    const md = "A key is 24 hex chars and `<!-- card -->` sits mid-line.";
+    const child = children(buildLexical(md))[0] as { markdown: string };
+    expect(child.markdown).toContain("24 hex chars");
+    expect(child.markdown).toContain("`<!-- card -->`");
+  });
 });
