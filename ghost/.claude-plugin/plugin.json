@@ -1,6 +1,6 @@
 {
   "name": "ghost",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Write, revise, and push blog posts to a Ghost site from Claude Code — a Ghost Admin API MCP plus a plan→draft→revise→push skill set.",
   "author": {
     "name": "Court Schuett"
