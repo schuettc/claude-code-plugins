@@ -222,6 +222,28 @@ If no issues were found, say so — "All patterns clean."
 
 ---
 
+## Phase 5b: Reading pass — the tells a grep can't catch
+
+The greps in Phase 5 catch fixed strings. The tells that make writing read as AI are mostly **not** fixed strings — they are rhythm and framing, and they only surface on a read. A clean grep is not a clean draft. Read the whole draft once more, section by section, and fix each of the following before you show anything. When unsure, read the sentence out loud: **if you wouldn't actually say it, it's a tell.**
+
+- **Choppy rhythm.** Plain does not mean short. A run of short declaratives reads as mechanical; substantive sentences that connect cause and effect are the voice. Rewrite staccato runs into connected sentences and vary length.
+  - _Choppy:_ "Publishing runs in CI. There's no separate step. Shipping is tagging a release."
+  - _Connected:_ "Publishing happens in CI on a pushed tag, so releasing is nothing more than tagging a clean version."
+- **Cleft / focus-frame.** "X is what Y", "the X is that", "what X is is Y" — lead with the subject.
+  - _Before:_ "The server is what the skills reach Ghost through." → _After:_ "The skills reach Ghost through the server."
+- **Manufactured contrast.** "X is easy; Y is the hard part" is a tidy setup that reads as AI. Describe what actually happened instead.
+- **Em-dash reveal.** "[claim] — and that turned out to be [payoff]." Drop the reveal; end on the fact.
+- **Retcon.** Do not dress a fix up as intentional design. Describe what the thing does and why, not a story of having meant it all along.
+  - _Before:_ "That's deliberate: the server stays up so…" → _After:_ "The server stays up rather than exiting, because exiting surfaces only an opaque error."
+- **Overselling.** "I set one rule at the start", "the part I lean on". Understate — it's a goal or a handy feature, not a manifesto.
+- **Negative-first.** Lead with the reason, not the absence.
+  - _Before:_ "Pages don't get their own tools." → _After:_ "Because a page is the same object as a post, the tools take a `type` argument."
+- **Slip-narration.** Present the working config, not a blow-by-blow of what broke and how it got fixed.
+
+Fix these in the file. Only then continue to the hand-off.
+
+---
+
 ## Phase 6: Confirm and hand off
 
 After the audit, confirm the draft is ready for review:

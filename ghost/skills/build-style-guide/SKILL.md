@@ -141,6 +141,15 @@ Combine two sources:
    - Cute closers: "Happy coding!", "Until next time!", "Stay curious!", "Hope this helps!"
    - Code-fence width: code blocks without a language tag, or lines exceeding ~70 columns (Ghost renders narrow)
 
+**Also include the reading-pass tells — the ones a grep cannot catch.** These are rhythm and framing rather than fixed strings, so the guide must flag them for a *read* (with the read-aloud test: "if you wouldn't say it, it's a tell"). Carry each with a concrete before/after so the drafting and revising skills can match against real examples:
+- **Choppy rhythm** — plain is not short; a run of short declaratives reads as mechanical. Connect them into substantive sentences that carry cause and effect; vary length.
+- **Cleft / focus-frame** — "X is what Y", "the X is that"; lead with the subject.
+- **Manufactured contrast** — "X is easy; Y is the hard part"; describe what actually happened.
+- **Em-dash reveal** — "[claim] — and that turned out to be [payoff]"; end on the fact.
+- **Retcon** — a fix framed as intentional design; describe what the thing does and why, not a story of having meant it all along.
+- **Overselling** — "I set one rule at the start", "the part I lean on"; understate.
+- **Negative-first** — lead with the reason, not the absence.
+
 List each anti-pattern as a short bullet with a concrete example of what to avoid.
 
 If no corpus and no interview: write the house defaults list above as baseline anti-patterns.
