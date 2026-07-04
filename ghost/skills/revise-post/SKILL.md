@@ -166,6 +166,15 @@ If the style guide is available, also check:
 - Sentence and paragraph rhythm matches Observed patterns.
 - Vocabulary register is consistent with the style guide.
 
+**Then read the section — don't just grep it.** The patterns above are fixed strings; the tells below are rhythm and framing, and they only surface on a read. Read the section out loud: if you wouldn't actually say a sentence, it's a tell. Fix each in place.
+- **Choppy rhythm** — plain is not short; a run of short declaratives reads as mechanical. Connect them into substantive sentences that carry cause and effect, and vary length.
+- **Cleft / focus-frame** — "X is what Y", "the X is that"; lead with the subject ("The skills reach Ghost through the server," not "the server is what the skills reach Ghost through").
+- **Manufactured contrast** — "X is easy; Y is the hard part"; describe what actually happened instead.
+- **Em-dash reveal** — "[claim] — and that turned out to be [payoff]"; drop the reveal and end on the fact.
+- **Retcon** — a fix dressed up as intentional design; describe what the thing does and why, not a story of having meant it all along.
+- **Overselling** — "I set one rule at the start", "the part I lean on"; understate.
+- **Negative-first** — lead with the reason, not the absence ("Because a page is the same object as a post…," not "Pages don't get their own tools").
+
 #### Axis 3 — Content and accuracy
 
 Verify every factual claim in the section:
