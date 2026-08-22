@@ -40,6 +40,39 @@ Always `<target-repo-root>/.worktrees/<branch>` — resolved from the **repo the
 - **Multi-repo workspaces.** When several repos sit under one coordination root and you may be launched from the root *or* from a member, deriving the path from the target repo's root (`git -C "$TARGET" rev-parse --show-toplevel`) makes it identical either way. Don't build cwd-relative or primary-clone-absolute paths.
 - **Never `/tmp`.** On macOS `/tmp` is a symlink to `/private/tmp`; worktrees under it break tooling that resolves modules in worker threads — vite-node/vitest dies with `Cannot find package …` *before a single test runs*, so suites silently never run and regressions only surface in CI. A worktree under the repo root is already a real path; `pwd -P` is the backstop.
 
+### The exception: a bare primary clone
+
+**When the primary clone is bare, `<repo-root>/.worktrees/` is inside the git
+directory itself — and that breaks build tooling.** Use a sibling instead:
+
+```bash
+git -C "$BARE" worktree add "${BARE}-wt/<branch>" -b <branch> origin/dev
+```
+
+A bare repo has no working tree, so `git status` there is fatal (exit 128). Any
+tool that walks *up* from your package directory to find the repository root can
+land on the bare repo rather than on your worktree, run git there, and fail —
+reporting something that names neither worktrees nor bareness:
+
+```
+error obtaining VCS status: exit status 128
+        Use -buildvcs=false to disable VCS stamping.
+```
+
+That is Go's `-buildvcs` stamping, and it fails **every** `go build` in **every**
+worktree nested under a bare primary. It cost an hour to trace, because the error
+points at VCS stamping and the actual cause is a directory layout chosen weeks
+earlier. Anything else that resolves a repo root by walking upward — coverage
+tools, release stampers, monorepo task runners — can hit the same wall.
+
+`-buildvcs=false` silences it, at the cost of unstamped binaries, and only for
+Go. Moving the worktrees out is the fix that works for every tool.
+
+**Detect it before you place a worktree:** `git rev-parse --is-bare-repository`
+returns `true`. If it does, use `${repo}-wt/<branch>` and note it in the project's
+own docs — a nested worktree that *already* exists will keep failing builds until
+it is moved, and the error message will never say why.
+
 ## Starting parallel work
 
 To open a *new* parallel line of work, start it isolated from the beginning:

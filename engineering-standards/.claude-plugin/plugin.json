@@ -1,7 +1,7 @@
 {
   "name": "engineering-standards",
-  "version": "0.1.2",
-  "description": "Evergreen engineering standards I hold code to — the judgment layer that AI-slop resistance needs on top of the mechanical quality stack. Project-structure conventions (consistent layout + naming so every repo looks the same), worktree isolation (every line of work in its own tree so parallel work never collides), and GitHub API discipline (zipball over per-file, rate-limit backoff), with automation-auth (GitHub App vs PAT) and hook-escape conventions on the way. Pure advisory skills that fire when the situation matches — no tooling, no setup, safe to leave enabled for a project's whole life. Backed by lessons from real incidents.",
+  "version": "0.2.0",
+  "description": "Evergreen engineering standards I hold code to \u2014 the judgment layer that AI-slop resistance needs on top of the mechanical quality stack. Project-structure conventions, worktree isolation (every line of work in its own tree; bare primaries need a sibling), GitHub API discipline, exit-code integrity (never read a check's result through a pipe), verify-the-artifact (source is a claim, only the running artifact is evidence), and testing interactions over time (the defects users hit live between two moments, and state tests cannot see them). Pure advisory skills that fire when the situation matches \u2014 no tooling, no setup, safe to leave enabled for a project's whole life. Backed by lessons from real incidents.",
   "author": {
     "name": "Court Schuett"
   },
