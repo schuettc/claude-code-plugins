@@ -114,12 +114,25 @@ title: "<working title>"
 status: draft
 date: <YYYY-MM-DD>
 tags: []
+generator: "ghost:draft-post"
+next: "/ghost:revise-post"
 ---
-
-<!-- DRAFT — produced by /ghost:draft-post. Run /ghost:revise-post to refine. -->
 
 <full prose content>
 ```
+
+**The provenance note is front matter, not an HTML comment, and that is load-bearing.**
+This template used to emit `<!-- DRAFT — produced by /ghost:draft-post. … -->` as the
+first line of the body. Drafts are reviewed in galley (`galley edit <draft.md>`), which
+REFUSES raw HTML outright — and an HTML comment is raw HTML. So every draft this skill
+produced was unopenable for review, and the author had not typed a character yet: the
+tool put the blocker in before the writing started. Measured 2026-08-22 against a real
+corpus — 19 of 24 drafts in ghost-site refused, every one on that banner line, at lines
+7-11. Front matter is parsed and skipped by galley, and `push-draft` reads named keys
+and ignores the rest, so the provenance survives with nothing downstream to teach.
+
+DO NOT put an HTML comment back into the emitted draft, here or anywhere else in this
+skill. If something new needs to ride along with a draft, it goes in front matter.
 
 Apply every constraint from the style guide as you write:
 
@@ -239,6 +252,7 @@ The greps in Phase 5 catch fixed strings. The tells that make writing read as AI
 - **Negative-first.** Lead with the reason, not the absence.
   - _Before:_ "Pages don't get their own tools." → _After:_ "Because a page is the same object as a post, the tools take a `type` argument."
 - **Slip-narration.** Present the working config, not a blow-by-blow of what broke and how it got fixed.
+- **Answering unasked questions.** Pre-emptive explanation of mechanisms, alternatives, dead ends, or edge cases the reader didn't need. A paragraph justifying why some other approach wouldn't work — when the reader never asked about that approach — is a cut. One clause of warning is the ceiling for a dead end, and only when the reader would plausibly hit it. If a sentence exists to head off a hypothetical objection, delete it.
 
 Fix these in the file. Only then continue to the hand-off.
 

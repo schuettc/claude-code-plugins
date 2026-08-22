@@ -174,6 +174,7 @@ If the style guide is available, also check:
 - **Retcon** — a fix dressed up as intentional design; describe what the thing does and why, not a story of having meant it all along.
 - **Overselling** — "I set one rule at the start", "the part I lean on"; understate.
 - **Negative-first** — lead with the reason, not the absence ("Because a page is the same object as a post…," not "Pages don't get their own tools").
+- **Answering unasked questions** — pre-emptive explanation of mechanisms, alternatives, dead ends, or edge cases the reader didn't need. One clause of warning is the ceiling for a dead end, and only when the reader would plausibly hit it. If a sentence exists to head off a hypothetical objection, delete it.
 
 #### Axis 3 — Content and accuracy
 
