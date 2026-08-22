@@ -252,6 +252,7 @@ The greps in Phase 5 catch fixed strings. The tells that make writing read as AI
 - **Negative-first.** Lead with the reason, not the absence.
   - _Before:_ "Pages don't get their own tools." → _After:_ "Because a page is the same object as a post, the tools take a `type` argument."
 - **Slip-narration.** Present the working config, not a blow-by-blow of what broke and how it got fixed.
+- **Answering unasked questions.** Pre-emptive explanation of mechanisms, alternatives, dead ends, or edge cases the reader didn't need. A paragraph justifying why some other approach wouldn't work — when the reader never asked about that approach — is a cut. One clause of warning is the ceiling for a dead end, and only when the reader would plausibly hit it. If a sentence exists to head off a hypothetical objection, delete it.
 
 Fix these in the file. Only then continue to the hand-off.
 
